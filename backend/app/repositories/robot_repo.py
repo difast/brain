@@ -51,3 +51,9 @@ class RobotRepository:
         robot.updated_at = datetime.now(UTC)
         await self.session.flush()
         return robot
+
+    async def touch(self, robot: Robot) -> Robot:
+        """Persist in-place mutations on a tracked robot (e.g. heartbeat)."""
+        robot.updated_at = datetime.now(UTC)
+        await self.session.flush()
+        return robot

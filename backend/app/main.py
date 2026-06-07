@@ -21,7 +21,6 @@ from app.core.database import Base, engine
 from app.core.exceptions import BrainError
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestContextMiddleware
-from app.services.cache import PresenceCache
 from app.services.claude_client import ClaudeBrain
 from app.services.storage import FrameStorage
 
@@ -34,7 +33,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("startup", environment=settings.environment, version=__version__)
 
     # Initialize shared singletons (cheap to hold for the process lifetime).
-    app.state.presence = PresenceCache.from_url()
     app.state.brain = ClaudeBrain()
     app.state.storage = FrameStorage()
 
@@ -42,11 +40,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if settings.environment != "production":
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        await app.state.storage.ensure_bucket()
+        if settings.storage_enabled:
+            await app.state.storage.ensure_bucket()
 
     yield
 
-    await app.state.presence.close()
     await engine.dispose()
     logger.info("shutdown")
 

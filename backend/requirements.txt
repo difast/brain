@@ -12,10 +12,7 @@ sqlalchemy[asyncio]==2.0.36
 asyncpg==0.30.0
 alembic==1.14.0
 
-# --- Cache / heartbeat ---
-redis==5.2.1
-
-# --- Object storage (S3 / MinIO) ---
+# --- Object storage (S3 / MinIO), optional ---
 aioboto3==13.3.0
 
 # --- AI ---

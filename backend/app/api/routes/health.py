@@ -10,11 +10,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import __version__
-from app.api.deps import get_presence
 from app.core.config import settings
 from app.core.database import get_session
 from app.schemas.common import HealthResponse
-from app.services.cache import PresenceCache
 
 router = APIRouter(tags=["health"])
 
@@ -26,22 +24,24 @@ async def health() -> HealthResponse:
     )
 
 
-@router.get("/ready", summary="Readiness probe (checks DB + Redis)")
+@router.get("/ready", summary="Readiness probe (checks the database)")
 async def ready(
     response: Response,
     session: Annotated[AsyncSession, Depends(get_session)],
-    presence: Annotated[PresenceCache, Depends(get_presence)],
 ) -> dict:
-    checks = {"database": False, "redis": False}
+    checks = {"database": False}
     try:
         await session.execute(text("SELECT 1"))
         checks["database"] = True
     except Exception:  # noqa: BLE001
         pass
-    checks["redis"] = await presence.ping()
 
     ok = all(checks.values())
     response.status_code = (
         status.HTTP_200_OK if ok else status.HTTP_503_SERVICE_UNAVAILABLE
     )
-    return {"status": "ok" if ok else "degraded", "checks": checks}
+    return {
+        "status": "ok" if ok else "degraded",
+        "checks": checks,
+        "storage_enabled": settings.storage_enabled,
+    }

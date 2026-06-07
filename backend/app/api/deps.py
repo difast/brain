@@ -10,15 +10,10 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.exceptions import AuthError
 from app.core.security import decode_robot_token
-from app.services.cache import PresenceCache
 from app.services.claude_client import ClaudeBrain
 from app.services.storage import FrameStorage
 
 _bearer = HTTPBearer(auto_error=False)
-
-
-def get_presence(request: Request) -> PresenceCache:
-    return request.app.state.presence
 
 
 def get_brain(request: Request) -> ClaudeBrain:
