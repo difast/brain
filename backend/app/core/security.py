@@ -16,7 +16,9 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# pbkdf2_sha256 is pure-Python (no native bcrypt dependency) and has no
+# 72-byte input limit — well-suited to hashing opaque API keys.
+_pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def generate_api_key() -> str:
