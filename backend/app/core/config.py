@@ -60,6 +60,11 @@ class Settings(BaseSettings):
 
     # --- Claude / Anthropic ---
     anthropic_api_key: str = ""
+    # Optional override of the API endpoint. Leave empty to call Claude
+    # directly. Set it to route every request through an AI tunnel / proxy
+    # (any Anthropic-compatible endpoint). Both modes work transparently —
+    # only the value of this variable decides which is used.
+    anthropic_base_url: str | None = None
     # Default to the most capable model. For high-throughput / low-latency
     # fleets, operators may switch to claude-sonnet-4-6 or claude-haiku-4-5
     # via the CLAUDE_MODEL env var (see README) — the decision contract is
@@ -86,7 +91,10 @@ class Settings(BaseSettings):
 
     @property
     def use_claude_mock(self) -> bool:
-        return not self.anthropic_api_key and self.claude_allow_mock
+        # Real mode if a key OR a tunnel endpoint is configured; otherwise
+        # fall back to the deterministic mock (when allowed).
+        configured = bool(self.anthropic_api_key or self.anthropic_base_url)
+        return not configured and self.claude_allow_mock
 
 
 @lru_cache

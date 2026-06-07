@@ -51,14 +51,23 @@ class ClaudeBrain:
         self._mock = settings.use_claude_mock
         self._client: anthropic.AsyncAnthropic | None = None
         if not self._mock:
-            self._client = anthropic.AsyncAnthropic(
-                api_key=settings.anthropic_api_key,
-                timeout=settings.claude_timeout_seconds,
+            kwargs: dict = {"timeout": settings.claude_timeout_seconds}
+            # An AI tunnel may not require a real key; the SDK still needs a
+            # non-empty value, so use a placeholder when only a base_url is set.
+            kwargs["api_key"] = settings.anthropic_api_key or "tunnel"
+            if settings.anthropic_base_url:
+                kwargs["base_url"] = settings.anthropic_base_url
+            self._client = anthropic.AsyncAnthropic(**kwargs)
+            logger.info(
+                "claude_client_ready",
+                endpoint=settings.anthropic_base_url or "api.anthropic.com",
+                model=settings.claude_model,
             )
         else:
             logger.warning(
                 "claude_mock_enabled",
-                reason="no ANTHROPIC_API_KEY configured; returning mock decisions",
+                reason="no ANTHROPIC_API_KEY or ANTHROPIC_BASE_URL configured; "
+                "returning mock decisions",
             )
 
     async def decide(
@@ -131,19 +140,26 @@ class ClaudeBrain:
             )
         content.append({"type": "text", "text": text})
 
+        # `thinking` and `output_config` are passed via extra_body so the
+        # request works regardless of the installed SDK version (older SDKs
+        # don't expose them as typed kwargs) — the fields are forwarded to the
+        # API verbatim.
+        extra_body = {
+            "thinking": {"type": settings.claude_thinking},
+            "output_config": {
+                "format": {
+                    "type": "json_schema",
+                    "schema": DECISION_JSON_SCHEMA,
+                }
+            },
+        }
         try:
             response = await self._client.messages.create(
                 model=settings.claude_model,
                 max_tokens=settings.claude_max_tokens,
                 system=SYSTEM_PROMPT,
-                thinking={"type": settings.claude_thinking},
-                output_config={
-                    "format": {
-                        "type": "json_schema",
-                        "schema": DECISION_JSON_SCHEMA,
-                    }
-                },
                 messages=[{"role": "user", "content": content}],
+                extra_body=extra_body,
             )
         except anthropic.BadRequestError as exc:
             logger.error("claude_bad_request", error=str(exc))
