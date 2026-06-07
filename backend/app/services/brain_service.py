@@ -16,6 +16,7 @@ import binascii
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.exceptions import RobotNotFoundError
 from app.core.logging import get_logger
 from app.models.decision import Decision
@@ -48,7 +49,7 @@ class BrainService:
         task = await self.memory.ensure_task(robot_id, req.task)
 
         frame_url = req.frame_url
-        if req.image_b64 and not frame_url:
+        if req.image_b64 and not frame_url and settings.storage_enabled:
             frame_url = await self._store_frame(
                 robot_id, req.image_b64, req.image_media_type
             )

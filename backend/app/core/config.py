@@ -45,16 +45,18 @@ class Settings(BaseSettings):
     db_max_overflow: int = 10
     db_echo: bool = False
 
-    # --- Redis (cache + heartbeat presence) ---
-    redis_url: str = "redis://redis:6379/0"
     # Seconds after which a robot is considered offline if no heartbeat.
+    # Presence is tracked in Postgres (robots.last_seen_at) — no Redis needed.
     heartbeat_ttl_seconds: int = 30
 
-    # --- Object storage (S3 / MinIO) ---
-    s3_endpoint_url: str | None = "http://minio:9000"
+    # --- Object storage (S3 / MinIO) — OPTIONAL ---
+    # Leave the endpoint/credentials empty to run without object storage:
+    # camera frames simply won't be persisted (decisions still work). Set them
+    # to enable frame storage on any S3-compatible store (AWS S3, R2, MinIO).
+    s3_endpoint_url: str | None = None
     s3_region: str = "us-east-1"
-    s3_access_key: str = "minioadmin"
-    s3_secret_key: str = "minioadmin"
+    s3_access_key: str = ""
+    s3_secret_key: str = ""
     s3_bucket: str = "robot-frames"
     s3_public_url: str | None = None  # public base url for presigned/serving
 
@@ -88,6 +90,13 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [o.strip() for o in v.split(",") if o.strip()]
         return v
+
+    @property
+    def storage_enabled(self) -> bool:
+        """Object storage is on only when an endpoint + credentials are set."""
+        return bool(
+            self.s3_access_key and self.s3_secret_key and self.s3_bucket
+        )
 
     @property
     def use_claude_mock(self) -> bool:

@@ -1,9 +1,9 @@
 """Pytest fixtures.
 
-Tests run fully offline: a SQLite in-memory database replaces Postgres, an
-in-memory fake replaces Redis presence, a no-op replaces S3, and the Claude
-brain runs in mock mode (no ANTHROPIC_API_KEY). This keeps unit tests fast and
-hermetic while exercising the real service/route code paths.
+Tests run fully offline: a SQLite in-memory database replaces Postgres, a no-op
+replaces S3, and the Claude brain runs in mock mode (no ANTHROPIC_API_KEY).
+Presence is DB-based (no Redis). This keeps unit tests fast and hermetic while
+exercising the real service/route code paths.
 """
 
 from __future__ import annotations
@@ -25,29 +25,10 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from app.api.deps import get_brain, get_presence, get_storage
+from app.api.deps import get_brain, get_storage
 from app.core.database import Base, get_session
 from app.main import create_app
 from app.services.claude_client import ClaudeBrain
-
-
-class FakePresence:
-    """In-memory presence cache standing in for Redis."""
-
-    def __init__(self) -> None:
-        self._alive: set[str] = set()
-
-    async def mark_alive(self, robot_id: str, ttl: int | None = None) -> None:
-        self._alive.add(robot_id)
-
-    async def is_alive(self, robot_id: str) -> bool:
-        return robot_id in self._alive
-
-    async def ping(self) -> bool:
-        return True
-
-    async def close(self) -> None:
-        pass
 
 
 class FakeStorage:
@@ -89,13 +70,11 @@ async def client(engine) -> AsyncIterator[AsyncClient]:
                 await session.rollback()
                 raise
 
-    presence = FakePresence()
     storage = FakeStorage()
     brain = ClaudeBrain()  # mock mode (no API key)
 
     app = create_app()
     app.dependency_overrides[get_session] = _get_session
-    app.dependency_overrides[get_presence] = lambda: presence
     app.dependency_overrides[get_storage] = lambda: storage
     app.dependency_overrides[get_brain] = lambda: brain
 

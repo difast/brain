@@ -43,10 +43,12 @@ That starts everything:
 | --------- | ------------------------------------ | ------------------------------ |
 | Backend   | http://localhost:8000                | API gateway + brain            |
 | API docs  | http://localhost:8000/docs           | Swagger UI (OpenAPI)           |
-| Dashboard | http://localhost:3000                | Fleet console + simulator      |
-| MinIO     | http://localhost:9001                | Object storage console         |
+| Dashboard | http://localhost:3000                | Fleet console (optional)       |
 | Postgres  | localhost:5432                       | `brain` / `brain`              |
-| Redis     | localhost:6379                       | heartbeat presence             |
+
+**Postgres is the only required backing service.** Presence is tracked in the
+database (no Redis), and object storage (S3) is optional — without it, camera
+frames simply aren't persisted and decisions still work.
 
 > **No Anthropic key?** Leave `ANTHROPIC_API_KEY` empty — the brain runs in a
 > deterministic **mock mode** so the whole platform is fully usable offline
@@ -86,8 +88,7 @@ backend/app/
 │   ├── registry_service.py # Robot Registry
 │   ├── telemetry_service.py# Telemetry Service
 │   ├── memory_service.py   # Memory Service (decisions + tasks)
-│   ├── storage.py          # S3/MinIO frame storage
-│   └── cache.py            # Redis heartbeat presence
+│   └── storage.py          # optional S3/MinIO frame storage
 ├── repositories/   # Data-access layer (SQLAlchemy)
 ├── models/         # ORM models (Robot, Task, Decision, Telemetry)
 ├── schemas/        # Pydantic request/response contracts
@@ -145,8 +146,8 @@ body, so one robot can't impersonate another.
 
 1. Robot sends `task`, optional camera frame (`image_b64` / `frame_url`) and
    `state` to `POST /brain/decision`.
-2. Brain ensures a task record, stores the frame in S3/MinIO, and pulls the
-   robot's recent decisions for short-term context.
+2. Brain ensures a task record, stores the frame in S3/MinIO (if storage is
+   configured), and pulls the robot's recent decisions for short-term context.
 3. The prompt is assembled from the robot's **capabilities** and sent to Claude
    with `output_config.format` constraining the response to a strict JSON
    schema (no free text).
@@ -163,13 +164,13 @@ All config is via environment variables (12-factor) — see
 | Variable             | Default              | Purpose                                  |
 | -------------------- | -------------------- | ---------------------------------------- |
 | `ANTHROPIC_API_KEY`  | *(empty → mock)*     | Enables real Claude decisions            |
+| `ANTHROPIC_BASE_URL` | *(empty → direct)*   | Set to route via an AI tunnel / Anthropic-compatible proxy |
 | `CLAUDE_MODEL`       | `claude-opus-4-8`    | Most capable; switch to `claude-sonnet-4-6` / `claude-haiku-4-5` for higher throughput |
 | `CLAUDE_THINKING`    | `disabled`           | `adaptive` for harder reasoning (higher latency) |
 | `SECRET_KEY`         | —                    | **Set in production** (signs robot tokens) |
-| `DATABASE_URL`       | postgres             | Async SQLAlchemy URL                     |
-| `REDIS_URL`          | redis                | Heartbeat presence                       |
-| `HEARTBEAT_TTL_SECONDS` | `30`              | Offline threshold                        |
-| `S3_*`               | minio defaults       | Frame storage                            |
+| `DATABASE_URL`       | postgres             | Async SQLAlchemy URL (`postgresql+asyncpg://…`) |
+| `HEARTBEAT_TTL_SECONDS` | `30`              | Offline threshold (DB-based presence)    |
+| `S3_*`               | *(empty → disabled)* | Optional frame storage                   |
 
 ---
 
@@ -186,12 +187,12 @@ pytest
 # Lint
 ruff check app tests
 
-# Run the API (needs Postgres + Redis; or use docker compose)
+# Run the API (needs only Postgres; or use docker compose)
 uvicorn app.main:app --reload
 ```
 
 Tests run with **no external services and no API key** — SQLite replaces
-Postgres, in-memory fakes replace Redis/S3, and the brain runs in mock mode.
+Postgres, S3 is disabled, presence is DB-based, and the brain runs in mock mode.
 
 ### Database migrations (Alembic)
 
@@ -210,29 +211,35 @@ In `development` the app auto-creates tables on startup for convenience; in
 ## Deployment (Railway)
 
 The repo is deploy-ready for [Railway](https://railway.app) straight from
-GitHub:
+GitHub as **a single service + one PostgreSQL plugin**:
 
-1. **Provision** managed **PostgreSQL** and **Redis** plugins.
-2. **Backend service** — root `backend/`, builds the `Dockerfile`. Set:
+1. **Add a PostgreSQL plugin** in your Railway project.
+2. **One service from this GitHub repo** — set **Root Directory = `backend`**
+   (so Railway builds `backend/Dockerfile`). Variables:
    - `ENVIRONMENT=production`, `SECRET_KEY=<random>`, `RUN_MIGRATIONS=1`
-   - `ANTHROPIC_API_KEY=<your key>`
-   - `DATABASE_URL` / `REDIS_URL` from the Railway plugins (use the
-     `postgresql+asyncpg://` scheme for the DB URL)
-   - S3 credentials for any S3-compatible bucket (AWS S3, Cloudflare R2, …)
+   - `ANTHROPIC_API_KEY=<your key>` *(or `ANTHROPIC_BASE_URL=<tunnel>`; leave
+     both empty for mock mode)*
+   - `DATABASE_URL` from the Postgres plugin — **change the scheme to
+     `postgresql+asyncpg://…`**
    - Railway provides `$PORT` automatically.
-3. **Frontend service** — root `frontend/`, builds the `Dockerfile`. Set the
-   build arg / env `NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1`.
+   - *(optional)* `S3_*` for frame storage on any S3-compatible bucket.
 
-`scripts/start.sh` runs migrations then launches the server, so deploys are
-zero-touch.
+That's it — `scripts/start.sh` runs migrations then launches the server, so
+deploys are zero-touch.
+
+> **Dashboard (optional):** the `frontend/` app is a separate Next.js console.
+> Deploy it as a second service (Root Directory = `frontend`, build arg
+> `NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1`) only if you want
+> the web UI — the API works without it.
 
 ---
 
 ## Scaling notes
 
 - **Stateless backend** → scale horizontally (`WEB_CONCURRENCY`, more replicas).
-- **Heartbeat presence in Redis** keeps the hot path off Postgres.
-- **Frames in object storage** (not the DB) keep rows small and reads cheap.
+- **DB-based presence** (`last_seen_at`) keeps the deployment to one service +
+  Postgres; a Redis cache can be reintroduced later if the hot path needs it.
+- **Frames in object storage** (optional, not the DB) keep rows small.
 - **Repository layer** isolates data access — swap stores or add read replicas
   without touching business logic.
 - **Modular services** can be extracted into independent deployables when a
@@ -244,7 +251,7 @@ zero-touch.
 
 ## Tech stack
 
-Python · FastAPI · SQLAlchemy 2 (async) · PostgreSQL · Redis · S3/MinIO ·
+Python · FastAPI · SQLAlchemy 2 (async) · PostgreSQL · optional S3/MinIO ·
 Anthropic Claude · Docker / Docker Compose · Next.js · TypeScript.
 
 ---

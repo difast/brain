@@ -8,9 +8,10 @@ of robot you simply register it with its own ``capabilities`` command schema.
 from __future__ import annotations
 
 import enum
+from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, Enum, String
+from sqlalchemy import JSON, DateTime, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -37,6 +38,12 @@ class Robot(UUIDMixin, TimestampMixin, Base):
         default=RobotStatus.offline,
         nullable=False,
         index=True,
+    )
+
+    # Last heartbeat time — the source of truth for online/offline presence
+    # (a robot is "online" if it heartbeated within heartbeat_ttl_seconds).
+    last_seen_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
 
     # The command vocabulary this robot understands. List of:

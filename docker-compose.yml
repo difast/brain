@@ -1,5 +1,9 @@
 name: cloud-brain
 
+# Minimal stack: backend (the cloud brain) + Postgres. No Redis, no MinIO —
+# presence is tracked in Postgres and object storage is optional. The frontend
+# dashboard is included for convenience but is not required.
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -17,57 +21,23 @@ services:
       timeout: 5s
       retries: 10
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # web console
-    volumes:
-      - minio-data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   backend:
     build:
       context: ./backend
     env_file: .env
     environment:
-      # Override hosts for the compose network (point at service names).
       DATABASE_URL: postgresql+asyncpg://brain:brain@postgres:5432/brain
-      REDIS_URL: redis://redis:6379/0
-      S3_ENDPOINT_URL: http://minio:9000
     ports:
       - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
 
+  # Optional dashboard. Remove this block if you only need the API.
   frontend:
     build:
       context: ./frontend
       args:
-        # Baked into the client bundle at build time.
         NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
     ports:
       - "3000:3000"
@@ -76,4 +46,3 @@ services:
 
 volumes:
   postgres-data:
-  minio-data:

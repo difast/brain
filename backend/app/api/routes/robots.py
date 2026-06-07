@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentRobotId, get_presence
+from app.api.deps import CurrentRobotId
 from app.core.database import get_session
 from app.models.robot import RobotStatus
 from app.schemas.common import Page
@@ -18,13 +18,11 @@ from app.schemas.robot import (
     RobotRegisterResponse,
     RobotResponse,
 )
-from app.services.cache import PresenceCache
 from app.services.registry_service import RegistryService
 
 router = APIRouter(tags=["robots"])
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
-PresenceDep = Annotated[PresenceCache, Depends(get_presence)]
 
 
 @router.post(
@@ -36,9 +34,8 @@ PresenceDep = Annotated[PresenceCache, Depends(get_presence)]
 async def register_robot(
     payload: RobotRegisterRequest,
     session: SessionDep,
-    presence: PresenceDep,
 ) -> RobotRegisterResponse:
-    service = RegistryService(session, presence)
+    service = RegistryService(session)
     robot, api_key, token = await service.register(payload)
     return RobotRegisterResponse(
         robot=RobotResponse.model_validate(robot),
@@ -56,9 +53,8 @@ async def heartbeat(
     payload: HeartbeatRequest,
     robot_id: CurrentRobotId,
     session: SessionDep,
-    presence: PresenceDep,
 ) -> HeartbeatResponse:
-    service = RegistryService(session, presence)
+    service = RegistryService(session)
     _, ack = await service.heartbeat(robot_id, payload)
     return HeartbeatResponse(
         robot_id=robot_id, status=payload.status, acknowledged_at=ack
@@ -72,13 +68,12 @@ async def heartbeat(
 )
 async def list_robots(
     session: SessionDep,
-    presence: PresenceDep,
     status_filter: Annotated[RobotStatus | None, Query(alias="status")] = None,
     robot_type: str | None = None,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> Page[RobotResponse]:
-    service = RegistryService(session, presence)
+    service = RegistryService(session)
     robots, total = await service.list_with_presence(
         status=status_filter, robot_type=robot_type, limit=limit, offset=offset
     )
@@ -98,8 +93,7 @@ async def list_robots(
 async def get_robot(
     robot_id: str,
     session: SessionDep,
-    presence: PresenceDep,
 ) -> RobotResponse:
-    service = RegistryService(session, presence)
+    service = RegistryService(session)
     robot = await service.get(robot_id)
     return RobotResponse.model_validate(robot)
