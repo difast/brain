@@ -1,0 +1,33 @@
+# --- Web framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# --- Settings & validation ---
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# --- Database ---
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# --- Cache / heartbeat ---
+redis==5.2.1
+
+# --- Object storage (S3 / MinIO) ---
+aioboto3==13.3.0
+
+# --- AI ---
+anthropic==0.42.0
+
+# --- Auth / security ---
+passlib[bcrypt]==1.7.4
+pyjwt==2.10.1
+
+# --- Logging ---
+structlog==24.4.0
+
+# --- Misc ---
+tenacity==9.0.0
+httpx==0.28.1
