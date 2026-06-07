@@ -22,14 +22,19 @@ class Base(DeclarativeBase):
     """Declarative base for all ORM models."""
 
 
-engine = create_async_engine(
-    settings.database_url,
-    echo=settings.db_echo,
-    pool_size=settings.db_pool_size,
-    max_overflow=settings.db_max_overflow,
-    pool_pre_ping=True,
-    future=True,
-)
+def _engine_kwargs() -> dict:
+    kwargs: dict = {"echo": settings.db_echo, "future": True}
+    # SQLite (used in tests / tooling) doesn't support the QueuePool options.
+    if not settings.database_url.startswith("sqlite"):
+        kwargs.update(
+            pool_size=settings.db_pool_size,
+            max_overflow=settings.db_max_overflow,
+            pool_pre_ping=True,
+        )
+    return kwargs
+
+
+engine = create_async_engine(settings.database_url, **_engine_kwargs())
 
 SessionLocal = async_sessionmaker(
     bind=engine,
