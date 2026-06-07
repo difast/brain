@@ -60,9 +60,16 @@ class Settings(BaseSettings):
 
     # --- Claude / Anthropic ---
     anthropic_api_key: str = ""
-    claude_model: str = "claude-sonnet-4-6"
+    # Default to the most capable model. For high-throughput / low-latency
+    # fleets, operators may switch to claude-sonnet-4-6 or claude-haiku-4-5
+    # via the CLAUDE_MODEL env var (see README) — the decision contract is
+    # identical across models.
+    claude_model: str = "claude-opus-4-8"
     claude_max_tokens: int = 1024
     claude_timeout_seconds: float = 30.0
+    # Thinking adds latency; for real-time robot control it is disabled by
+    # default. Set to "adaptive" for harder reasoning at the cost of latency.
+    claude_thinking: Literal["disabled", "adaptive"] = "disabled"
     # If true and no API key is configured, the brain returns a deterministic
     # mock decision instead of calling the API. Useful for local dev / CI.
     claude_allow_mock: bool = True

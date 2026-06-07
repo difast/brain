@@ -1,0 +1,55 @@
+"""Telemetry ingest + query endpoints."""
+
+from __future__ import annotations
+
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps import CurrentRobotId
+from app.core.database import get_session
+from app.schemas.common import Page
+from app.schemas.telemetry import TelemetryIngest, TelemetryResponse
+from app.services.telemetry_service import TelemetryService
+
+router = APIRouter(tags=["telemetry"])
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
+
+@router.post(
+    "/telemetry",
+    response_model=TelemetryResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Ingest a telemetry reading (authenticated as the robot)",
+)
+async def ingest_telemetry(
+    payload: TelemetryIngest,
+    robot_id: CurrentRobotId,
+    session: SessionDep,
+) -> TelemetryResponse:
+    service = TelemetryService(session)
+    telemetry = await service.ingest(robot_id, payload)
+    return TelemetryResponse.model_validate(telemetry)
+
+
+@router.get(
+    "/telemetry",
+    response_model=Page[TelemetryResponse],
+    summary="Query telemetry",
+)
+async def list_telemetry(
+    session: SessionDep,
+    robot_id: str | None = None,
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+) -> Page[TelemetryResponse]:
+    service = TelemetryService(session)
+    items, total = await service.list(robot_id=robot_id, limit=limit, offset=offset)
+    return Page(
+        items=[TelemetryResponse.model_validate(t) for t in items],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
