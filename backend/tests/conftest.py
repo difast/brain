@@ -11,8 +11,11 @@ from __future__ import annotations
 import os
 from collections.abc import AsyncIterator
 
-# Ensure mock mode + non-prod before importing the app/config.
-os.environ.setdefault("ANTHROPIC_API_KEY", "")
+# Force hermetic mock mode before importing the app/config. The execution
+# environment may inject ANTHROPIC_API_KEY / ANTHROPIC_BASE_URL — clear them so
+# tests never hit a real endpoint.
+os.environ["ANTHROPIC_API_KEY"] = ""
+os.environ["ANTHROPIC_BASE_URL"] = ""
 os.environ.setdefault("ENVIRONMENT", "development")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
