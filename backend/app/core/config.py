@@ -8,10 +8,10 @@ variables are injected by the platform (e.g. Railway).
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -82,7 +82,12 @@ class Settings(BaseSettings):
     claude_allow_mock: bool = True
 
     # --- CORS ---
-    cors_origins: list[str] = Field(default_factory=lambda: ["*"])
+    # NoDecode stops pydantic-settings from trying json.loads() on the env
+    # value (so CORS_ORIGINS=* or a comma-separated list is accepted) — our
+    # validator below turns the raw string into a list.
+    cors_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["*"]
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod
