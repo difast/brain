@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import __version__
-from app.api.routes import brain, health, logs, robots, telemetry
+from app.api.routes import brain, health, logs, robots, tasks, telemetry
 from app.core.config import settings
 from app.core.database import Base, engine
 from app.core.exceptions import BrainError
@@ -87,7 +87,7 @@ def create_app() -> FastAPI:
         )
 
     api = settings.api_v1_prefix
-    for module in (health, robots, brain, telemetry, logs):
+    for module in (health, robots, brain, telemetry, tasks, logs):
         app.include_router(module.router, prefix=api)
 
     @app.get("/", include_in_schema=False)
