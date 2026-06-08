@@ -1,0 +1,2 @@
+# Keeps the public/ directory in git so the Docker build can COPY it.
+# Put static assets (favicon, images) here if needed.
