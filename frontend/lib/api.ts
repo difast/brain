@@ -46,6 +46,8 @@ export interface Task {
   robot_id: string;
   description: string;
   status: string;
+  priority: number;
+  source: string;
   result: string | null;
   created_at: string;
   updated_at: string;
@@ -62,6 +64,19 @@ export interface Telemetry {
   errors: unknown[];
   extra: Record<string, unknown>;
   created_at: string;
+}
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  prefix: string;
+  revoked: boolean;
+  last_used_at: string | null;
+  created_at: string;
+}
+
+export interface ApiKeyCreated extends ApiKey {
+  key: string;
 }
 
 export interface Page<T> {
@@ -87,6 +102,15 @@ async function post<T>(path: string, body: unknown, token?: string): Promise<T> 
     headers,
     body: JSON.stringify(body),
   });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`${res.status}: ${text}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+async function del<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, { method: "DELETE" });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`${res.status}: ${text}`);
@@ -124,4 +148,17 @@ export const api = {
   ) => post<Decision>("/brain/decision", body, token),
   heartbeat: (token: string) =>
     post<unknown>("/robots/heartbeat", { status: "online" }, token),
+
+  // Task Engine
+  createTask: (body: {
+    robot_id: string;
+    description: string;
+    priority: number;
+  }) => post<Task>("/tasks", body),
+
+  // API keys
+  listApiKeys: () => get<ApiKey[]>("/api-keys"),
+  createApiKey: (name: string) =>
+    post<ApiKeyCreated>("/api-keys", { name }),
+  revokeApiKey: (id: string) => del<ApiKey>(`/api-keys/${id}`),
 };
