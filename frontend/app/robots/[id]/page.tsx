@@ -13,10 +13,12 @@ export default function RobotDetail({
   const { id } = use(params);
   const robot = usePoll(() => api.getRobot(id), 5000);
   const logs = usePoll(() => api.listLogs(id), 4000);
+  const tasks = usePoll(() => api.listTasks(id), 4000);
   const telemetry = usePoll(() => api.listTelemetry(id), 4000);
 
   const r = robot.data;
   const decisions = logs.data?.items ?? [];
+  const robotTasks = tasks.data?.items ?? [];
   const readings = telemetry.data?.items ?? [];
   const latest = readings[0];
 
@@ -70,7 +72,34 @@ export default function RobotDetail({
           </div>
 
           <div className="panel" style={{ marginTop: 16 }}>
-            <h2>Recent Decisions</h2>
+            <h2>Tasks</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {robotTasks.map((t) => (
+                  <tr key={t.id}>
+                    <td>{t.description}</td>
+                    <td>
+                      <span className="chip">{t.status}</span>
+                    </td>
+                    <td className="muted">{timeAgo(t.updated_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {robotTasks.length === 0 && (
+              <div className="empty">No tasks yet for this robot.</div>
+            )}
+          </div>
+
+          <div className="panel" style={{ marginTop: 16 }}>
+            <h2>Decision Logs</h2>
             <table>
               <thead>
                 <tr>
