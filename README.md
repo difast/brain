@@ -126,12 +126,35 @@ machine-readable spec at `/openapi.json`.
 | POST   | `/robots/heartbeat`   | robot token | Report liveness                      |
 | POST   | `/brain/decision`     | robot token | Get the next decision (core endpoint)|
 | POST   | `/telemetry`          | robot token | Ingest a telemetry reading           |
+| POST   | `/executions`         | robot token | Report execution feedback (DAL)      |
+| POST   | `/tasks`              | —           | Assign a task (Task Engine)          |
+| GET    | `/tasks/next`         | robot token | Robot pulls its next queued task     |
+| POST   | `/tasks/{id}/result`  | robot token | Robot reports a task result          |
 | GET    | `/robots`             | —           | List robots (+ live status)          |
 | GET    | `/robots/{id}`        | —           | Robot detail                         |
-| GET    | `/telemetry`          | —           | Query telemetry                      |
-| GET    | `/logs`               | —           | Decision logs (audit trail)          |
-| GET    | `/tasks`              | —           | Tasks                                |
+| GET    | `/robots/{id}/profile`| —           | Device profile (DAL)                 |
+| GET    | `/telemetry` `/executions` | —      | Query telemetry / execution feedback |
+| GET    | `/logs` `/tasks`      | —           | Decision logs / tasks                |
+| POST/GET/DELETE | `/api-keys`  | —           | Per-user API key management          |
 | GET    | `/health` `/ready`    | —           | Liveness / readiness probes          |
+
+### Device Abstraction Layer (DAL) & Model Router
+
+The platform is an independent device-control layer, not a Claude proxy:
+
+- **Universal actions + Action Translator** — the LLM emits universal actions
+  (`grasp`, `inspect`, `release`, …); the translator maps each to the concrete
+  device command the device supports (from its `capabilities`), attaching an
+  `action_id`. New device types need no core changes.
+- **Device Profile** — `firmware_version`, `protocol_version`, capabilities and
+  supported universal actions (`GET /robots/{id}/profile`).
+- **Execution Feedback** — devices report `{action_id, status, duration_ms,
+  error}`; recent feedback is fed back into the next decision (learning).
+- **Memory & Learning** — each decision stores input state, universal + device
+  actions, and links to execution results.
+- **Model Router** — swap the LLM via `LLM_PROVIDER` (`claude` | `openai` |
+  `local` | `auto`) with no API change. `local`/`openai` use any
+  OpenAI-compatible endpoint (Ollama, vLLM, LM Studio) via `OPENAI_BASE_URL`.
 
 ### Authentication
 

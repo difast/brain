@@ -17,14 +17,45 @@ export interface Robot {
   robot_type: string;
   status: RobotStatus;
   capabilities: CommandSpec[];
+  firmware_version: string | null;
+  protocol_version: string;
   meta: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
 
+export interface DeviceProfile {
+  robot_id: string;
+  robot_type: string;
+  protocol_version: string;
+  firmware_version: string | null;
+  capabilities: CommandSpec[];
+  supported_commands: string[];
+  supported_actions: { type: string; description: string }[];
+}
+
+export interface Execution {
+  id: string;
+  robot_id: string;
+  decision_id: string | null;
+  action_id: string;
+  action_type: string | null;
+  status: "success" | "failed";
+  duration_ms: number | null;
+  error: string | null;
+  created_at: string;
+}
+
 export interface Action {
   type: string;
   value: number | string | boolean | null;
+}
+
+export interface DeviceAction {
+  action_id: string;
+  type: string;
+  value: number | string | boolean | null;
+  universal: string | null;
 }
 
 export interface Decision {
@@ -34,9 +65,12 @@ export interface Decision {
   goal: string;
   thought: string | null;
   confidence: number;
-  actions: Action[];
+  actions: DeviceAction[];
+  universal_actions: Action[];
+  state: Record<string, unknown>;
   frame_url: string | null;
   model: string | null;
+  provider: string | null;
   latency_ms: number | null;
   created_at: string;
 }
@@ -121,6 +155,11 @@ async function del<T>(path: string): Promise<T> {
 export const api = {
   listRobots: () => get<Page<Robot>>("/robots?limit=200"),
   getRobot: (id: string) => get<Robot>(`/robots/${id}`),
+  getProfile: (id: string) => get<DeviceProfile>(`/robots/${id}/profile`),
+  listExecutions: (robotId?: string) =>
+    get<Page<Execution>>(
+      `/executions?limit=50${robotId ? `&robot_id=${robotId}` : ""}`,
+    ),
   listLogs: (robotId?: string) =>
     get<Page<Decision>>(
       `/logs?limit=100${robotId ? `&robot_id=${robotId}` : ""}`,

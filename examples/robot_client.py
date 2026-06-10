@@ -69,7 +69,7 @@ def main() -> None:
             headers=auth,
         )
 
-        # 4. Decision loop
+        # 4. Decision loop with Device Abstraction Layer + execution feedback
         for step in range(3):
             resp = client.post(
                 "/brain/decision",
@@ -84,9 +84,23 @@ def main() -> None:
             decision = resp.json()
             print(f"\nstep {step}: goal={decision['goal']!r} "
                   f"confidence={decision['confidence']}")
+            # `actions` are concrete device commands (translated from the brain's
+            # universal actions); each carries an action_id for feedback.
             for action in decision["actions"]:
-                print(f"  -> execute {action['type']} = {action['value']}")
-                # Here a real robot would actuate motors / servos.
+                print(f"  -> execute {action['type']} = {action['value']} "
+                      f"(from universal: {action.get('universal')})")
+                # Here a real robot would actuate motors / servos, then report:
+                client.post(
+                    "/executions",
+                    json={
+                        "action_id": action["action_id"],
+                        "action_type": action["type"],
+                        "status": "success",
+                        "duration_ms": 120,
+                        "decision_id": decision["id"],
+                    },
+                    headers=auth,
+                )
             client.post("/robots/heartbeat", json={"status": "online"}, headers=auth)
             time.sleep(1)
 
