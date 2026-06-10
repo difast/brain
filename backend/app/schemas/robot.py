@@ -16,8 +16,10 @@ class RobotRegisterRequest(BaseModel):
     robot_type: str = Field(..., min_length=1, max_length=128, examples=["rover"])
     capabilities: list[CommandSpec] = Field(
         default_factory=list,
-        description="Command vocabulary this robot understands.",
+        description="Low-level command vocabulary this device understands.",
     )
+    firmware_version: str | None = Field(default=None, examples=["1.0.0"])
+    protocol_version: str = Field(default="1.0", examples=["1.0"])
     meta: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -27,9 +29,25 @@ class RobotResponse(ORMModel):
     robot_type: str
     status: RobotStatus
     capabilities: list[dict[str, Any]]
+    firmware_version: str | None
+    protocol_version: str
     meta: dict[str, Any]
     created_at: datetime
     updated_at: datetime
+
+
+class DeviceProfile(BaseModel):
+    """Unified description of a device (Device Abstraction Layer)."""
+
+    robot_id: str
+    robot_type: str
+    protocol_version: str
+    firmware_version: str | None
+    capabilities: list[dict[str, Any]]
+    # Low-level device command types the device declared.
+    supported_commands: list[str]
+    # High-level universal actions the device can perform (via the translator).
+    supported_actions: list[dict[str, str]]
 
 
 class RobotRegisterResponse(BaseModel):

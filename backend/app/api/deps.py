@@ -10,13 +10,13 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.exceptions import AuthError
 from app.core.security import decode_robot_token
-from app.services.claude_client import ClaudeBrain
+from app.services.decision_engine import DecisionEngine
 from app.services.storage import FrameStorage
 
 _bearer = HTTPBearer(auto_error=False)
 
 
-def get_brain(request: Request) -> ClaudeBrain:
+def get_brain(request: Request) -> DecisionEngine:
     return request.app.state.brain
 
 

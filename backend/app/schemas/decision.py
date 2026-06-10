@@ -49,8 +49,13 @@ class DecisionResponse(ORMModel):
     goal: str
     thought: str | None
     confidence: float
+    # Device commands to execute (each has an action_id for execution feedback).
     actions: list[dict[str, Any]]
+    # The universal actions the LLM produced, before translation.
+    universal_actions: list[dict[str, Any]]
+    state: dict[str, Any]
     frame_url: str | None
     model: str | None
+    provider: str | None
     latency_ms: int | None
     created_at: datetime

@@ -30,13 +30,21 @@ class Decision(UUIDMixin, TimestampMixin, Base):
     thought: Mapped[str | None] = mapped_column(Text, nullable=True)
     confidence: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
 
-    # List of {"type": str, "value": Any}
+    # Device commands the robot executes: {"action_id", "type", "value",
+    # "universal"} — produced by the Action Translator.
     actions: Mapped[list[dict[str, Any]]] = mapped_column(
         JSON, default=list, nullable=False
     )
+    # The universal actions the LLM emitted, before translation.
+    universal_actions: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSON, default=list, nullable=False
+    )
+    # Input state snapshot that produced this decision (Memory & Learning).
+    state: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
 
     frame_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     model: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    provider: Mapped[str | None] = mapped_column(String(64), nullable=True)
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Raw model output, kept for debugging / replay.
     raw_response: Mapped[str | None] = mapped_column(Text, nullable=True)

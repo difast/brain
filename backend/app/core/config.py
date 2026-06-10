@@ -81,6 +81,17 @@ class Settings(BaseSettings):
     # mock decision instead of calling the API. Useful for local dev / CI.
     claude_allow_mock: bool = True
 
+    # --- Model Router (LLM provider selection) ---
+    # The Decision Engine is provider-agnostic. "auto" picks a provider from
+    # the configured credentials (Claude → OpenAI/local → mock). Force a
+    # specific one with claude | openai | local | mock.
+    llm_provider: Literal["auto", "claude", "openai", "local", "mock"] = "auto"
+    # OpenAI / OpenAI-compatible (also used for local models via base_url,
+    # e.g. Ollama/vLLM/LM Studio exposing an OpenAI-compatible endpoint).
+    openai_api_key: str = ""
+    openai_base_url: str | None = None
+    openai_model: str = "gpt-4o-mini"
+
     # --- CORS ---
     # NoDecode stops pydantic-settings from trying json.loads() on the env
     # value (so CORS_ORIGINS=* or a comma-separated list is accepted) — our
@@ -104,11 +115,28 @@ class Settings(BaseSettings):
         )
 
     @property
+    def _claude_configured(self) -> bool:
+        return bool(self.anthropic_api_key or self.anthropic_base_url)
+
+    @property
+    def _openai_configured(self) -> bool:
+        return bool(self.openai_api_key or self.openai_base_url)
+
+    @property
+    def resolved_provider(self) -> str:
+        """Which LLM provider the Decision Engine will use."""
+        if self.llm_provider != "auto":
+            return self.llm_provider
+        if self._claude_configured:
+            return "claude"
+        if self._openai_configured:
+            return "openai"
+        return "mock" if self.claude_allow_mock else "claude"
+
+    @property
     def use_claude_mock(self) -> bool:
-        # Real mode if a key OR a tunnel endpoint is configured; otherwise
-        # fall back to the deterministic mock (when allowed).
-        configured = bool(self.anthropic_api_key or self.anthropic_base_url)
-        return not configured and self.claude_allow_mock
+        # Backwards-compatible alias: true when no real provider is selected.
+        return self.resolved_provider == "mock"
 
 
 @lru_cache

@@ -54,7 +54,15 @@ class Robot(UUIDMixin, TimestampMixin, Base):
         JSON, default=list, nullable=False
     )
 
-    # Free-form descriptive metadata (firmware, hardware, geometry, etc.).
+    # --- Device Profile ---
+    firmware_version: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    protocol_version: Mapped[str] = mapped_column(
+        String(32), default="1.0", nullable=False
+    )
+
+    # Free-form descriptive metadata (hardware, geometry, etc.).
     meta: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
 
     def command_types(self) -> set[str]:
