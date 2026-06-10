@@ -9,9 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentRobotId
 from app.core.database import get_session
+from app.dal.translator import ActionTranslator
 from app.models.robot import RobotStatus
 from app.schemas.common import Page
 from app.schemas.robot import (
+    DeviceProfile,
     HeartbeatRequest,
     HeartbeatResponse,
     RobotRegisterRequest,
@@ -97,3 +99,25 @@ async def get_robot(
     service = RegistryService(session)
     robot = await service.get(robot_id)
     return RobotResponse.model_validate(robot)
+
+
+@router.get(
+    "/robots/{robot_id}/profile",
+    response_model=DeviceProfile,
+    summary="Device profile (DAL): capabilities + supported universal actions",
+)
+async def device_profile(
+    robot_id: str,
+    session: SessionDep,
+) -> DeviceProfile:
+    service = RegistryService(session)
+    robot = await service.get(robot_id)
+    return DeviceProfile(
+        robot_id=robot.id,
+        robot_type=robot.robot_type,
+        protocol_version=robot.protocol_version,
+        firmware_version=robot.firmware_version,
+        capabilities=robot.capabilities,
+        supported_commands=sorted(robot.command_types()),
+        supported_actions=ActionTranslator.available_universal(robot.capabilities),
+    )

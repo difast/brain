@@ -26,6 +26,18 @@ const NAV: { group: string; items: { id: string; label: string }[] }[] = [
     ],
   },
   {
+    group: "Device Abstraction Layer",
+    items: [
+      { id: "dal", label: "DAL overview" },
+      { id: "universal-actions", label: "Universal Actions" },
+      { id: "translator", label: "Action Translator" },
+      { id: "device-profile", label: "Device Profile" },
+      { id: "execution-feedback", label: "Execution Feedback" },
+      { id: "memory-learning", label: "Memory & Learning" },
+      { id: "model-router", label: "Model Router" },
+    ],
+  },
+  {
     group: "Reference",
     items: [
       { id: "endpoints", label: "API Endpoints" },
@@ -227,6 +239,117 @@ POST /tasks/{id}/result {"status":"completed","result":"delivered"}`}</Code>
             <Code>{`X-API-Key: cbk_xxxxxxxx...`}</Code>
           </section>
 
+          <section id="dal">
+            <h2>Device Abstraction Layer (DAL)</h2>
+            <p>
+              The DAL lets the cloud control <strong>any</strong> device through
+              one protocol. The LLM never emits hardware commands — it emits{" "}
+              <strong>universal actions</strong>, and the platform translates
+              them into each device&apos;s own low-level commands based on its
+              declared capabilities. The result: new device types plug in with
+              no changes to the core.
+            </p>
+          </section>
+
+          <section id="universal-actions">
+            <h2>Universal Actions</h2>
+            <p>
+              A device declares low-level <code>capabilities</code> (e.g.{" "}
+              <code>move_forward</code>, <code>arm_grasp</code>,{" "}
+              <code>camera_capture</code>, <code>speaker_say</code>,{" "}
+              <code>light_on</code>). From these the platform derives the{" "}
+              <strong>universal actions</strong> the device can perform (e.g.{" "}
+              <code>grasp</code>, <code>release</code>, <code>inspect</code>,{" "}
+              <code>say</code>). The brain is shown only these and returns:
+            </p>
+            <Code>{`{
+  "goal": "inspect_object",
+  "actions": [
+    {"type": "grasp"},
+    {"type": "inspect"},
+    {"type": "release"}
+  ]
+}`}</Code>
+          </section>
+
+          <section id="translator">
+            <h2>Action Translator</h2>
+            <p>
+              The translator maps each universal action to the first device
+              command the device supports, attaching a unique{" "}
+              <code>action_id</code> (used for execution feedback). Unsupported
+              actions are dropped. Example for an arm with a camera:
+            </p>
+            <Code>{`grasp    -> arm_grasp       (action_id: a1b2…)
+inspect  -> camera_capture  (action_id: c3d4…)
+release  -> arm_release     (action_id: e5f6…)`}</Code>
+            <p>
+              The device receives only commands it can actually run; the
+              response includes both <code>actions</code> (device commands) and{" "}
+              <code>universal_actions</code> (what the brain decided).
+            </p>
+          </section>
+
+          <section id="device-profile">
+            <h2>Device Profile</h2>
+            <p>
+              <code>GET /robots/&#123;id&#125;/profile</code> returns the unified
+              device description:
+            </p>
+            <ul>
+              <li><code>robot_type</code></li>
+              <li><code>capabilities</code> (low-level commands)</li>
+              <li><code>supported_commands</code></li>
+              <li><code>supported_actions</code> (universal actions)</li>
+              <li><code>firmware_version</code>, <code>protocol_version</code></li>
+            </ul>
+            <p>
+              Set <code>firmware_version</code> / <code>protocol_version</code>{" "}
+              at registration.
+            </p>
+          </section>
+
+          <section id="execution-feedback">
+            <h2>Execution Feedback</h2>
+            <p>
+              After running a command, the device reports the outcome to{" "}
+              <code>POST /executions</code>:
+            </p>
+            <Code>{`{"action_id": "123", "status": "success", "duration_ms": 450}
+// or
+{"action_id": "123", "status": "failed", "error": "object_not_found"}`}</Code>
+            <p>
+              Recent feedback is fed back into the next decision so the brain
+              learns from what actually happened.
+            </p>
+          </section>
+
+          <section id="memory-learning">
+            <h2>Memory &amp; Learning</h2>
+            <p>
+              Every decision is stored with its full context for learning: the
+              input <strong>state</strong>, the <strong>decision</strong>{" "}
+              (universal + translated device actions), and the linked{" "}
+              <strong>execution results</strong>. This history powers short-term
+              context and adaptation over time.
+            </p>
+          </section>
+
+          <section id="model-router">
+            <h2>Model Router</h2>
+            <p>
+              The Decision Engine is provider-agnostic — it doesn&apos;t depend
+              on Claude. Switch providers via the <code>LLM_PROVIDER</code>{" "}
+              setting without changing the API:
+            </p>
+            <ul>
+              <li><code>claude</code> — Anthropic (or a tunnel via <code>ANTHROPIC_BASE_URL</code>)</li>
+              <li><code>openai</code> — OpenAI API</li>
+              <li><code>local</code> — any OpenAI-compatible endpoint (Ollama, vLLM, LM Studio) via <code>OPENAI_BASE_URL</code></li>
+              <li><code>auto</code> — pick from configured credentials; falls back to a deterministic mock</li>
+            </ul>
+          </section>
+
           <section id="endpoints">
             <h2>API Endpoints</h2>
             <table>
@@ -243,7 +366,10 @@ POST /tasks/{id}/result {"status":"completed","result":"delivered"}`}</Code>
                 <tr><td>POST</td><td className="mono">/robots/heartbeat</td><td>token</td><td>Report liveness</td></tr>
                 <tr><td>GET</td><td className="mono">/robots</td><td>—</td><td>List robots</td></tr>
                 <tr><td>GET</td><td className="mono">/robots/&#123;id&#125;</td><td>—</td><td>Robot detail</td></tr>
+                <tr><td>GET</td><td className="mono">/robots/&#123;id&#125;/profile</td><td>—</td><td>Device profile (DAL)</td></tr>
                 <tr><td>POST</td><td className="mono">/brain/decision</td><td>token</td><td>Get a decision</td></tr>
+                <tr><td>POST</td><td className="mono">/executions</td><td>token</td><td>Report execution feedback</td></tr>
+                <tr><td>GET</td><td className="mono">/executions</td><td>—</td><td>Query execution feedback</td></tr>
                 <tr><td>POST</td><td className="mono">/telemetry</td><td>token</td><td>Ingest telemetry</td></tr>
                 <tr><td>GET</td><td className="mono">/telemetry</td><td>—</td><td>Query telemetry</td></tr>
                 <tr><td>POST</td><td className="mono">/tasks</td><td>—</td><td>Assign a task</td></tr>

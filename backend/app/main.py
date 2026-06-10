@@ -18,6 +18,7 @@ from app import __version__
 from app.api.routes import (
     api_keys,
     brain,
+    executions,
     health,
     logs,
     robots,
@@ -29,7 +30,7 @@ from app.core.database import Base, engine
 from app.core.exceptions import BrainError
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestContextMiddleware
-from app.services.claude_client import ClaudeBrain
+from app.services.decision_engine import DecisionEngine
 from app.services.storage import FrameStorage
 
 logger = get_logger("app")
@@ -41,7 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("startup", environment=settings.environment, version=__version__)
 
     # Initialize shared singletons (cheap to hold for the process lifetime).
-    app.state.brain = ClaudeBrain()
+    app.state.brain = DecisionEngine()
     app.state.storage = FrameStorage()
 
     # Dev convenience: auto-create tables. In production run Alembic migrations.
@@ -95,7 +96,16 @@ def create_app() -> FastAPI:
         )
 
     api = settings.api_v1_prefix
-    for module in (health, robots, brain, telemetry, tasks, logs, api_keys):
+    for module in (
+        health,
+        robots,
+        brain,
+        telemetry,
+        tasks,
+        executions,
+        logs,
+        api_keys,
+    ):
         app.include_router(module.router, prefix=api)
 
     @app.get("/", include_in_schema=False)

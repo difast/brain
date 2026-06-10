@@ -28,6 +28,7 @@ export default function LogsPage() {
               <th>Goal / Thought</th>
               <th>Actions</th>
               <th>Confidence</th>
+              <th>Provider</th>
               <th>Model</th>
               <th>Latency</th>
             </tr>
@@ -56,6 +57,9 @@ export default function LogsPage() {
                 </td>
                 <td style={{ minWidth: 110 }}>
                   <Confidence value={d.confidence} />
+                </td>
+                <td>
+                  <span className="chip">{d.provider ?? "—"}</span>
                 </td>
                 <td>
                   <span className="chip">{d.model ?? "—"}</span>

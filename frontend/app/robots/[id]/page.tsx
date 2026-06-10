@@ -12,14 +12,18 @@ export default function RobotDetail({
 }) {
   const { id } = use(params);
   const robot = usePoll(() => api.getRobot(id), 5000);
+  const profile = usePoll(() => api.getProfile(id), 8000);
   const logs = usePoll(() => api.listLogs(id), 4000);
   const tasks = usePoll(() => api.listTasks(id), 4000);
   const telemetry = usePoll(() => api.listTelemetry(id), 4000);
+  const executions = usePoll(() => api.listExecutions(id), 4000);
 
   const r = robot.data;
+  const prof = profile.data;
   const decisions = logs.data?.items ?? [];
   const robotTasks = tasks.data?.items ?? [];
   const readings = telemetry.data?.items ?? [];
+  const execs = executions.data?.items ?? [];
   const latest = readings[0];
 
   return (
@@ -60,15 +64,47 @@ export default function RobotDetail({
           </div>
 
           <div className="panel" style={{ marginTop: 16 }}>
-            <h2>Capabilities</h2>
-            {r.capabilities.length === 0 && (
-              <span className="muted">No commands registered.</span>
-            )}
-            {r.capabilities.map((c) => (
-              <span key={c.type} className="chip" title={c.description ?? ""}>
-                {c.type}
-              </span>
-            ))}
+            <h2>Device Profile</h2>
+            <div className="row" style={{ gap: 24, marginBottom: 12 }}>
+              <div>
+                <div className="muted" style={{ fontSize: 12 }}>Type</div>
+                <div className="mono">{r.robot_type}</div>
+              </div>
+              <div>
+                <div className="muted" style={{ fontSize: 12 }}>Firmware</div>
+                <div className="mono">{r.firmware_version ?? "—"}</div>
+              </div>
+              <div>
+                <div className="muted" style={{ fontSize: 12 }}>Protocol</div>
+                <div className="mono">{r.protocol_version}</div>
+              </div>
+            </div>
+            <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
+              Low-level commands (capabilities)
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              {r.capabilities.length === 0 && (
+                <span className="muted">none registered</span>
+              )}
+              {r.capabilities.map((c) => (
+                <span key={c.type} className="chip" title={c.description ?? ""}>
+                  {c.type}
+                </span>
+              ))}
+            </div>
+            <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
+              Universal actions (what the brain may use, via the DAL)
+            </div>
+            <div>
+              {(prof?.supported_actions ?? []).map((a) => (
+                <span key={a.type} className="chip" title={a.description}>
+                  {a.type}
+                </span>
+              ))}
+              {prof && prof.supported_actions.length === 0 && (
+                <span className="muted">none</span>
+              )}
+            </div>
           </div>
 
           <div className="panel" style={{ marginTop: 16 }}>
@@ -139,6 +175,50 @@ export default function RobotDetail({
             </table>
             {decisions.length === 0 && (
               <div className="empty">No decisions yet for this robot.</div>
+            )}
+          </div>
+
+          <div className="panel" style={{ marginTop: 16 }}>
+            <h2>Execution Feedback</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Action</th>
+                  <th>Status</th>
+                  <th>Duration</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                {execs.map((e) => (
+                  <tr key={e.id}>
+                    <td className="muted" style={{ whiteSpace: "nowrap" }}>
+                      {timeAgo(e.created_at)}
+                    </td>
+                    <td className="mono">
+                      {e.action_type ?? e.action_id.slice(0, 8)}
+                    </td>
+                    <td>
+                      <span
+                        className={`badge ${e.status === "success" ? "online" : "error"}`}
+                      >
+                        <span className="dot" />
+                        {e.status}
+                      </span>
+                    </td>
+                    <td className="mono muted">
+                      {e.duration_ms != null ? `${e.duration_ms}ms` : "—"}
+                    </td>
+                    <td className="mono" style={{ color: "var(--error)" }}>
+                      {e.error ?? ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {execs.length === 0 && (
+              <div className="empty">No execution feedback yet.</div>
             )}
           </div>
         </>

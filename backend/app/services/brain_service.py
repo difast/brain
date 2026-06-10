@@ -22,7 +22,7 @@ from app.core.logging import get_logger
 from app.models.decision import Decision
 from app.repositories.robot_repo import RobotRepository
 from app.schemas.decision import DecisionRequest
-from app.services.claude_client import ClaudeBrain
+from app.services.decision_engine import DecisionEngine
 from app.services.memory_service import MemoryService
 from app.services.storage import FrameStorage
 
@@ -33,7 +33,7 @@ class BrainService:
     def __init__(
         self,
         session: AsyncSession,
-        brain: ClaudeBrain,
+        brain: DecisionEngine,
         storage: FrameStorage,
     ) -> None:
         self.robots = RobotRepository(session)
@@ -55,6 +55,7 @@ class BrainService:
             )
 
         recent = await self.memory.recent_actions(robot_id, limit=5)
+        recent_feedback = await self.memory.recent_feedback(robot_id, limit=8)
 
         result = await self.brain.decide(
             task=req.task,
@@ -62,6 +63,7 @@ class BrainService:
             capabilities=robot.capabilities,
             state=req.state,
             recent_actions=recent,
+            recent_feedback=recent_feedback,
             image_b64=req.image_b64,
             image_media_type=req.image_media_type,
         )
@@ -72,9 +74,12 @@ class BrainService:
             goal=result.decision.goal,
             thought=result.decision.thought,
             confidence=result.decision.confidence,
-            actions=[a.model_dump() for a in result.decision.actions],
+            actions=result.device_actions,
+            universal_actions=[a.model_dump() for a in result.decision.actions],
+            state=req.state,
             frame_url=frame_url,
             model=result.model,
+            provider=result.provider,
             latency_ms=result.latency_ms,
             raw_response=result.raw_response,
         )
@@ -82,9 +87,10 @@ class BrainService:
         logger.info(
             "decision_made",
             robot_id=robot_id,
+            provider=result.provider,
             model=result.model,
             confidence=result.decision.confidence,
-            n_actions=len(result.decision.actions),
+            n_actions=len(result.device_actions),
             latency_ms=result.latency_ms,
         )
         return decision

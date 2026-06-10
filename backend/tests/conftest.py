@@ -16,6 +16,9 @@ from collections.abc import AsyncIterator
 # tests never hit a real endpoint.
 os.environ["ANTHROPIC_API_KEY"] = ""
 os.environ["ANTHROPIC_BASE_URL"] = ""
+os.environ["OPENAI_API_KEY"] = ""
+os.environ["OPENAI_BASE_URL"] = ""
+os.environ["LLM_PROVIDER"] = "auto"
 os.environ.setdefault("ENVIRONMENT", "development")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
@@ -28,7 +31,7 @@ from sqlalchemy.pool import StaticPool
 from app.api.deps import get_brain, get_storage
 from app.core.database import Base, get_session
 from app.main import create_app
-from app.services.claude_client import ClaudeBrain
+from app.services.decision_engine import DecisionEngine
 
 
 class FakeStorage:
@@ -71,7 +74,7 @@ async def client(engine) -> AsyncIterator[AsyncClient]:
                 raise
 
     storage = FakeStorage()
-    brain = ClaudeBrain()  # mock mode (no API key)
+    brain = DecisionEngine()  # mock mode (no provider configured)
 
     app = create_app()
     app.dependency_overrides[get_session] = _get_session

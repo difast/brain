@@ -49,6 +49,8 @@ class RegistryService:
             api_key_hash=hash_api_key(api_key),
             status=RobotStatus.offline,
             capabilities=[c.model_dump() for c in payload.capabilities],
+            firmware_version=payload.firmware_version,
+            protocol_version=payload.protocol_version,
             meta=payload.meta,
         )
         robot = await self.repo.create(robot)

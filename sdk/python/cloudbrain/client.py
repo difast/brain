@@ -142,6 +142,37 @@ class BrainClient:
             json={"status": status, "result": result},
         )
 
+    # -- device abstraction layer ---------------------------------------
+
+    def profile(self, robot_id: str | None = None) -> dict[str, Any]:
+        """Fetch the device profile (capabilities + supported universal actions)."""
+        rid = robot_id or getattr(self, "robot", {}).get("id")
+        return self._request("GET", f"/robots/{rid}/profile")
+
+    def report_execution(
+        self,
+        action_id: str,
+        *,
+        status: str = "success",
+        duration_ms: int | None = None,
+        error: str | None = None,
+        decision_id: str | None = None,
+        action_type: str | None = None,
+    ) -> dict[str, Any]:
+        """Report the outcome of executing a device command (DAL feedback)."""
+        return self._request(
+            "POST",
+            "/executions",
+            json={
+                "action_id": action_id,
+                "status": status,
+                "duration_ms": duration_ms,
+                "error": error,
+                "decision_id": decision_id,
+                "action_type": action_type,
+            },
+        )
+
     # -- internals -------------------------------------------------------
 
     def _auth_headers(self) -> dict[str, str]:
