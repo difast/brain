@@ -23,6 +23,8 @@ logger = get_logger("registry")
 
 
 def _is_online(robot: Robot) -> bool:
+    if robot.paused:
+        return False
     if robot.status == RobotStatus.error:
         return False
     if robot.last_seen_at is None:
@@ -83,6 +85,17 @@ class RegistryService:
             robot.status = (
                 RobotStatus.online if _is_online(robot) else RobotStatus.offline
             )
+        return robot
+
+    async def set_paused(self, robot_id: str, paused: bool) -> Robot:
+        robot = await self.repo.get(robot_id)
+        if robot is None:
+            raise RobotNotFoundError()
+        robot.paused = paused
+        if paused:
+            robot.status = RobotStatus.offline
+        await self.repo.touch(robot)
+        logger.info("robot_paused" if paused else "robot_resumed", robot_id=robot_id)
         return robot
 
     async def list_with_presence(

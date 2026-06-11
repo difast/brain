@@ -73,17 +73,30 @@ class DecisionEngine:
                 has_image=bool(image_b64),
             )
             start = time.perf_counter()
-            raw = await self._provider.complete_json(
-                system=SYSTEM_PROMPT,
-                user_text=text,
-                schema=DECISION_JSON_SCHEMA,
-                image_b64=image_b64,
-                image_media_type=image_media_type,
-            )
-            latency_ms = int((time.perf_counter() - start) * 1000)
-            decision = self._parse(raw)
-            model = self.model_name
-            provider = self.provider_name
+            try:
+                raw = await self._provider.complete_json(
+                    system=SYSTEM_PROMPT,
+                    user_text=text,
+                    schema=DECISION_JSON_SCHEMA,
+                    image_b64=image_b64,
+                    image_media_type=image_media_type,
+                )
+                latency_ms = int((time.perf_counter() - start) * 1000)
+                decision = self._parse(raw)
+                model = self.model_name
+                provider = self.provider_name
+            except Exception as exc:  # noqa: BLE001
+                # Never let a misconfigured/unreachable provider break the
+                # device loop — fall back to a safe deterministic decision.
+                logger.warning(
+                    "provider_failed_fallback_mock",
+                    provider=self.provider_name,
+                    error=str(exc),
+                )
+                decision = self._mock_decision(task, available)
+                raw = decision.model_dump_json()
+                model = provider = f"{self.provider_name}:fallback"
+                latency_ms = int((time.perf_counter() - start) * 1000)
 
         # Translate universal actions -> concrete device commands.
         translation = ActionTranslator.translate(

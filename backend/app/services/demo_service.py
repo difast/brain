@@ -109,6 +109,9 @@ async def _tick() -> None:
         robot = await s.scalar(select(Robot).where(Robot.name == DEMO_NAME))
         if robot is None:
             return
+        # Respect the pause control — a paused demo device generates nothing.
+        if robot.paused:
+            return
         now = datetime.now(UTC)
         robot.status = RobotStatus.online
         robot.last_seen_at = now  # keep it "online"
@@ -135,8 +138,9 @@ async def _tick() -> None:
                 extra={"demo": True},
             )
         )
-        # Occasionally emit a new decision so logs keep moving.
-        if random.random() < 0.4:
+        # Occasionally emit a new decision so logs keep moving (kept low so it
+        # doesn't flood the logs).
+        if random.random() < 0.12:
             goal, universal = random.choice(_GOALS)
             s.add(
                 Decision(
