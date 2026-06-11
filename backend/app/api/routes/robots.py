@@ -101,6 +101,28 @@ async def get_robot(
     return RobotResponse.model_validate(robot)
 
 
+@router.post(
+    "/robots/{robot_id}/pause",
+    response_model=RobotResponse,
+    summary="Pause a device (stops decisions + demo activity)",
+)
+async def pause_robot(robot_id: str, session: SessionDep) -> RobotResponse:
+    service = RegistryService(session)
+    robot = await service.set_paused(robot_id, True)
+    return RobotResponse.model_validate(robot)
+
+
+@router.post(
+    "/robots/{robot_id}/resume",
+    response_model=RobotResponse,
+    summary="Resume a paused device",
+)
+async def resume_robot(robot_id: str, session: SessionDep) -> RobotResponse:
+    service = RegistryService(session)
+    robot = await service.set_paused(robot_id, False)
+    return RobotResponse.model_validate(robot)
+
+
 @router.get(
     "/robots/{robot_id}/profile",
     response_model=DeviceProfile,

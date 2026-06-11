@@ -16,6 +16,7 @@ export interface Robot {
   name: string;
   robot_type: string;
   status: RobotStatus;
+  paused: boolean;
   capabilities: CommandSpec[];
   firmware_version: string | null;
   protocol_version: string;
@@ -187,6 +188,9 @@ export const api = {
   ) => post<Decision>("/brain/decision", body, token),
   heartbeat: (token: string) =>
     post<unknown>("/robots/heartbeat", { status: "online" }, token),
+
+  pauseRobot: (id: string) => post<Robot>(`/robots/${id}/pause`, {}),
+  resumeRobot: (id: string) => post<Robot>(`/robots/${id}/resume`, {}),
 
   // Task Engine
   createTask: (body: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { useState } from "react";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { Actions, Confidence, DemoBadge, StatusBadge, timeAgo } from "@/components/ui";
@@ -9,10 +9,11 @@ import { useT } from "@/lib/i18n";
 export default function RobotDetail({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
   const { t } = useT();
-  const { id } = use(params);
+  const { id } = params;
+  const [busy, setBusy] = useState(false);
   const robot = usePoll(() => api.getRobot(id), 5000);
   const profile = usePoll(() => api.getProfile(id), 8000);
   const logs = usePoll(() => api.listLogs(id), 4000);
@@ -38,6 +39,27 @@ export default function RobotDetail({
             <StatusBadge status={r.status} />
             <span className="chip">{r.robot_type}</span>
             <DemoBadge meta={r.meta} />
+            <button
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  if (r.paused) await api.resumeRobot(r.id);
+                  else await api.pauseRobot(r.id);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              style={{
+                marginLeft: "auto",
+                background: r.paused ? "var(--online)" : "transparent",
+                color: r.paused ? "#04121f" : "var(--error)",
+                border: "1px solid var(--border)",
+                padding: "6px 14px",
+              }}
+            >
+              {r.paused ? t("common.resume") : t("common.pause")}
+            </button>
           </div>
           <p className="sub mono">{r.id}</p>
 

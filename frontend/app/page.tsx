@@ -51,6 +51,7 @@ export default function RobotsPage() {
               <th>{t("common.status")}</th>
               <th>{t("robots.commands")}</th>
               <th>{t("robots.registered")}</th>
+              <th>{t("common.actions")}</th>
               <th></th>
             </tr>
           </thead>
@@ -70,6 +71,21 @@ export default function RobotsPage() {
                 </td>
                 <td className="mono">{r.capabilities.length}</td>
                 <td className="muted">{timeAgo(r.created_at)}</td>
+                <td>
+                  <button
+                    onClick={() =>
+                      r.paused ? api.resumeRobot(r.id) : api.pauseRobot(r.id)
+                    }
+                    style={{
+                      background: r.paused ? "var(--online)" : "transparent",
+                      color: r.paused ? "#04121f" : "var(--error)",
+                      border: "1px solid var(--border)",
+                      padding: "4px 10px",
+                    }}
+                  >
+                    {r.paused ? t("common.resume") : t("common.pause")}
+                  </button>
+                </td>
                 <td>
                   <Link href={`/robots/${r.id}`}>{t("common.view")}</Link>
                 </td>

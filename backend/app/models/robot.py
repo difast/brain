@@ -11,7 +11,7 @@ import enum
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Enum, String
+from sqlalchemy import JSON, Boolean, DateTime, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -39,6 +39,10 @@ class Robot(UUIDMixin, TimestampMixin, Base):
         nullable=False,
         index=True,
     )
+
+    # When paused, the device is treated as offline, the brain refuses new
+    # decisions for it, and the demo simulator stops generating activity.
+    paused: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Last heartbeat time — the source of truth for online/offline presence
     # (a robot is "online" if it heartbeated within heartbeat_ttl_seconds).

@@ -17,7 +17,7 @@ import binascii
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.exceptions import RobotNotFoundError
+from app.core.exceptions import ConflictError, RobotNotFoundError
 from app.core.logging import get_logger
 from app.models.decision import Decision
 from app.repositories.robot_repo import RobotRepository
@@ -45,6 +45,8 @@ class BrainService:
         robot = await self.robots.get(robot_id)
         if robot is None:
             raise RobotNotFoundError()
+        if robot.paused:
+            raise ConflictError("Device is paused; resume it to get decisions.")
 
         task = await self.memory.ensure_task(robot_id, req.task)
 

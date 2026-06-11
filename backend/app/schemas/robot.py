@@ -28,6 +28,7 @@ class RobotResponse(ORMModel):
     name: str
     robot_type: str
     status: RobotStatus
+    paused: bool
     capabilities: list[dict[str, Any]]
     firmware_version: str | None
     protocol_version: str

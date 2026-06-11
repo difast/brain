@@ -91,10 +91,14 @@ def create_app() -> FastAPI:
     )
 
     app.add_middleware(RequestContextMiddleware)
+    # The API authenticates with bearer tokens (no cookies), so credentials
+    # are not needed. Disabling them lets a wildcard origin work cleanly —
+    # "*" + allow_credentials is rejected by browsers and breaks fetch().
+    allow_all = "*" in settings.cors_origins
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        allow_credentials=True,
+        allow_credentials=not allow_all,
         allow_methods=["*"],
         allow_headers=["*"],
     )
