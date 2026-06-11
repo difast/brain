@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { api, type Decision } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 const DEFAULT_CAPS = `[
   { "type": "move_forward", "description": "Drive forward", "value": { "type": "number", "min": 0, "max": 1, "unit": "m" } },
@@ -12,6 +13,7 @@ const DEFAULT_CAPS = `[
 ]`;
 
 export default function Simulator() {
+  const { t } = useT();
   const [name, setName] = useState("sim-rover");
   const [type, setType] = useState("rover");
   const [caps, setCaps] = useState(DEFAULT_CAPS);
@@ -64,23 +66,19 @@ export default function Simulator() {
 
   return (
     <main className="container">
-      <h1>Robot Simulator</h1>
-      <p className="sub">
-        Acts as a thin-client robot: register, then request a decision from the
-        cloud brain. (If no Anthropic key is configured, the brain returns a
-        deterministic mock decision.)
-      </p>
+      <h1>{t("sim.title")}</h1>
+      <p className="sub">{t("sim.sub")}</p>
 
       {error && <div className="error-box">{error}</div>}
 
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <div className="panel">
-          <h2>1 · Register robot</h2>
-          <label>Name</label>
+          <h2>{t("sim.register")}</h2>
+          <label>{t("sim.name")}</label>
           <input value={name} onChange={(e) => setName(e.target.value)} />
-          <label>Robot type</label>
+          <label>{t("sim.type")}</label>
           <input value={type} onChange={(e) => setType(e.target.value)} />
-          <label>Capabilities (JSON)</label>
+          <label>{t("sim.caps")}</label>
           <textarea
             value={caps}
             onChange={(e) => setCaps(e.target.value)}
@@ -89,27 +87,27 @@ export default function Simulator() {
           />
           <div style={{ marginTop: 12 }}>
             <button onClick={register} disabled={busy}>
-              Register
+              {t("sim.registerBtn")}
             </button>
           </div>
           {robotId && (
             <p className="mono muted" style={{ marginTop: 12 }}>
-              ✓ registered:{" "}
+              {t("sim.registered")}{" "}
               <Link href={`/robots/${robotId}`}>{robotId.slice(0, 16)}…</Link>
             </p>
           )}
         </div>
 
         <div className="panel">
-          <h2>2 · Request decision</h2>
-          <label>Task</label>
+          <h2>{t("sim.requestDecision")}</h2>
+          <label>{t("sim.task")}</label>
           <textarea
             value={task}
             onChange={(e) => setTask(e.target.value)}
             rows={2}
             style={{ width: "100%" }}
           />
-          <label>State / sensors (JSON)</label>
+          <label>{t("sim.state")}</label>
           <textarea
             value={stateJson}
             onChange={(e) => setStateJson(e.target.value)}
@@ -118,12 +116,12 @@ export default function Simulator() {
           />
           <div style={{ marginTop: 12 }}>
             <button onClick={requestDecision} disabled={busy || !token}>
-              {token ? "Get decision" : "Register first"}
+              {token ? t("sim.getDecision") : t("sim.registerFirst")}
             </button>
           </div>
           {decision && (
             <div style={{ marginTop: 16 }}>
-              <h2>Decision</h2>
+              <h2>{t("sim.decision")}</h2>
               <pre className="mono">{JSON.stringify(decision, null, 2)}</pre>
             </div>
           )}

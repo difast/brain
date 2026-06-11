@@ -1,30 +1,26 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { LanguageProvider } from "@/lib/i18n";
+import { NavBar } from "@/components/NavBar";
 
 export const metadata: Metadata = {
-  title: "Cloud Brain — Robot Console",
-  description: "Cloud decision-making console for connected robots",
+  title: "PolisOS — Device Control",
+  description: "Cloud platform for controlling any device through one protocol",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <body>
-        <nav className="nav">
-          <Link href="/" className="brand" style={{ color: "var(--text)" }}>
-            ◎ Cloud<span>Brain</span>
-          </Link>
-          <Link href="/">Robots</Link>
-          <Link href="/logs">Decision Logs</Link>
-          <Link href="/tasks">Tasks</Link>
-          <Link href="/simulator">Simulator</Link>
-          <Link href="/api">API</Link>
-          <Link href="/sdk">SDK</Link>
-          <Link href="/docs">Documentation</Link>
-        </nav>
-        {children}
+        <LanguageProvider>
+          <NavBar />
+          {children}
+          <footer className="footer">
+            PolisOS · AI Decision Engine (YandexGPT · GigaChat · Claude · local
+            models)
+          </footer>
+        </LanguageProvider>
       </body>
     </html>
   );

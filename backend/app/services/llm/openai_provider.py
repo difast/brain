@@ -28,7 +28,8 @@ logger = get_logger("llm.openai")
 class OpenAIProvider(LLMProvider):
     name = "openai"
 
-    def __init__(self) -> None:
+    def __init__(self, name: str = "openai") -> None:
+        self.name = name
         base = (settings.openai_base_url or "https://api.openai.com/v1").rstrip("/")
         self._base_url = base
         self._headers = {"Content-Type": "application/json"}

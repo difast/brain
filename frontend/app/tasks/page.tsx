@@ -5,8 +5,10 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { timeAgo } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 
 export default function TasksPage() {
+  const { t } = useT();
   const { data, error } = usePoll(() => api.listTasks());
   const robots = usePoll(() => api.listRobots(), 8000);
   const tasks = data?.items ?? [];
@@ -20,7 +22,7 @@ export default function TasksPage() {
 
   async function assign() {
     if (!robotId || !description.trim()) {
-      setFormError("Pick a robot and enter a description.");
+      setFormError(t("tasks.pickError"));
       return;
     }
     setBusy(true);
@@ -38,24 +40,21 @@ export default function TasksPage() {
 
   return (
     <main className="container">
-      <h1>Task Engine</h1>
-      <p className="sub">
-        Assign tasks to robots top-down. Robots pull their next queued task
-        (highest priority first) and report the result.
-      </p>
+      <h1>{t("tasks.title")}</h1>
+      <p className="sub">{t("tasks.sub")}</p>
 
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h2>Assign a task</h2>
+        <h2>{t("tasks.assign")}</h2>
         {formError && <div className="error-box">{formError}</div>}
         <div className="row" style={{ alignItems: "flex-end" }}>
           <div style={{ flex: "1 1 200px" }}>
-            <label>Robot</label>
+            <label>{t("tasks.robot")}</label>
             <select
               value={robotId}
               onChange={(e) => setRobotId(e.target.value)}
               style={{ width: "100%" }}
             >
-              <option value="">— select robot —</option>
+              <option value="">{t("tasks.selectRobot")}</option>
               {robotList.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name} ({r.robot_type})
@@ -64,16 +63,16 @@ export default function TasksPage() {
             </select>
           </div>
           <div style={{ flex: "2 1 320px" }}>
-            <label>Description</label>
+            <label>{t("tasks.description")}</label>
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. bring the box from A to B"
+              placeholder={t("tasks.descPlaceholder")}
               style={{ width: "100%" }}
             />
           </div>
           <div style={{ flex: "0 0 110px" }}>
-            <label>Priority</label>
+            <label>{t("tasks.priority")}</label>
             <input
               type="number"
               min={0}
@@ -84,46 +83,50 @@ export default function TasksPage() {
             />
           </div>
           <button onClick={assign} disabled={busy}>
-            Assign
+            {t("tasks.assignBtn")}
           </button>
         </div>
       </div>
 
-      {error && <div className="error-box">Cannot reach API: {error}</div>}
+      {error && (
+        <div className="error-box">
+          {t("common.cannotReach")} {error}
+        </div>
+      )}
 
       <div className="panel">
-        <h2>Queue</h2>
+        <h2>{t("tasks.queue")}</h2>
         <table>
           <thead>
             <tr>
-              <th>Priority</th>
-              <th>Description</th>
-              <th>Robot</th>
-              <th>Status</th>
-              <th>Source</th>
-              <th>Updated</th>
+              <th>{t("tasks.priority")}</th>
+              <th>{t("tasks.description")}</th>
+              <th>{t("common.robot")}</th>
+              <th>{t("common.status")}</th>
+              <th>{t("tasks.source")}</th>
+              <th>{t("common.updated")}</th>
             </tr>
           </thead>
           <tbody>
-            {tasks.map((t) => (
-              <tr key={t.id}>
-                <td className="mono">{t.priority}</td>
-                <td>{t.description}</td>
+            {tasks.map((tk) => (
+              <tr key={tk.id}>
+                <td className="mono">{tk.priority}</td>
+                <td>{tk.description}</td>
                 <td>
-                  <Link href={`/robots/${t.robot_id}`} className="mono">
-                    {t.robot_id.slice(0, 8)}…
+                  <Link href={`/robots/${tk.robot_id}`} className="mono">
+                    {tk.robot_id.slice(0, 8)}…
                   </Link>
                 </td>
                 <td>
-                  <span className="chip">{t.status}</span>
+                  <span className="chip">{tk.status}</span>
                 </td>
-                <td className="muted">{t.source}</td>
-                <td className="muted">{timeAgo(t.updated_at)}</td>
+                <td className="muted">{tk.source}</td>
+                <td className="muted">{timeAgo(tk.updated_at)}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {tasks.length === 0 && <div className="empty">No tasks yet.</div>}
+        {tasks.length === 0 && <div className="empty">{t("tasks.empty")}</div>}
       </div>
     </main>
   );

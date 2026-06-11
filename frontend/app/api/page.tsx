@@ -4,8 +4,10 @@ import { useState } from "react";
 import { api, API_BASE, type ApiKeyCreated } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { timeAgo } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 
 export default function ApiPage() {
+  const { t } = useT();
   const { data, error } = usePoll(() => api.listApiKeys(), 6000);
   const keys = data ?? [];
 
@@ -16,7 +18,7 @@ export default function ApiPage() {
 
   async function generate() {
     if (!name.trim()) {
-      setFormError("Enter a name for the key.");
+      setFormError(t("api.nameError"));
       return;
     }
     setBusy(true);
@@ -38,53 +40,76 @@ export default function ApiPage() {
 
   return (
     <main className="container">
-      <h1>API Access</h1>
+      <h1>{t("api.title")}</h1>
       <p className="sub">
-        Generate a personal API key for each user/application. Use it with the
-        SDK or send it as the <code>X-API-Key</code> header. Base URL:{" "}
-        <span className="mono">{API_BASE}</span>
+        {t("api.sub")} <span className="mono">{API_BASE}</span>
       </p>
 
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h2>Generate a new key</h2>
+        <h2>{t("api.generate")}</h2>
         {formError && <div className="error-box">{formError}</div>}
         <div className="row" style={{ alignItems: "flex-end" }}>
           <div style={{ flex: "1 1 280px" }}>
-            <label>Key name (who/what it&apos;s for)</label>
+            <label>{t("api.keyName")}</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. alice-rover-fleet"
+              placeholder={t("api.namePlaceholder")}
               style={{ width: "100%" }}
             />
           </div>
           <button onClick={generate} disabled={busy}>
-            Generate key
+            {t("api.generateBtn")}
           </button>
         </div>
 
         {created && (
           <div style={{ marginTop: 16 }}>
-            <div className="error-box" style={{ borderColor: "var(--online)", color: "#1f7a52", background: "rgba(46,158,107,0.08)" }}>
-              Copy this key now — it is shown <strong>only once</strong>.
+            <div
+              className="error-box"
+              style={{
+                borderColor: "var(--online)",
+                color: "#1f7a52",
+                background: "rgba(46,158,107,0.08)",
+              }}
+            >
+              {t("api.copyOnce")}
             </div>
-            <pre className="mono" style={{ marginTop: 8 }}>{created.key}</pre>
+            <pre className="mono" style={{ marginTop: 8 }}>
+              {created.key}
+            </pre>
           </div>
         )}
       </div>
 
-      {error && <div className="error-box">Cannot reach API: {error}</div>}
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <h2>{t("api.enginesTitle")}</h2>
+        <p style={{ lineHeight: 1.6 }}>{t("api.enginesBody")}</p>
+        <div>
+          <span className="chip">YandexGPT</span>
+          <span className="chip">GigaChat</span>
+          <span className="chip">Claude</span>
+          <span className="chip">OpenAI</span>
+          <span className="chip">Ollama / vLLM / LM Studio (local)</span>
+        </div>
+      </div>
+
+      {error && (
+        <div className="error-box">
+          {t("common.cannotReach")} {error}
+        </div>
+      )}
 
       <div className="panel">
-        <h2>Your API keys</h2>
+        <h2>{t("api.yourKeys")}</h2>
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Prefix</th>
-              <th>Created</th>
-              <th>Last used</th>
-              <th>Status</th>
+              <th>{t("api.name")}</th>
+              <th>{t("api.prefix")}</th>
+              <th>{t("api.created")}</th>
+              <th>{t("api.lastUsed")}</th>
+              <th>{t("common.status")}</th>
               <th></th>
             </tr>
           </thead>
@@ -95,12 +120,12 @@ export default function ApiPage() {
                 <td className="mono">{k.prefix}…</td>
                 <td className="muted">{timeAgo(k.created_at)}</td>
                 <td className="muted">
-                  {k.last_used_at ? timeAgo(k.last_used_at) : "never"}
+                  {k.last_used_at ? timeAgo(k.last_used_at) : t("common.never")}
                 </td>
                 <td>
                   <span className={`badge ${k.revoked ? "error" : "online"}`}>
                     <span className="dot" />
-                    {k.revoked ? "revoked" : "active"}
+                    {k.revoked ? t("common.revoked") : t("common.active")}
                   </span>
                 </td>
                 <td>
@@ -114,7 +139,7 @@ export default function ApiPage() {
                         padding: "4px 10px",
                       }}
                     >
-                      Revoke
+                      {t("api.revoke")}
                     </button>
                   )}
                 </td>
@@ -122,7 +147,7 @@ export default function ApiPage() {
             ))}
           </tbody>
         </table>
-        {keys.length === 0 && <div className="empty">No keys yet.</div>}
+        {keys.length === 0 && <div className="empty">{t("api.empty")}</div>}
       </div>
     </main>
   );

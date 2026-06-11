@@ -1,0 +1,287 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+
+export type Lang = "ru" | "en";
+
+type Dict = Record<string, string>;
+
+const EN: Dict = {
+  // nav / common
+  "nav.robots": "Devices",
+  "nav.logs": "Decision Logs",
+  "nav.tasks": "Tasks",
+  "nav.simulator": "Simulator",
+  "nav.api": "API",
+  "nav.sdk": "SDK",
+  "nav.docs": "Documentation",
+  "common.demo": "Demo",
+  "common.online": "online",
+  "common.offline": "offline",
+  "common.error": "error",
+  "common.active": "active",
+  "common.revoked": "revoked",
+  "common.success": "success",
+  "common.failed": "failed",
+  "common.cannotReach": "Cannot reach API:",
+  "common.never": "never",
+  "common.none": "none",
+  "common.view": "view →",
+  "common.updated": "Updated",
+  "common.status": "Status",
+  "common.robot": "Robot",
+  "common.when": "When",
+  // robots
+  "robots.title": "Device Fleet",
+  "robots.sub": "Connected devices and their live status. Decisions are made in the cloud.",
+  "robots.total": "Total devices",
+  "robots.online": "Online",
+  "robots.types": "Types",
+  "robots.name": "Name",
+  "robots.type": "Type",
+  "robots.commands": "Commands",
+  "robots.registered": "Registered",
+  "robots.empty": "No devices yet. Open the Simulator to register one and request a decision.",
+  // logs
+  "logs.title": "Decision Logs",
+  "logs.sub": "Every decision the AI engine returned — the full audit trail of what was decided and why.",
+  "logs.goalThought": "Goal / Thought",
+  "logs.actions": "Actions",
+  "logs.confidence": "Confidence",
+  "logs.provider": "Provider",
+  "logs.model": "Model",
+  "logs.latency": "Latency",
+  "logs.empty": "No decisions yet.",
+  // tasks
+  "tasks.title": "Task Engine",
+  "tasks.sub": "Assign tasks to devices top-down. Devices pull their next queued task (highest priority first) and report the result.",
+  "tasks.assign": "Assign a task",
+  "tasks.pickError": "Pick a device and enter a description.",
+  "tasks.robot": "Device",
+  "tasks.selectRobot": "— select device —",
+  "tasks.description": "Description",
+  "tasks.descPlaceholder": "e.g. bring the box from A to B",
+  "tasks.priority": "Priority",
+  "tasks.assignBtn": "Assign",
+  "tasks.queue": "Queue",
+  "tasks.source": "Source",
+  "tasks.empty": "No tasks yet.",
+  // robot detail
+  "rd.notFound": "Device not found or API unreachable.",
+  "rd.battery": "Battery",
+  "rd.speed": "Speed",
+  "rd.position": "Position",
+  "rd.profile": "Device Profile",
+  "rd.fwType": "Type",
+  "rd.firmware": "Firmware",
+  "rd.protocol": "Protocol",
+  "rd.lowLevel": "Low-level commands (capabilities)",
+  "rd.noCommands": "none registered",
+  "rd.universal": "Universal actions (what the brain may use, via the DAL)",
+  "rd.tasks": "Tasks",
+  "rd.tasksEmpty": "No tasks yet for this device.",
+  "rd.decisions": "Decision Logs",
+  "rd.goal": "Goal",
+  "rd.frame": "Frame",
+  "rd.decisionsEmpty": "No decisions yet for this device.",
+  "rd.feedback": "Execution Feedback",
+  "rd.action": "Action",
+  "rd.duration": "Duration",
+  "rd.errorCol": "Error",
+  "rd.feedbackEmpty": "No execution feedback yet.",
+  // simulator
+  "sim.title": "Device Simulator",
+  "sim.sub": "Acts as a thin-client device: register, then request a decision from the AI Decision Engine. (If no AI engine is configured, a deterministic mock decision is returned.)",
+  "sim.register": "1 · Register device",
+  "sim.name": "Name",
+  "sim.type": "Device type",
+  "sim.caps": "Capabilities (JSON)",
+  "sim.registerBtn": "Register",
+  "sim.registered": "✓ registered:",
+  "sim.requestDecision": "2 · Request decision",
+  "sim.task": "Task",
+  "sim.state": "State / sensors (JSON)",
+  "sim.getDecision": "Get decision",
+  "sim.registerFirst": "Register first",
+  "sim.decision": "Decision",
+  // api
+  "api.title": "API Access",
+  "api.sub": "Generate a personal API key for each user/application. Use it with the SDK or send it as the X-API-Key header. Base URL:",
+  "api.generate": "Generate a new key",
+  "api.nameError": "Enter a name for the key.",
+  "api.keyName": "Key name (who/what it's for)",
+  "api.namePlaceholder": "e.g. alice-rover-fleet",
+  "api.generateBtn": "Generate key",
+  "api.copyOnce": "Copy this key now — it is shown only once.",
+  "api.yourKeys": "Your API keys",
+  "api.name": "Name",
+  "api.prefix": "Prefix",
+  "api.created": "Created",
+  "api.lastUsed": "Last used",
+  "api.revoke": "Revoke",
+  "api.empty": "No keys yet.",
+  "api.enginesTitle": "AI engines & local deploy",
+  "api.enginesBody": "The AI Decision Engine supports YandexGPT, GigaChat, Claude and local models (any OpenAI-compatible endpoint — Ollama, vLLM, LM Studio). Switch via the LLM_PROVIDER setting; Russian engines and on-prem deployment are first-class.",
+};
+
+const RU: Dict = {
+  "nav.robots": "Устройства",
+  "nav.logs": "Логи решений",
+  "nav.tasks": "Задачи",
+  "nav.simulator": "Симулятор",
+  "nav.api": "API",
+  "nav.sdk": "SDK",
+  "nav.docs": "Документация",
+  "common.demo": "Демо",
+  "common.online": "онлайн",
+  "common.offline": "офлайн",
+  "common.error": "ошибка",
+  "common.active": "активен",
+  "common.revoked": "отозван",
+  "common.success": "успех",
+  "common.failed": "ошибка",
+  "common.cannotReach": "Нет связи с API:",
+  "common.never": "никогда",
+  "common.none": "нет",
+  "common.view": "открыть →",
+  "common.updated": "Обновлено",
+  "common.status": "Статус",
+  "common.robot": "Устройство",
+  "common.when": "Когда",
+  "robots.title": "Парк устройств",
+  "robots.sub": "Подключённые устройства и их статус в реальном времени. Решения принимаются в облаке.",
+  "robots.total": "Всего устройств",
+  "robots.online": "Онлайн",
+  "robots.types": "Типов",
+  "robots.name": "Имя",
+  "robots.type": "Тип",
+  "robots.commands": "Команды",
+  "robots.registered": "Зарегистрирован",
+  "robots.empty": "Пока нет устройств. Откройте «Симулятор», чтобы зарегистрировать устройство и запросить решение.",
+  "logs.title": "Логи решений",
+  "logs.sub": "Все решения AI-движка — полный журнал того, что и почему было решено.",
+  "logs.goalThought": "Цель / Мысль",
+  "logs.actions": "Действия",
+  "logs.confidence": "Уверенность",
+  "logs.provider": "Провайдер",
+  "logs.model": "Модель",
+  "logs.latency": "Задержка",
+  "logs.empty": "Пока нет решений.",
+  "tasks.title": "Движок задач",
+  "tasks.sub": "Назначайте задачи устройствам сверху. Устройства забирают следующую задачу из очереди (по приоритету) и отчитываются о результате.",
+  "tasks.assign": "Назначить задачу",
+  "tasks.pickError": "Выберите устройство и введите описание.",
+  "tasks.robot": "Устройство",
+  "tasks.selectRobot": "— выберите устройство —",
+  "tasks.description": "Описание",
+  "tasks.descPlaceholder": "например: привезти коробку из A в B",
+  "tasks.priority": "Приоритет",
+  "tasks.assignBtn": "Назначить",
+  "tasks.queue": "Очередь",
+  "tasks.source": "Источник",
+  "tasks.empty": "Пока нет задач.",
+  "rd.notFound": "Устройство не найдено или нет связи с API.",
+  "rd.battery": "Батарея",
+  "rd.speed": "Скорость",
+  "rd.position": "Координаты",
+  "rd.profile": "Профиль устройства",
+  "rd.fwType": "Тип",
+  "rd.firmware": "Прошивка",
+  "rd.protocol": "Протокол",
+  "rd.lowLevel": "Низкоуровневые команды (capabilities)",
+  "rd.noCommands": "не зарегистрированы",
+  "rd.universal": "Универсальные действия (что доступно мозгу через DAL)",
+  "rd.tasks": "Задачи",
+  "rd.tasksEmpty": "У этого устройства пока нет задач.",
+  "rd.decisions": "Логи решений",
+  "rd.goal": "Цель",
+  "rd.frame": "Кадр",
+  "rd.decisionsEmpty": "У этого устройства пока нет решений.",
+  "rd.feedback": "Обратная связь по выполнению",
+  "rd.action": "Действие",
+  "rd.duration": "Длительность",
+  "rd.errorCol": "Ошибка",
+  "rd.feedbackEmpty": "Пока нет обратной связи по выполнению.",
+  "sim.title": "Симулятор устройства",
+  "sim.sub": "Работает как тонкий клиент: зарегистрируйтесь и запросите решение у облачного мозга. (Если AI-движок не настроен — вернётся детерминированное демо-решение.)",
+  "sim.register": "1 · Регистрация устройства",
+  "sim.name": "Имя",
+  "sim.type": "Тип устройства",
+  "sim.caps": "Capabilities (JSON)",
+  "sim.registerBtn": "Зарегистрировать",
+  "sim.registered": "✓ зарегистрирован:",
+  "sim.requestDecision": "2 · Запрос решения",
+  "sim.task": "Задача",
+  "sim.state": "Состояние / датчики (JSON)",
+  "sim.getDecision": "Получить решение",
+  "sim.registerFirst": "Сначала зарегистрируйте",
+  "sim.decision": "Решение",
+  "api.title": "Доступ к API",
+  "api.sub": "Сгенерируйте персональный API-ключ для каждого пользователя/приложения. Используйте его в SDK или передавайте в заголовке X-API-Key. Базовый URL:",
+  "api.generate": "Сгенерировать новый ключ",
+  "api.nameError": "Введите имя ключа.",
+  "api.keyName": "Имя ключа (для кого/чего)",
+  "api.namePlaceholder": "например: alice-rover-fleet",
+  "api.generateBtn": "Сгенерировать ключ",
+  "api.copyOnce": "Скопируйте ключ сейчас — он показывается только один раз.",
+  "api.yourKeys": "Ваши API-ключи",
+  "api.name": "Имя",
+  "api.prefix": "Префикс",
+  "api.created": "Создан",
+  "api.lastUsed": "Использован",
+  "api.revoke": "Отозвать",
+  "api.empty": "Пока нет ключей.",
+  "api.enginesTitle": "AI-движки и локальный деплой",
+  "api.enginesBody": "AI Decision Engine поддерживает YandexGPT, GigaChat, Claude и локальные модели (любой OpenAI-совместимый endpoint — Ollama, vLLM, LM Studio). Переключение через настройку LLM_PROVIDER; российские движки и развёртывание on-prem поддерживаются на равных.",
+};
+
+const DICTS: Record<Lang, Dict> = { ru: RU, en: EN };
+
+interface I18nContextValue {
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  t: (key: string) => string;
+}
+
+const I18nContext = createContext<I18nContextValue | null>(null);
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>("ru");
+
+  useEffect(() => {
+    const saved = (typeof window !== "undefined" &&
+      window.localStorage.getItem("polisos-lang")) as Lang | null;
+    if (saved === "ru" || saved === "en") setLangState(saved);
+  }, []);
+
+  const setLang = useCallback((l: Lang) => {
+    setLangState(l);
+    if (typeof window !== "undefined")
+      window.localStorage.setItem("polisos-lang", l);
+  }, []);
+
+  const t = useCallback(
+    (key: string) => DICTS[lang][key] ?? DICTS.en[key] ?? key,
+    [lang],
+  );
+
+  return (
+    <I18nContext.Provider value={{ lang, setLang, t }}>
+      {children}
+    </I18nContext.Provider>
+  );
+}
+
+export function useT(): I18nContextValue {
+  const ctx = useContext(I18nContext);
+  if (!ctx)
+    return { lang: "ru", setLang: () => {}, t: (k) => RU[k] ?? EN[k] ?? k };
+  return ctx;
+}

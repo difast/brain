@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     )
 
     # --- Application ---
-    app_name: str = "Cloud Brain for Robots"
+    app_name: str = "PolisOS"
     environment: Literal["development", "staging", "production"] = "development"
     debug: bool = False
     log_level: str = "INFO"
@@ -85,12 +85,24 @@ class Settings(BaseSettings):
     # The Decision Engine is provider-agnostic. "auto" picks a provider from
     # the configured credentials (Claude → OpenAI/local → mock). Force a
     # specific one with claude | openai | local | mock.
-    llm_provider: Literal["auto", "claude", "openai", "local", "mock"] = "auto"
-    # OpenAI / OpenAI-compatible (also used for local models via base_url,
-    # e.g. Ollama/vLLM/LM Studio exposing an OpenAI-compatible endpoint).
+    # Supported engines: Claude, OpenAI, YandexGPT, GigaChat and any local /
+    # OpenAI-compatible model. yandexgpt & gigachat are reached through an
+    # OpenAI-compatible gateway (set OPENAI_BASE_URL / OPENAI_MODEL).
+    llm_provider: Literal[
+        "auto", "claude", "openai", "yandexgpt", "gigachat", "local", "mock"
+    ] = "auto"
+    # OpenAI / OpenAI-compatible (also used for local & Russian models via
+    # base_url, e.g. Ollama/vLLM/LM Studio or a GigaChat/YandexGPT gateway).
     openai_api_key: str = ""
     openai_base_url: str | None = None
     openai_model: str = "gpt-4o-mini"
+
+    # --- Demo mode ---
+    # Seeds a simulated "Demo" device with live-changing telemetry and a few
+    # decision logs so the dashboard is never empty. Disable in production with
+    # DEMO_MODE=false.
+    demo_mode: bool = True
+    demo_interval_seconds: int = 5
 
     # --- CORS ---
     # NoDecode stops pydantic-settings from trying json.loads() on the env

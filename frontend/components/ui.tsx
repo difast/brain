@@ -1,14 +1,22 @@
 "use client";
 
 import type { RobotStatus } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 export function StatusBadge({ status }: { status: RobotStatus }) {
+  const { t } = useT();
   return (
     <span className={`badge ${status}`}>
       <span className="dot" />
-      {status}
+      {t(`common.${status}`)}
     </span>
   );
+}
+
+export function DemoBadge({ meta }: { meta: Record<string, unknown> }) {
+  const { t } = useT();
+  if (!meta || meta.demo !== true) return null;
+  return <span className="demo-badge">{t("common.demo")}</span>;
 }
 
 export function Confidence({ value }: { value: number }) {

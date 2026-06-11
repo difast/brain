@@ -1,16 +1,20 @@
-# Cloud Brain for Robots
+# PolisOS
 
-A cloud service that acts as the **brain** for a fleet of robots. Robots are
-**thin clients** — they stream camera frames, telemetry and their current task,
-and the cloud returns **structured action commands**. All decision-making runs
-in the cloud via the **Claude API**.
+A cloud platform that acts as the **brain** for any fleet of devices. Devices
+are **thin clients** — they stream camera frames, telemetry and their current
+task, and the cloud returns **structured action commands**. All decision-making
+runs in the cloud via the **AI Decision Engine** (supports **YandexGPT,
+GigaChat, Claude and local models**).
+
+The dashboard ships with a **RU/EN switch (Russian by default)** and a live
+**Demo device** so it's never empty.
 
 ```
-┌──────────┐   frame + telemetry + task    ┌──────────────────────────┐
-│  Robot   │ ───────────────────────────▶  │      Cloud Brain         │
-│ (thin    │                               │  API Gateway → Brain     │
-│  client) │ ◀─────────────────────────── │  → Claude → JSON commands│
-└──────────┘    { goal, confidence,        └──────────────────────────┘
+┌──────────┐   frame + telemetry + task    ┌──────────────────────────────┐
+│  Device  │ ───────────────────────────▶  │            PolisOS           │
+│ (thin    │                               │  API Gateway → Decision Eng. │
+│  client) │ ◀─────────────────────────── │  → AI engine → JSON commands │
+└──────────┘    { goal, confidence,        └──────────────────────────────┘
                   actions: [...] }
 ```
 

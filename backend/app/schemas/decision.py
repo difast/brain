@@ -34,7 +34,7 @@ class DecisionRequest(BaseModel):
 
 
 class BrainDecision(BaseModel):
-    """The strict JSON contract Claude must produce and robots execute."""
+    """The strict JSON contract the AI engine must produce and robots execute."""
 
     goal: str = Field(..., examples=["approach the object"])
     thought: str | None = Field(default=None, examples=["bottle detected on table"])

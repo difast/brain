@@ -7,6 +7,7 @@ handling and OpenAPI documentation.
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -30,6 +31,7 @@ from app.core.database import Base, engine
 from app.core.exceptions import BrainError
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestContextMiddleware
+from app.services import demo_service
 from app.services.decision_engine import DecisionEngine
 from app.services.storage import FrameStorage
 
@@ -52,8 +54,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         if settings.storage_enabled:
             await app.state.storage.ensure_bucket()
 
+    # Demo device: seed it and keep it live in the background.
+    demo_stop = asyncio.Event()
+    demo_task: asyncio.Task | None = None
+    if settings.demo_mode:
+        try:
+            await demo_service.ensure_demo()
+            demo_task = asyncio.create_task(demo_service.run_demo_loop(demo_stop))
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("demo_setup_failed", error=str(exc))
+
     yield
 
+    if demo_task is not None:
+        demo_stop.set()
+        demo_task.cancel()
     await engine.dispose()
     logger.info("shutdown")
 
@@ -63,9 +78,11 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         version=__version__,
         description=(
-            "Cloud Brain for Robots — robots are thin clients; all "
-            "decision-making runs in the cloud via Claude. Register a robot, "
-            "stream frames + telemetry, and receive structured action commands."
+            "PolisOS — cloud platform for controlling any device through a "
+            "single protocol. Devices are thin clients; all decision-making "
+            "runs in the cloud via the AI Decision Engine (supports YandexGPT, "
+            "GigaChat, Claude and local models). Register a device, stream "
+            "frames + telemetry, and receive structured action commands."
         ),
         lifespan=lifespan,
         docs_url="/docs",
