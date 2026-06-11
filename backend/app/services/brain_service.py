@@ -5,7 +5,7 @@ Flow:
   2. Ensure a task record exists (Memory service).
   3. Persist the camera frame to object storage (best-effort).
   4. Pull recent decisions for short-term context.
-  5. Call Claude to produce a structured decision.
+  5. Call the AI Decision Engine to produce a structured decision.
   6. Persist the decision (Memory service) and return it.
 """
 

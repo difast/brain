@@ -1,4 +1,4 @@
-"""Synchronous client for the Cloud Brain API.
+"""Synchronous client for the PolisOS API.
 
 Wraps the raw HTTP endpoints so a robot integration is a few method calls
 instead of hand-built requests. Requires only ``httpx``.
@@ -21,7 +21,7 @@ class BrainError(Exception):
 
 
 class BrainClient:
-    """A thin, typed-ish wrapper around the Cloud Brain API.
+    """A thin, typed-ish wrapper around the PolisOS API.
 
     Authenticate either by registering a new robot (:meth:`register`) or by
     constructing with an existing bearer ``token``.

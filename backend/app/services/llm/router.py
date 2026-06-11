@@ -22,8 +22,10 @@ def get_provider() -> LLMProvider | None:
         from app.services.llm.claude_provider import ClaudeProvider
 
         return ClaudeProvider()
-    if provider in ("openai", "local"):
+    # OpenAI, local and the Russian engines (YandexGPT / GigaChat) all speak
+    # the OpenAI-compatible protocol (directly or via a gateway).
+    if provider in ("openai", "local", "yandexgpt", "gigachat"):
         from app.services.llm.openai_provider import OpenAIProvider
 
-        return OpenAIProvider()
+        return OpenAIProvider(name=provider)
     return None

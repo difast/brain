@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cloudbrain-sdk"
+name = "polisos-sdk"
 version = "0.1.0"
-description = "Python SDK for the Cloud Brain for Robots API"
+description = "Python SDK for the PolisOS device-control API"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
@@ -15,4 +15,4 @@ dependencies = ["httpx>=0.27"]
 Homepage = "https://github.com/difast/brain"
 
 [tool.hatch.build.targets.wheel]
-packages = ["cloudbrain"]
+packages = ["polisos"]

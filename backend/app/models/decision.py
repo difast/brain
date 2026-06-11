@@ -1,4 +1,4 @@
-"""Decision model — a single brain decision (Claude inference) for a robot.
+"""Decision model — a single brain decision (AI inference) for a robot.
 
 Stores the full audit trail: the goal/thought, confidence, emitted actions,
 the frame that was analysed, latency and the model used. This is the

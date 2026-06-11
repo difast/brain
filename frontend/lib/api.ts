@@ -1,4 +1,4 @@
-// Typed client for the Cloud Brain API.
+// Typed client for the PolisOS API.
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";

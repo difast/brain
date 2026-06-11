@@ -3,35 +3,39 @@
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
-import { StatusBadge, timeAgo } from "@/components/ui";
+import { DemoBadge, StatusBadge, timeAgo } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 
 export default function RobotsPage() {
+  const { t } = useT();
   const { data, error, loading } = usePoll(() => api.listRobots());
   const robots = data?.items ?? [];
   const online = robots.filter((r) => r.status === "online").length;
 
   return (
     <main className="container">
-      <h1>Robot Fleet</h1>
-      <p className="sub">
-        Connected robots and their live status. Decisions are made in the cloud.
-      </p>
+      <h1>{t("robots.title")}</h1>
+      <p className="sub">{t("robots.sub")}</p>
 
-      {error && <div className="error-box">Cannot reach API: {error}</div>}
+      {error && (
+        <div className="error-box">
+          {t("common.cannotReach")} {error}
+        </div>
+      )}
 
       <div className="grid cards" style={{ marginBottom: 24 }}>
         <div className="panel">
-          <h2>Total robots</h2>
+          <h2>{t("robots.total")}</h2>
           <div className="stat">{robots.length}</div>
         </div>
         <div className="panel">
-          <h2>Online</h2>
+          <h2>{t("robots.online")}</h2>
           <div className="stat" style={{ color: "var(--online)" }}>
             {online}
           </div>
         </div>
         <div className="panel">
-          <h2>Types</h2>
+          <h2>{t("robots.types")}</h2>
           <div className="stat">
             {new Set(robots.map((r) => r.robot_type)).size}
           </div>
@@ -42,11 +46,11 @@ export default function RobotsPage() {
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Commands</th>
-              <th>Registered</th>
+              <th>{t("robots.name")}</th>
+              <th>{t("robots.type")}</th>
+              <th>{t("common.status")}</th>
+              <th>{t("robots.commands")}</th>
+              <th>{t("robots.registered")}</th>
               <th></th>
             </tr>
           </thead>
@@ -54,7 +58,8 @@ export default function RobotsPage() {
             {robots.map((r) => (
               <tr key={r.id}>
                 <td>
-                  <Link href={`/robots/${r.id}`}>{r.name}</Link>
+                  <Link href={`/robots/${r.id}`}>{r.name}</Link>{" "}
+                  <DemoBadge meta={r.meta} />
                   <div className="mono muted">{r.id.slice(0, 12)}…</div>
                 </td>
                 <td>
@@ -66,17 +71,14 @@ export default function RobotsPage() {
                 <td className="mono">{r.capabilities.length}</td>
                 <td className="muted">{timeAgo(r.created_at)}</td>
                 <td>
-                  <Link href={`/robots/${r.id}`}>view →</Link>
+                  <Link href={`/robots/${r.id}`}>{t("common.view")}</Link>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
         {!loading && robots.length === 0 && (
-          <div className="empty">
-            No robots yet. Open the <Link href="/simulator">Simulator</Link> to
-            register one and request a decision.
-          </div>
+          <div className="empty">{t("robots.empty")}</div>
         )}
       </div>
     </main>

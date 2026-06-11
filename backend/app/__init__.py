@@ -1,3 +1,3 @@
-"""Cloud Brain for Robots — backend application package."""
+"""PolisOS — backend application package."""
 
 __version__ = "0.1.0"

@@ -19,6 +19,7 @@ os.environ["ANTHROPIC_BASE_URL"] = ""
 os.environ["OPENAI_API_KEY"] = ""
 os.environ["OPENAI_BASE_URL"] = ""
 os.environ["LLM_PROVIDER"] = "auto"
+os.environ["DEMO_MODE"] = "false"
 os.environ.setdefault("ENVIRONMENT", "development")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 

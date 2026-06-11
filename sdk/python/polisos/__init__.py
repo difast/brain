@@ -1,8 +1,8 @@
-"""Cloud Brain for Robots — Python SDK.
+"""PolisOS — Python SDK.
 
 Example
 -------
-    from cloudbrain import BrainClient
+    from polisos import BrainClient
 
     bot = BrainClient.register(
         "https://your-api/api/v1",
@@ -16,7 +16,7 @@ Example
         ...  # execute on the robot
 """
 
-from cloudbrain.client import BrainClient, BrainError
+from polisos.client import BrainClient, BrainError
 
 __all__ = ["BrainClient", "BrainError"]
 __version__ = "0.1.0"

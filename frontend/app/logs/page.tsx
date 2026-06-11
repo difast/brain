@@ -4,33 +4,36 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { Actions, Confidence, timeAgo } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 
 export default function LogsPage() {
+  const { t } = useT();
   const { data, error } = usePoll(() => api.listLogs());
   const logs = data?.items ?? [];
 
   return (
     <main className="container">
-      <h1>Decision Logs</h1>
-      <p className="sub">
-        Every decision the brain has returned — the full audit trail of what
-        Claude decided and why.
-      </p>
+      <h1>{t("logs.title")}</h1>
+      <p className="sub">{t("logs.sub")}</p>
 
-      {error && <div className="error-box">Cannot reach API: {error}</div>}
+      {error && (
+        <div className="error-box">
+          {t("common.cannotReach")} {error}
+        </div>
+      )}
 
       <div className="panel">
         <table>
           <thead>
             <tr>
-              <th>When</th>
-              <th>Robot</th>
-              <th>Goal / Thought</th>
-              <th>Actions</th>
-              <th>Confidence</th>
-              <th>Provider</th>
-              <th>Model</th>
-              <th>Latency</th>
+              <th>{t("common.when")}</th>
+              <th>{t("common.robot")}</th>
+              <th>{t("logs.goalThought")}</th>
+              <th>{t("logs.actions")}</th>
+              <th>{t("logs.confidence")}</th>
+              <th>{t("logs.provider")}</th>
+              <th>{t("logs.model")}</th>
+              <th>{t("logs.latency")}</th>
             </tr>
           </thead>
           <tbody>
@@ -71,7 +74,7 @@ export default function LogsPage() {
             ))}
           </tbody>
         </table>
-        {logs.length === 0 && <div className="empty">No decisions yet.</div>}
+        {logs.length === 0 && <div className="empty">{t("logs.empty")}</div>}
       </div>
     </main>
   );

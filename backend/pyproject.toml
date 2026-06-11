@@ -1,7 +1,7 @@
 [project]
-name = "cloud-brain-backend"
+name = "polisos-backend"
 version = "0.1.0"
-description = "Cloud Brain for Robots — backend API"
+description = "PolisOS — backend API"
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]

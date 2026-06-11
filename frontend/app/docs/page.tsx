@@ -75,12 +75,13 @@ export default function DocsPage() {
           <section id="overview">
             <h2>Overview</h2>
             <p>
-              <strong>Cloud Brain for Robots</strong> is a cloud service that
-              acts as the brain for a fleet of robots. Robots are{" "}
+              <strong>PolisOS</strong> is a cloud platform that acts as the
+              brain for any fleet of devices. Devices are{" "}
               <strong>thin clients</strong>: they stream camera frames,
               telemetry and their current task, and the cloud returns{" "}
               <strong>structured action commands</strong>. All decision-making
-              runs in the cloud via the Claude API.
+              runs in the cloud via the <strong>AI Decision Engine</strong>{" "}
+              (supports YandexGPT, GigaChat, Claude and local models).
             </p>
             <p>
               Base API URL: <code>{API_BASE}</code> · Interactive API:{" "}
@@ -97,7 +98,7 @@ export default function DocsPage() {
               </li>
               <li>
                 <strong>Decision Engine (Brain)</strong> — builds the prompt
-                from the robot&apos;s capabilities, calls Claude, returns strict
+                from the robot&apos;s capabilities, calls the AI Decision Engine, returns strict
                 JSON.
               </li>
               <li>
@@ -175,7 +176,7 @@ curl -X POST ${API_BASE}/brain/decision \\
               camera frame (<code>image_b64</code> or <code>frame_url</code>)
               and the current <code>state</code>. The brain assembles a prompt
               from the robot&apos;s capabilities and recent decisions, calls
-              Claude with a strict JSON schema, validates the output and filters
+              the AI engine with a strict JSON schema, validates the output and filters
               out any unsupported command.
             </p>
           </section>
@@ -339,15 +340,30 @@ release  -> arm_release     (action_id: e5f6…)`}</Code>
             <h2>Model Router</h2>
             <p>
               The Decision Engine is provider-agnostic — it doesn&apos;t depend
-              on Claude. Switch providers via the <code>LLM_PROVIDER</code>{" "}
+              on any single vendor. Switch engines via the <code>LLM_PROVIDER</code>{" "}
               setting without changing the API:
             </p>
             <ul>
               <li><code>claude</code> — Anthropic (or a tunnel via <code>ANTHROPIC_BASE_URL</code>)</li>
               <li><code>openai</code> — OpenAI API</li>
+              <li><code>yandexgpt</code> — YandexGPT (via an OpenAI-compatible gateway)</li>
+              <li><code>gigachat</code> — GigaChat (via an OpenAI-compatible gateway)</li>
               <li><code>local</code> — any OpenAI-compatible endpoint (Ollama, vLLM, LM Studio) via <code>OPENAI_BASE_URL</code></li>
               <li><code>auto</code> — pick from configured credentials; falls back to a deterministic mock</li>
             </ul>
+            <h3>Russian models &amp; local / on-prem deploy</h3>
+            <p>
+              PolisOS is engine-neutral. <strong>YandexGPT</strong> and{" "}
+              <strong>GigaChat</strong> are supported through an
+              OpenAI-compatible gateway (set <code>LLM_PROVIDER=yandexgpt</code>{" "}
+              or <code>gigachat</code> + <code>OPENAI_BASE_URL</code> /{" "}
+              <code>OPENAI_API_KEY</code>). For fully <strong>local /
+              air-gapped</strong> deployment, run any OpenAI-compatible server
+              (Ollama, vLLM, LM Studio) and point <code>OPENAI_BASE_URL</code>{" "}
+              at it with <code>LLM_PROVIDER=local</code> — no data leaves your
+              infrastructure, and the entire platform self-hosts (single backend
+              service + PostgreSQL).
+            </p>
           </section>
 
           <section id="endpoints">
@@ -445,10 +461,11 @@ release  -> arm_release     (action_id: e5f6…)`}</Code>
               No. Robots self-register via the API from their own code (the
               Simulator is only for testing).
             </p>
-            <h3>What if I don&apos;t set an Anthropic key?</h3>
+            <h3>What if no AI engine is configured?</h3>
             <p>
               The brain runs in deterministic mock mode, so the whole platform
-              works offline.
+              works offline. Configure any engine (YandexGPT, GigaChat, Claude,
+              OpenAI or a local model) to get real decisions.
             </p>
             <h3>Can different robot types connect?</h3>
             <p>

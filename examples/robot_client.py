@@ -1,4 +1,4 @@
-"""Reference thin-client robot for the Cloud Brain.
+"""Reference thin-client device for PolisOS.
 
 Demonstrates the full lifecycle any robot follows:
   1. Register (once) — receive a bearer token + API key.

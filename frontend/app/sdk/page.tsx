@@ -14,14 +14,14 @@ export default function SdkPage() {
       <div className="panel" style={{ marginBottom: 16 }}>
         <h2>Install</h2>
         <pre className="mono">
-{`pip install "cloudbrain-sdk @ git+https://github.com/difast/brain#subdirectory=sdk/python"`}
+{`pip install "polisos-sdk @ git+https://github.com/difast/brain#subdirectory=sdk/python"`}
         </pre>
       </div>
 
       <div className="panel" style={{ marginBottom: 16 }}>
         <h2>Quick start</h2>
         <pre className="mono">
-{`from cloudbrain import BrainClient
+{`from polisos import BrainClient
 
 # 1. Register once (save bot.token to reuse next time)
 bot = BrainClient.register(

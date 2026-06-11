@@ -3,13 +3,15 @@
 import { use } from "react";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
-import { Actions, Confidence, StatusBadge, timeAgo } from "@/components/ui";
+import { Actions, Confidence, DemoBadge, StatusBadge, timeAgo } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 
 export default function RobotDetail({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { t } = useT();
   const { id } = use(params);
   const robot = usePoll(() => api.getRobot(id), 5000);
   const profile = usePoll(() => api.getProfile(id), 8000);
@@ -28,33 +30,32 @@ export default function RobotDetail({
 
   return (
     <main className="container">
-      {robot.error && (
-        <div className="error-box">Robot not found or API unreachable.</div>
-      )}
+      {robot.error && <div className="error-box">{t("rd.notFound")}</div>}
       {r && (
         <>
           <div className="row" style={{ alignItems: "center", gap: 14 }}>
             <h1 style={{ margin: 0 }}>{r.name}</h1>
             <StatusBadge status={r.status} />
             <span className="chip">{r.robot_type}</span>
+            <DemoBadge meta={r.meta} />
           </div>
           <p className="sub mono">{r.id}</p>
 
           <div className="grid cards">
             <div className="panel">
-              <h2>Battery</h2>
+              <h2>{t("rd.battery")}</h2>
               <div className="stat">
                 {latest?.battery != null ? `${latest.battery}%` : "—"}
               </div>
             </div>
             <div className="panel">
-              <h2>Speed</h2>
+              <h2>{t("rd.speed")}</h2>
               <div className="stat">
                 {latest?.speed != null ? latest.speed : "—"}
               </div>
             </div>
             <div className="panel">
-              <h2>Position</h2>
+              <h2>{t("rd.position")}</h2>
               <div className="mono" style={{ fontSize: 16, marginTop: 8 }}>
                 {latest
                   ? `x:${latest.x ?? 0} y:${latest.y ?? 0} z:${latest.z ?? 0}`
@@ -64,27 +65,27 @@ export default function RobotDetail({
           </div>
 
           <div className="panel" style={{ marginTop: 16 }}>
-            <h2>Device Profile</h2>
+            <h2>{t("rd.profile")}</h2>
             <div className="row" style={{ gap: 24, marginBottom: 12 }}>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>Type</div>
+                <div className="muted" style={{ fontSize: 12 }}>{t("rd.fwType")}</div>
                 <div className="mono">{r.robot_type}</div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>Firmware</div>
+                <div className="muted" style={{ fontSize: 12 }}>{t("rd.firmware")}</div>
                 <div className="mono">{r.firmware_version ?? "—"}</div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>Protocol</div>
+                <div className="muted" style={{ fontSize: 12 }}>{t("rd.protocol")}</div>
                 <div className="mono">{r.protocol_version}</div>
               </div>
             </div>
             <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
-              Low-level commands (capabilities)
+              {t("rd.lowLevel")}
             </div>
             <div style={{ marginBottom: 10 }}>
               {r.capabilities.length === 0 && (
-                <span className="muted">none registered</span>
+                <span className="muted">{t("rd.noCommands")}</span>
               )}
               {r.capabilities.map((c) => (
                 <span key={c.type} className="chip" title={c.description ?? ""}>
@@ -93,7 +94,7 @@ export default function RobotDetail({
               ))}
             </div>
             <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
-              Universal actions (what the brain may use, via the DAL)
+              {t("rd.universal")}
             </div>
             <div>
               {(prof?.supported_actions ?? []).map((a) => (
@@ -102,48 +103,48 @@ export default function RobotDetail({
                 </span>
               ))}
               {prof && prof.supported_actions.length === 0 && (
-                <span className="muted">none</span>
+                <span className="muted">{t("common.none")}</span>
               )}
             </div>
           </div>
 
           <div className="panel" style={{ marginTop: 16 }}>
-            <h2>Tasks</h2>
+            <h2>{t("rd.tasks")}</h2>
             <table>
               <thead>
                 <tr>
-                  <th>Description</th>
-                  <th>Status</th>
-                  <th>Updated</th>
+                  <th>{t("tasks.description")}</th>
+                  <th>{t("common.status")}</th>
+                  <th>{t("common.updated")}</th>
                 </tr>
               </thead>
               <tbody>
-                {robotTasks.map((t) => (
-                  <tr key={t.id}>
-                    <td>{t.description}</td>
+                {robotTasks.map((tk) => (
+                  <tr key={tk.id}>
+                    <td>{tk.description}</td>
                     <td>
-                      <span className="chip">{t.status}</span>
+                      <span className="chip">{tk.status}</span>
                     </td>
-                    <td className="muted">{timeAgo(t.updated_at)}</td>
+                    <td className="muted">{timeAgo(tk.updated_at)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {robotTasks.length === 0 && (
-              <div className="empty">No tasks yet for this robot.</div>
+              <div className="empty">{t("rd.tasksEmpty")}</div>
             )}
           </div>
 
           <div className="panel" style={{ marginTop: 16 }}>
-            <h2>Decision Logs</h2>
+            <h2>{t("rd.decisions")}</h2>
             <table>
               <thead>
                 <tr>
-                  <th>When</th>
-                  <th>Goal</th>
-                  <th>Actions</th>
-                  <th>Confidence</th>
-                  <th>Frame</th>
+                  <th>{t("common.when")}</th>
+                  <th>{t("rd.goal")}</th>
+                  <th>{t("logs.actions")}</th>
+                  <th>{t("logs.confidence")}</th>
+                  <th>{t("rd.frame")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -166,28 +167,26 @@ export default function RobotDetail({
                     <td style={{ minWidth: 110 }}>
                       <Confidence value={d.confidence} />
                     </td>
-                    <td className="mono muted">
-                      {d.frame_url ? "yes" : "—"}
-                    </td>
+                    <td className="mono muted">{d.frame_url ? "✓" : "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {decisions.length === 0 && (
-              <div className="empty">No decisions yet for this robot.</div>
+              <div className="empty">{t("rd.decisionsEmpty")}</div>
             )}
           </div>
 
           <div className="panel" style={{ marginTop: 16 }}>
-            <h2>Execution Feedback</h2>
+            <h2>{t("rd.feedback")}</h2>
             <table>
               <thead>
                 <tr>
-                  <th>When</th>
-                  <th>Action</th>
-                  <th>Status</th>
-                  <th>Duration</th>
-                  <th>Error</th>
+                  <th>{t("common.when")}</th>
+                  <th>{t("rd.action")}</th>
+                  <th>{t("common.status")}</th>
+                  <th>{t("rd.duration")}</th>
+                  <th>{t("rd.errorCol")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -204,7 +203,7 @@ export default function RobotDetail({
                         className={`badge ${e.status === "success" ? "online" : "error"}`}
                       >
                         <span className="dot" />
-                        {e.status}
+                        {t(`common.${e.status}`)}
                       </span>
                     </td>
                     <td className="mono muted">
@@ -218,7 +217,7 @@ export default function RobotDetail({
               </tbody>
             </table>
             {execs.length === 0 && (
-              <div className="empty">No execution feedback yet.</div>
+              <div className="empty">{t("rd.feedbackEmpty")}</div>
             )}
           </div>
         </>
