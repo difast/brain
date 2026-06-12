@@ -1,4 +1,4 @@
-"""Reference thin-client device for PolisOS.
+"""Reference thin-client device for Mevratek.
 
 Demonstrates the full lifecycle any robot follows:
   1. Register (once) — receive a bearer token + API key.

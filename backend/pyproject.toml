@@ -1,7 +1,7 @@
 [project]
-name = "polisos-backend"
+name = "mevratek-backend"
 version = "0.1.0"
-description = "PolisOS — backend API"
+description = "Mevratek — backend API"
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]

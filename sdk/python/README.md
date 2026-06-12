@@ -1,12 +1,12 @@
-# PolisOS SDK (Python)
+# Mevratek SDK (Python)
 
-Official Python SDK for the **PolisOS for Robots** API. Connect any device
-to PolisOS in a few lines instead of hand-building HTTP requests.
+Official Python SDK for the **Mevratek for Robots** API. Connect any device
+to Mevratek in a few lines instead of hand-building HTTP requests.
 
 ## Install
 
 ```bash
-pip install "polisos-sdk @ git+https://github.com/difast/brain#subdirectory=sdk/python"
+pip install "mevratek-sdk @ git+https://github.com/difast/brain#subdirectory=sdk/python"
 ```
 
 (or, from a local checkout: `pip install ./sdk/python`)
@@ -14,7 +14,7 @@ pip install "polisos-sdk @ git+https://github.com/difast/brain#subdirectory=sdk/
 ## Quick start
 
 ```python
-from polisos import BrainClient
+from mevratek import BrainClient
 
 # 1. Register once — returns an authenticated client (save bot.token to reuse).
 bot = BrainClient.register(
@@ -70,4 +70,4 @@ if task:
 | `.next_task()` | Pull next queued task (or `None`) |
 | `.report_task_result(task_id, status, result)` | Report task outcome |
 
-Errors raise `polisos.BrainError` with `.status_code`.
+Errors raise `mevratek.BrainError` with `.status_code`.
