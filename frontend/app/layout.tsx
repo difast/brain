@@ -5,7 +5,7 @@ import { LanguageProvider } from "@/lib/i18n";
 import { NavBar } from "@/components/NavBar";
 
 export const metadata: Metadata = {
-  title: "PolisOS — Device Control",
+  title: "Mevratek — Device Control",
   description: "Cloud platform for controlling any device through one protocol",
 };
 
@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <NavBar />
           {children}
           <footer className="footer">
-            PolisOS · AI Decision Engine (YandexGPT · GigaChat · Claude · local
+            Mevratek · AI Decision Engine (YandexGPT · GigaChat · Claude · local
             models)
           </footer>
         </LanguageProvider>

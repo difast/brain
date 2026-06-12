@@ -1,6 +1,6 @@
-name: polisos
+name: mevratek
 
-# Minimal stack: backend (PolisOS) + Postgres. No Redis, no MinIO —
+# Minimal stack: backend (Mevratek) + Postgres. No Redis, no MinIO —
 # presence is tracked in Postgres and object storage is optional. The frontend
 # dashboard is included for convenience but is not required.
 

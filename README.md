@@ -1,4 +1,4 @@
-# PolisOS
+# Mevratek
 
 A cloud platform that acts as the **brain** for any fleet of devices. Devices
 are **thin clients** — they stream camera frames, telemetry and their current
@@ -11,7 +11,7 @@ The dashboard ships with a **RU/EN switch (Russian by default)** and a live
 
 ```
 ┌──────────┐   frame + telemetry + task    ┌──────────────────────────────┐
-│  Device  │ ───────────────────────────▶  │            PolisOS           │
+│  Device  │ ───────────────────────────▶  │            Mevratek           │
 │ (thin    │                               │  API Gateway → Decision Eng. │
 │  client) │ ◀─────────────────────────── │  → AI engine → JSON commands │
 └──────────┘    { goal, confidence,        └──────────────────────────────┘

@@ -78,7 +78,7 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         version=__version__,
         description=(
-            "PolisOS — cloud platform for controlling any device through a "
+            "Mevratek — cloud platform for controlling any device through a "
             "single protocol. Devices are thin clients; all decision-making "
             "runs in the cloud via the AI Decision Engine (supports YandexGPT, "
             "GigaChat, Claude and local models). Register a device, stream "

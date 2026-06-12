@@ -58,7 +58,7 @@ const EN: Docs = {
   },
   overview: {
     title: "Overview",
-    p1: "PolisOS is a cloud platform that acts as the brain for any fleet of devices. Devices are thin clients: they stream camera frames, telemetry and their current task, and the cloud returns structured action commands. All decision-making runs in the cloud via the AI Decision Engine (supports YandexGPT, GigaChat, Claude and local models).",
+    p1: "Mevratek is a cloud platform that acts as the brain for any fleet of devices. Devices are thin clients: they stream camera frames, telemetry and their current task, and the cloud returns structured action commands. All decision-making runs in the cloud via the AI Decision Engine (supports YandexGPT, GigaChat, Claude and local models).",
     baseUrl: "Base API URL:",
     interactive: "Interactive API:",
   },
@@ -152,7 +152,7 @@ const EN: Docs = {
       "auto — pick from configured credentials; falls back to a deterministic mock",
     ],
     ruTitle: "Russian models & local / on-prem deploy",
-    ruBody: "PolisOS is engine-neutral. YandexGPT and GigaChat are supported through an OpenAI-compatible gateway (set LLM_PROVIDER=yandexgpt or gigachat + OPENAI_BASE_URL / OPENAI_API_KEY). For fully local / air-gapped deployment, run any OpenAI-compatible server (Ollama, vLLM, LM Studio) and point OPENAI_BASE_URL at it with LLM_PROVIDER=local — no data leaves your infrastructure, and the entire platform self-hosts (single backend service + PostgreSQL).",
+    ruBody: "Mevratek is engine-neutral. YandexGPT and GigaChat are supported through an OpenAI-compatible gateway (set LLM_PROVIDER=yandexgpt or gigachat + OPENAI_BASE_URL / OPENAI_API_KEY). For fully local / air-gapped deployment, run any OpenAI-compatible server (Ollama, vLLM, LM Studio) and point OPENAI_BASE_URL at it with LLM_PROVIDER=local — no data leaves your infrastructure, and the entire platform self-hosts (single backend service + PostgreSQL).",
   },
   endpoints: {
     title: "API Endpoints",
@@ -228,7 +228,7 @@ const RU: Docs = {
   },
   overview: {
     title: "Обзор",
-    p1: "PolisOS — облачная платформа, которая выступает «мозгом» для любого парка устройств. Устройства — тонкие клиенты: они передают кадры с камеры, телеметрию и текущую задачу, а облако возвращает структурированные команды действий. Всё принятие решений выполняется в облаке через AI Decision Engine (поддержка YandexGPT, GigaChat, Claude и локальных моделей).",
+    p1: "Mevratek — облачная платформа, которая выступает «мозгом» для любого парка устройств. Устройства — тонкие клиенты: они передают кадры с камеры, телеметрию и текущую задачу, а облако возвращает структурированные команды действий. Всё принятие решений выполняется в облаке через AI Decision Engine (поддержка YandexGPT, GigaChat, Claude и локальных моделей).",
     baseUrl: "Базовый URL API:",
     interactive: "Интерактивный API:",
   },
@@ -322,7 +322,7 @@ const RU: Docs = {
       "auto — выбор по заданным ключам; иначе детерминированный mock",
     ],
     ruTitle: "Российские модели и локальный / on-prem деплой",
-    ruBody: "PolisOS нейтрален к движку. YandexGPT и GigaChat поддерживаются через OpenAI-совместимый шлюз (задайте LLM_PROVIDER=yandexgpt или gigachat + OPENAI_BASE_URL / OPENAI_API_KEY). Для полностью локального / изолированного развёртывания запустите любой OpenAI-совместимый сервер (Ollama, vLLM, LM Studio) и укажите OPENAI_BASE_URL с LLM_PROVIDER=local — данные не покидают вашу инфраструктуру, а вся платформа разворачивается у вас (один backend-сервис + PostgreSQL).",
+    ruBody: "Mevratek нейтрален к движку. YandexGPT и GigaChat поддерживаются через OpenAI-совместимый шлюз (задайте LLM_PROVIDER=yandexgpt или gigachat + OPENAI_BASE_URL / OPENAI_API_KEY). Для полностью локального / изолированного развёртывания запустите любой OpenAI-совместимый сервер (Ollama, vLLM, LM Studio) и укажите OPENAI_BASE_URL с LLM_PROVIDER=local — данные не покидают вашу инфраструктуру, а вся платформа разворачивается у вас (один backend-сервис + PostgreSQL).",
   },
   endpoints: {
     title: "Эндпоинты API",

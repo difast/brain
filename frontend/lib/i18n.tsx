@@ -265,14 +265,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = (typeof window !== "undefined" &&
-      window.localStorage.getItem("polisos-lang")) as Lang | null;
+      window.localStorage.getItem("mevratek-lang")) as Lang | null;
     if (saved === "ru" || saved === "en") setLangState(saved);
   }, []);
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
     if (typeof window !== "undefined")
-      window.localStorage.setItem("polisos-lang", l);
+      window.localStorage.setItem("mevratek-lang", l);
   }, []);
 
   const t = useCallback(

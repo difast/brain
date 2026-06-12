@@ -8,7 +8,7 @@ export function NavBar() {
   return (
     <nav className="nav">
       <Link href="/" className="brand" style={{ color: "var(--text)" }}>
-        ◎ Polis<span>OS</span>
+        ◎ Mevra<span>tek</span>
       </Link>
       <Link href="/">{t("nav.robots")}</Link>
       <Link href="/logs">{t("nav.logs")}</Link>

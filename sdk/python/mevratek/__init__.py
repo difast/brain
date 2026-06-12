@@ -1,8 +1,8 @@
-"""PolisOS — Python SDK.
+"""Mevratek — Python SDK.
 
 Example
 -------
-    from polisos import BrainClient
+    from mevratek import BrainClient
 
     bot = BrainClient.register(
         "https://your-api/api/v1",
@@ -16,7 +16,7 @@ Example
         ...  # execute on the robot
 """
 
-from polisos.client import BrainClient, BrainError
+from mevratek.client import BrainClient, BrainError
 
 __all__ = ["BrainClient", "BrainError"]
 __version__ = "0.1.0"

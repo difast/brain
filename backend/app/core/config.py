@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     )
 
     # --- Application ---
-    app_name: str = "PolisOS"
+    app_name: str = "Mevratek"
     environment: Literal["development", "staging", "production"] = "development"
     debug: bool = False
     log_level: str = "INFO"
