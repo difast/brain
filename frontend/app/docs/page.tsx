@@ -1,70 +1,410 @@
 "use client";
 
 import { API_BASE } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 const SWAGGER = API_BASE.replace(/\/api\/v1$/, "/docs");
-
-const NAV: { group: string; items: { id: string; label: string }[] }[] = [
-  {
-    group: "Getting started",
-    items: [
-      { id: "overview", label: "Overview" },
-      { id: "architecture", label: "Architecture" },
-      { id: "quickstart", label: "Quick start" },
-    ],
-  },
-  {
-    group: "Concepts",
-    items: [
-      { id: "robots", label: "Robots & Registry" },
-      { id: "decisions", label: "Decision Engine" },
-      { id: "tasks", label: "Task Engine" },
-      { id: "telemetry", label: "Telemetry" },
-      { id: "memory", label: "Memory" },
-      { id: "auth", label: "Authentication" },
-      { id: "apikeys", label: "API Keys" },
-    ],
-  },
-  {
-    group: "Device Abstraction Layer",
-    items: [
-      { id: "dal", label: "DAL overview" },
-      { id: "universal-actions", label: "Universal Actions" },
-      { id: "translator", label: "Action Translator" },
-      { id: "device-profile", label: "Device Profile" },
-      { id: "execution-feedback", label: "Execution Feedback" },
-      { id: "memory-learning", label: "Memory & Learning" },
-      { id: "model-router", label: "Model Router" },
-    ],
-  },
-  {
-    group: "Reference",
-    items: [
-      { id: "endpoints", label: "API Endpoints" },
-      { id: "decision-format", label: "Decision Format" },
-      { id: "sdk", label: "SDK" },
-      { id: "dashboard", label: "Dashboard" },
-      { id: "deployment", label: "Deployment" },
-      { id: "faq", label: "FAQ" },
-    ],
-  },
-];
 
 function Code({ children }: { children: string }) {
   return <pre className="mono">{children}</pre>;
 }
 
+interface Endpoint {
+  m: string;
+  p: string;
+  a: string;
+  d: string;
+}
+
+interface Docs {
+  groups: { gs: string; concepts: string; dal: string; ref: string };
+  nav: Record<string, string>;
+  overview: { title: string; p1: string; baseUrl: string; interactive: string };
+  architecture: { title: string; lead: string; items: string[]; note: string };
+  quickstart: { title: string; lead: string; afterPre: string; afterSdk: string; afterMid: string; afterSim: string };
+  robots: { title: string; p1: string; p2: string };
+  decisions: { title: string; p1: string };
+  tasks: { title: string; p1: string };
+  telemetry: { title: string; p1: string };
+  memory: { title: string; p1: string };
+  auth: { title: string; p1: string };
+  apikeys: { title: string; p1: string };
+  dal: { title: string; p1: string };
+  universal: { title: string; p1: string };
+  translator: { title: string; p1: string; p2: string };
+  deviceProfile: { title: string; p1: string; items: string[]; p2: string };
+  exec: { title: string; p1: string; p2: string };
+  memlearn: { title: string; p1: string };
+  router: { title: string; p1: string; items: string[]; ruTitle: string; ruBody: string };
+  endpoints: { title: string; colM: string; colP: string; colA: string; colD: string; rows: Endpoint[]; swagger: string };
+  decisionFormat: { title: string; p1: string };
+  sdk: { title: string; p1: string; sdkLink: string; swaggerLink: string };
+  dashboard: { title: string; items: string[] };
+  deployment: { title: string; p1: string };
+  faq: { title: string; q1: string; a1: string; q2: string; a2: string; q3: string; a3: string };
+}
+
+const EN: Docs = {
+  groups: { gs: "Getting started", concepts: "Concepts", dal: "Device Abstraction Layer", ref: "Reference" },
+  nav: {
+    overview: "Overview", architecture: "Architecture", quickstart: "Quick start",
+    robots: "Devices & Registry", decisions: "Decision Engine", tasks: "Task Engine",
+    telemetry: "Telemetry", memory: "Memory", auth: "Authentication", apikeys: "API Keys",
+    dal: "DAL overview", "universal-actions": "Universal Actions", translator: "Action Translator",
+    "device-profile": "Device Profile", "execution-feedback": "Execution Feedback",
+    "memory-learning": "Memory & Learning", "model-router": "Model Router",
+    endpoints: "API Endpoints", "decision-format": "Decision Format", sdk: "SDK",
+    dashboard: "Dashboard", deployment: "Deployment", faq: "FAQ",
+  },
+  overview: {
+    title: "Overview",
+    p1: "PolisOS is a cloud platform that acts as the brain for any fleet of devices. Devices are thin clients: they stream camera frames, telemetry and their current task, and the cloud returns structured action commands. All decision-making runs in the cloud via the AI Decision Engine (supports YandexGPT, GigaChat, Claude and local models).",
+    baseUrl: "Base API URL:",
+    interactive: "Interactive API:",
+  },
+  architecture: {
+    title: "Architecture",
+    lead: "Clean, layered design. Logical services:",
+    items: [
+      "API Gateway — device authentication, routing.",
+      "Decision Engine — builds the prompt from the device's capabilities, calls the AI engine, returns strict JSON.",
+      "Device Registry — id, type, available commands, connection status.",
+      "Task Engine — assign / queue / pull / complete tasks.",
+      "Memory — decision and task history, results.",
+      "Telemetry — battery, speed, coordinates, errors.",
+    ],
+    note: "A device is described entirely by data (its type + capabilities), so new device types need no core changes.",
+  },
+  quickstart: {
+    title: "Quick start",
+    lead: "Connect a device in three calls (no SDK required):",
+    afterPre: "Or use the ",
+    afterSdk: "Python SDK",
+    afterMid: ", or try it live in the ",
+    afterSim: "Simulator",
+  },
+  robots: {
+    title: "Devices & Registry",
+    p1: "A device registers once with a name, robot_type and a list of capabilities — the commands it understands, each with optional value constraints:",
+    p2: "Registration returns a token (bearer) and a one-time api_key. The brain only ever returns commands from the device's own capability list. Presence (online/offline) is tracked by heartbeats.",
+  },
+  decisions: {
+    title: "Decision Engine",
+    p1: "POST /brain/decision takes the task, an optional camera frame (image_b64 or frame_url) and the current state. The brain assembles a prompt from the device's capabilities and recent decisions, calls the AI engine with a strict JSON schema, validates the output and filters out any unsupported command. This is the call a developer embeds in the device's own code (via the SDK bot.decide(...) or plain HTTP) — the Simulator simply demonstrates it in the UI.",
+  },
+  tasks: {
+    title: "Task Engine",
+    p1: "Tasks can be created top-down (operator/API assigns them to a device with a priority) or appear bottom-up from a device's own decision request. Devices pull their next queued task and report the result.",
+  },
+  telemetry: {
+    title: "Telemetry",
+    p1: "Devices push readings to POST /telemetry: battery, speed, coordinates (x/y/z), error list and any extra sensor channels. The latest values surface on the device's dashboard page.",
+  },
+  memory: {
+    title: "Memory",
+    p1: "Every decision is persisted (goal, thought, confidence, actions, frame, model, latency) along with task history — the full audit trail, available via GET /logs and the dashboard.",
+  },
+  auth: {
+    title: "Authentication",
+    p1: "Devices authenticate with the bearer token from registration and act as themselves — the robot_id is taken from the token, never the request body. Send it on every call: Authorization: Bearer <token>",
+  },
+  apikeys: {
+    title: "API Keys",
+    p1: "Each user/application can generate a personal API key from the API tab. The secret is shown once; only a hash and a short prefix are stored. Keys can be revoked at any time and are sent as the X-API-Key header.",
+  },
+  dal: {
+    title: "Device Abstraction Layer (DAL)",
+    p1: "The DAL lets the cloud control any device through one protocol. The LLM never emits hardware commands — it emits universal actions, and the platform translates them into each device's own low-level commands based on its declared capabilities. New device types plug in with no changes to the core.",
+  },
+  universal: {
+    title: "Universal Actions",
+    p1: "A device declares low-level capabilities (e.g. move_forward, arm_grasp, camera_capture, speaker_say, light_on). From these the platform derives the universal actions the device can perform (e.g. grasp, release, inspect, say). The brain is shown only these and returns universal actions.",
+  },
+  translator: {
+    title: "Action Translator",
+    p1: "The translator maps each universal action to the first device command the device supports, attaching a unique action_id (used for execution feedback). Unsupported actions are dropped.",
+    p2: "The device receives only commands it can actually run; the response includes both actions (device commands) and universal_actions (what the brain decided).",
+  },
+  deviceProfile: {
+    title: "Device Profile",
+    p1: "GET /robots/{id}/profile returns the unified device description:",
+    items: ["robot_type", "capabilities (low-level commands)", "supported_commands", "supported_actions (universal actions)", "firmware_version, protocol_version"],
+    p2: "Set firmware_version / protocol_version at registration.",
+  },
+  exec: {
+    title: "Execution Feedback",
+    p1: "After running a command, the device reports the outcome to POST /executions (action_id, status: success|failed, duration_ms, error).",
+    p2: "Recent feedback is fed back into the next decision so the brain learns from what actually happened.",
+  },
+  memlearn: {
+    title: "Memory & Learning",
+    p1: "Every decision is stored with its full context for learning: the input state, the decision (universal + translated device actions), and the linked execution results. This history powers short-term context and adaptation over time.",
+  },
+  router: {
+    title: "Model Router",
+    p1: "The Decision Engine is provider-agnostic — it doesn't depend on any single vendor. Switch engines via the LLM_PROVIDER setting without changing the API:",
+    items: [
+      "claude — Anthropic (or a tunnel via ANTHROPIC_BASE_URL)",
+      "openai — OpenAI API",
+      "yandexgpt — YandexGPT (via an OpenAI-compatible gateway)",
+      "gigachat — GigaChat (via an OpenAI-compatible gateway)",
+      "local — any OpenAI-compatible endpoint (Ollama, vLLM, LM Studio) via OPENAI_BASE_URL",
+      "auto — pick from configured credentials; falls back to a deterministic mock",
+    ],
+    ruTitle: "Russian models & local / on-prem deploy",
+    ruBody: "PolisOS is engine-neutral. YandexGPT and GigaChat are supported through an OpenAI-compatible gateway (set LLM_PROVIDER=yandexgpt or gigachat + OPENAI_BASE_URL / OPENAI_API_KEY). For fully local / air-gapped deployment, run any OpenAI-compatible server (Ollama, vLLM, LM Studio) and point OPENAI_BASE_URL at it with LLM_PROVIDER=local — no data leaves your infrastructure, and the entire platform self-hosts (single backend service + PostgreSQL).",
+  },
+  endpoints: {
+    title: "API Endpoints",
+    colM: "Method", colP: "Path", colA: "Auth", colD: "Description",
+    rows: [
+      { m: "POST", p: "/robots/register", a: "—", d: "Register a device" },
+      { m: "POST", p: "/robots/heartbeat", a: "token", d: "Report liveness" },
+      { m: "GET", p: "/robots", a: "—", d: "List devices" },
+      { m: "GET", p: "/robots/{id}", a: "—", d: "Device detail" },
+      { m: "GET", p: "/robots/{id}/profile", a: "—", d: "Device profile (DAL)" },
+      { m: "POST", p: "/robots/{id}/pause", a: "—", d: "Pause a device" },
+      { m: "POST", p: "/robots/{id}/resume", a: "—", d: "Resume a device" },
+      { m: "POST", p: "/brain/decision", a: "token", d: "Get a decision" },
+      { m: "POST", p: "/executions", a: "token", d: "Report execution feedback" },
+      { m: "GET", p: "/executions", a: "—", d: "Query execution feedback" },
+      { m: "POST", p: "/telemetry", a: "token", d: "Ingest telemetry" },
+      { m: "POST", p: "/tasks", a: "—", d: "Assign a task" },
+      { m: "GET", p: "/tasks/next", a: "token", d: "Pull next queued task" },
+      { m: "POST", p: "/tasks/{id}/result", a: "token", d: "Report task result" },
+      { m: "GET", p: "/logs", a: "—", d: "Decision logs" },
+      { m: "POST/GET/DELETE", p: "/api-keys", a: "—", d: "API key management" },
+    ],
+    swagger: "Full interactive reference:",
+  },
+  decisionFormat: {
+    title: "Decision Format",
+    p1: "The brain always returns strict JSON — no free text:",
+  },
+  sdk: {
+    title: "SDK",
+    p1: "The official Python SDK wraps every endpoint. See the ",
+    sdkLink: "SDK tab",
+    swaggerLink: " for install and usage. Any language with an HTTP client works too.",
+  },
+  dashboard: {
+    title: "Dashboard",
+    items: [
+      "Devices — fleet overview and live status.",
+      "Decision Logs — every decision the brain made.",
+      "Tasks — assign tasks and watch the queue.",
+      "Simulator — register a device and request a decision.",
+      "API — generate and revoke API keys.",
+      "SDK — install and usage.",
+      "Click a device to see its own tasks, decisions, telemetry and a Pause/Resume control.",
+    ],
+  },
+  deployment: {
+    title: "Deployment",
+    p1: "Deploys from GitHub as a single backend service + PostgreSQL (Redis not required; object storage optional). Set SECRET_KEY, DATABASE_URL (postgresql+asyncpg://…) and an AI engine (ANTHROPIC_API_KEY / OPENAI_* / LLM_PROVIDER). The dashboard is an optional second service with NEXT_PUBLIC_API_BASE_URL.",
+  },
+  faq: {
+    title: "FAQ",
+    q1: "Do I have to add devices manually?",
+    a1: "No. Devices self-register via the API from their own code (the Simulator is only for testing).",
+    q2: "What if no AI engine is configured?",
+    a2: "The brain runs in deterministic mock mode, so the whole platform works offline. Configure any engine (YandexGPT, GigaChat, Claude, OpenAI or a local model) to get real decisions.",
+    q3: "Can different device types connect?",
+    a3: "Yes — a device is defined by its capabilities data; the core never changes.",
+  },
+};
+
+const RU: Docs = {
+  groups: { gs: "Начало работы", concepts: "Концепции", dal: "Слой абстракции устройств (DAL)", ref: "Справочник" },
+  nav: {
+    overview: "Обзор", architecture: "Архитектура", quickstart: "Быстрый старт",
+    robots: "Устройства и реестр", decisions: "Движок решений", tasks: "Движок задач",
+    telemetry: "Телеметрия", memory: "Память", auth: "Аутентификация", apikeys: "API-ключи",
+    dal: "Обзор DAL", "universal-actions": "Универсальные действия", translator: "Транслятор действий",
+    "device-profile": "Профиль устройства", "execution-feedback": "Обратная связь",
+    "memory-learning": "Память и обучение", "model-router": "Маршрутизатор моделей",
+    endpoints: "Эндпоинты API", "decision-format": "Формат решения", sdk: "SDK",
+    dashboard: "Дашборд", deployment: "Развёртывание", faq: "Частые вопросы",
+  },
+  overview: {
+    title: "Обзор",
+    p1: "PolisOS — облачная платформа, которая выступает «мозгом» для любого парка устройств. Устройства — тонкие клиенты: они передают кадры с камеры, телеметрию и текущую задачу, а облако возвращает структурированные команды действий. Всё принятие решений выполняется в облаке через AI Decision Engine (поддержка YandexGPT, GigaChat, Claude и локальных моделей).",
+    baseUrl: "Базовый URL API:",
+    interactive: "Интерактивный API:",
+  },
+  architecture: {
+    title: "Архитектура",
+    lead: "Чистая слойная архитектура. Логические сервисы:",
+    items: [
+      "API-шлюз — аутентификация устройств, маршрутизация.",
+      "Движок решений — собирает промпт из capabilities устройства, вызывает AI-движок, возвращает строгий JSON.",
+      "Реестр устройств — id, тип, доступные команды, статус подключения.",
+      "Движок задач — назначение / очередь / выдача / завершение задач.",
+      "Память — история решений и задач, результаты.",
+      "Телеметрия — заряд, скорость, координаты, ошибки.",
+    ],
+    note: "Устройство описывается полностью данными (его тип + capabilities), поэтому новые типы устройств не требуют изменений ядра.",
+  },
+  quickstart: {
+    title: "Быстрый старт",
+    lead: "Подключите устройство за три вызова (SDK не обязателен):",
+    afterPre: "Или используйте ",
+    afterSdk: "Python SDK",
+    afterMid: ", либо попробуйте вживую в ",
+    afterSim: "Симуляторе",
+  },
+  robots: {
+    title: "Устройства и реестр",
+    p1: "Устройство регистрируется один раз: имя, robot_type и список capabilities — команд, которые оно понимает, каждая с необязательными ограничениями значения:",
+    p2: "Регистрация возвращает token (bearer) и одноразовый api_key. Мозг возвращает только команды из списка capabilities самого устройства. Присутствие (онлайн/офлайн) отслеживается по heartbeat.",
+  },
+  decisions: {
+    title: "Движок решений",
+    p1: "POST /brain/decision принимает задачу, необязательный кадр (image_b64 или frame_url) и текущее состояние. Мозг собирает промпт из capabilities устройства и недавних решений, вызывает AI-движок со строгой JSON-схемой, валидирует ответ и отбрасывает неподдерживаемые команды. Именно этот вызов разработчик встраивает в код своего устройства (через SDK bot.decide(...) или обычный HTTP) — Симулятор просто демонстрирует его в интерфейсе.",
+  },
+  tasks: {
+    title: "Движок задач",
+    p1: "Задачи создаются сверху (оператор/API назначает их устройству с приоритетом) или снизу — из собственного запроса решения устройства. Устройства забирают следующую задачу из очереди и отчитываются о результате.",
+  },
+  telemetry: {
+    title: "Телеметрия",
+    p1: "Устройства шлют показания в POST /telemetry: заряд, скорость, координаты (x/y/z), список ошибок и любые дополнительные сенсоры. Последние значения показываются на странице устройства.",
+  },
+  memory: {
+    title: "Память",
+    p1: "Каждое решение сохраняется (цель, мысль, уверенность, действия, кадр, модель, задержка) вместе с историей задач — полный журнал, доступный через GET /logs и в дашборде.",
+  },
+  auth: {
+    title: "Аутентификация",
+    p1: "Устройства аутентифицируются bearer-токеном из регистрации и действуют «от себя» — robot_id берётся из токена, а не из тела запроса. Передавайте его в каждом вызове: Authorization: Bearer <token>",
+  },
+  apikeys: {
+    title: "API-ключи",
+    p1: "Каждый пользователь/приложение может сгенерировать персональный API-ключ на вкладке API. Секрет показывается один раз; хранится только хэш и короткий префикс. Ключи можно отозвать в любой момент; передаются в заголовке X-API-Key.",
+  },
+  dal: {
+    title: "Слой абстракции устройств (DAL)",
+    p1: "DAL позволяет облаку управлять любым устройством через единый протокол. LLM никогда не выдаёт аппаратные команды — она выдаёт универсальные действия, а платформа транслирует их в собственные низкоуровневые команды устройства на основе его capabilities. Новые типы устройств подключаются без изменения ядра.",
+  },
+  universal: {
+    title: "Универсальные действия",
+    p1: "Устройство объявляет низкоуровневые capabilities (например move_forward, arm_grasp, camera_capture, speaker_say, light_on). Из них платформа выводит универсальные действия, доступные устройству (например grasp, release, inspect, say). Мозгу показываются только они, и он возвращает универсальные действия.",
+  },
+  translator: {
+    title: "Транслятор действий",
+    p1: "Транслятор сопоставляет каждое универсальное действие с первой поддерживаемой устройством командой, присваивая уникальный action_id (для обратной связи о выполнении). Неподдерживаемые действия отбрасываются.",
+    p2: "Устройство получает только выполнимые команды; в ответе есть и actions (команды устройства), и universal_actions (что решил мозг).",
+  },
+  deviceProfile: {
+    title: "Профиль устройства",
+    p1: "GET /robots/{id}/profile возвращает единое описание устройства:",
+    items: ["robot_type", "capabilities (низкоуровневые команды)", "supported_commands", "supported_actions (универсальные действия)", "firmware_version, protocol_version"],
+    p2: "Задайте firmware_version / protocol_version при регистрации.",
+  },
+  exec: {
+    title: "Обратная связь о выполнении",
+    p1: "После выполнения команды устройство сообщает результат в POST /executions (action_id, status: success|failed, duration_ms, error).",
+    p2: "Свежая обратная связь подаётся в следующее решение — мозг учится на том, что произошло на самом деле.",
+  },
+  memlearn: {
+    title: "Память и обучение",
+    p1: "Каждое решение сохраняется со всем контекстом для обучения: входное состояние, решение (универсальные + транслированные команды устройства) и связанные результаты выполнения. Эта история питает краткосрочный контекст и адаптацию со временем.",
+  },
+  router: {
+    title: "Маршрутизатор моделей",
+    p1: "Движок решений не зависит от конкретного вендора. Переключайте движок настройкой LLM_PROVIDER без изменения API:",
+    items: [
+      "claude — Anthropic (или туннель через ANTHROPIC_BASE_URL)",
+      "openai — OpenAI API",
+      "yandexgpt — YandexGPT (через OpenAI-совместимый шлюз)",
+      "gigachat — GigaChat (через OpenAI-совместимый шлюз)",
+      "local — любой OpenAI-совместимый endpoint (Ollama, vLLM, LM Studio) через OPENAI_BASE_URL",
+      "auto — выбор по заданным ключам; иначе детерминированный mock",
+    ],
+    ruTitle: "Российские модели и локальный / on-prem деплой",
+    ruBody: "PolisOS нейтрален к движку. YandexGPT и GigaChat поддерживаются через OpenAI-совместимый шлюз (задайте LLM_PROVIDER=yandexgpt или gigachat + OPENAI_BASE_URL / OPENAI_API_KEY). Для полностью локального / изолированного развёртывания запустите любой OpenAI-совместимый сервер (Ollama, vLLM, LM Studio) и укажите OPENAI_BASE_URL с LLM_PROVIDER=local — данные не покидают вашу инфраструктуру, а вся платформа разворачивается у вас (один backend-сервис + PostgreSQL).",
+  },
+  endpoints: {
+    title: "Эндпоинты API",
+    colM: "Метод", colP: "Путь", colA: "Авториз.", colD: "Описание",
+    rows: [
+      { m: "POST", p: "/robots/register", a: "—", d: "Регистрация устройства" },
+      { m: "POST", p: "/robots/heartbeat", a: "токен", d: "Сигнал «жив»" },
+      { m: "GET", p: "/robots", a: "—", d: "Список устройств" },
+      { m: "GET", p: "/robots/{id}", a: "—", d: "Детали устройства" },
+      { m: "GET", p: "/robots/{id}/profile", a: "—", d: "Профиль устройства (DAL)" },
+      { m: "POST", p: "/robots/{id}/pause", a: "—", d: "Остановить устройство" },
+      { m: "POST", p: "/robots/{id}/resume", a: "—", d: "Запустить устройство" },
+      { m: "POST", p: "/brain/decision", a: "токен", d: "Получить решение" },
+      { m: "POST", p: "/executions", a: "токен", d: "Отправить результат выполнения" },
+      { m: "GET", p: "/executions", a: "—", d: "Запросить результаты выполнения" },
+      { m: "POST", p: "/telemetry", a: "токен", d: "Принять телеметрию" },
+      { m: "POST", p: "/tasks", a: "—", d: "Назначить задачу" },
+      { m: "GET", p: "/tasks/next", a: "токен", d: "Забрать следующую задачу" },
+      { m: "POST", p: "/tasks/{id}/result", a: "токен", d: "Отчитаться о задаче" },
+      { m: "GET", p: "/logs", a: "—", d: "Логи решений" },
+      { m: "POST/GET/DELETE", p: "/api-keys", a: "—", d: "Управление API-ключами" },
+    ],
+    swagger: "Полный интерактивный справочник:",
+  },
+  decisionFormat: {
+    title: "Формат решения",
+    p1: "Мозг всегда возвращает строгий JSON — без свободного текста:",
+  },
+  sdk: {
+    title: "SDK",
+    p1: "Официальный Python SDK оборачивает все эндпоинты. См. ",
+    sdkLink: "вкладку SDK",
+    swaggerLink: " для установки и примеров. Подходит и любой язык с HTTP-клиентом.",
+  },
+  dashboard: {
+    title: "Дашборд",
+    items: [
+      "Устройства — обзор парка и статус в реальном времени.",
+      "Логи решений — все решения мозга.",
+      "Задачи — назначение задач и очередь.",
+      "Симулятор — регистрация устройства и запрос решения.",
+      "API — генерация и отзыв API-ключей.",
+      "SDK — установка и использование.",
+      "Клик по устройству — его задачи, решения, телеметрия и кнопка Стоп/Запустить.",
+    ],
+  },
+  deployment: {
+    title: "Развёртывание",
+    p1: "Деплой из GitHub как один backend-сервис + PostgreSQL (Redis не нужен; объектное хранилище опционально). Задайте SECRET_KEY, DATABASE_URL (postgresql+asyncpg://…) и AI-движок (ANTHROPIC_API_KEY / OPENAI_* / LLM_PROVIDER). Дашборд — необязательный второй сервис с NEXT_PUBLIC_API_BASE_URL.",
+  },
+  faq: {
+    title: "Частые вопросы",
+    q1: "Нужно ли добавлять устройства вручную?",
+    a1: "Нет. Устройства сами регистрируются через API из своего кода (Симулятор — только для тестов).",
+    q2: "Что если AI-движок не настроен?",
+    a2: "Мозг работает в детерминированном mock-режиме, поэтому платформа работает офлайн. Настройте любой движок (YandexGPT, GigaChat, Claude, OpenAI или локальную модель), чтобы получать реальные решения.",
+    q3: "Могут ли подключаться разные типы устройств?",
+    a3: "Да — устройство определяется данными capabilities; ядро не меняется.",
+  },
+};
+
+const NAV_GROUPS: { key: keyof Docs["groups"]; ids: string[] }[] = [
+  { key: "gs", ids: ["overview", "architecture", "quickstart"] },
+  { key: "concepts", ids: ["robots", "decisions", "tasks", "telemetry", "memory", "auth", "apikeys"] },
+  { key: "dal", ids: ["dal", "universal-actions", "translator", "device-profile", "execution-feedback", "memory-learning", "model-router"] },
+  { key: "ref", ids: ["endpoints", "decision-format", "sdk", "dashboard", "deployment", "faq"] },
+];
+
 export default function DocsPage() {
+  const { lang } = useT();
+  const d = lang === "ru" ? RU : EN;
+
   return (
     <main className="container">
       <div className="docs">
         <nav className="docs-nav">
-          {NAV.map((g) => (
-            <div key={g.group}>
-              <h3>{g.group}</h3>
-              {g.items.map((it) => (
-                <a key={it.id} href={`#${it.id}`}>
-                  {it.label}
+          {NAV_GROUPS.map((g) => (
+            <div key={g.key}>
+              <h3>{d.groups[g.key]}</h3>
+              {g.ids.map((id) => (
+                <a key={id} href={`#${id}`}>
+                  {d.nav[id]}
                 </a>
               ))}
             </div>
@@ -73,59 +413,28 @@ export default function DocsPage() {
 
         <div className="docs-content">
           <section id="overview">
-            <h2>Overview</h2>
+            <h2>{d.overview.title}</h2>
+            <p>{d.overview.p1}</p>
             <p>
-              <strong>PolisOS</strong> is a cloud platform that acts as the
-              brain for any fleet of devices. Devices are{" "}
-              <strong>thin clients</strong>: they stream camera frames,
-              telemetry and their current task, and the cloud returns{" "}
-              <strong>structured action commands</strong>. All decision-making
-              runs in the cloud via the <strong>AI Decision Engine</strong>{" "}
-              (supports YandexGPT, GigaChat, Claude and local models).
-            </p>
-            <p>
-              Base API URL: <code>{API_BASE}</code> · Interactive API:{" "}
+              {d.overview.baseUrl} <code>{API_BASE}</code> · {d.overview.interactive}{" "}
               <a href={SWAGGER}>Swagger / OpenAPI</a>
             </p>
           </section>
 
           <section id="architecture">
-            <h2>Architecture</h2>
-            <p>Clean, layered design. Logical services:</p>
+            <h2>{d.architecture.title}</h2>
+            <p>{d.architecture.lead}</p>
             <ul>
-              <li>
-                <strong>API Gateway</strong> — robot authentication, routing.
-              </li>
-              <li>
-                <strong>Decision Engine (Brain)</strong> — builds the prompt
-                from the robot&apos;s capabilities, calls the AI Decision Engine, returns strict
-                JSON.
-              </li>
-              <li>
-                <strong>Robot Registry</strong> — robot id, type, available
-                commands, connection status.
-              </li>
-              <li>
-                <strong>Task Engine</strong> — assign / queue / pull / complete
-                tasks.
-              </li>
-              <li>
-                <strong>Memory</strong> — decision and task history, results.
-              </li>
-              <li>
-                <strong>Telemetry</strong> — battery, speed, coordinates,
-                errors.
-              </li>
+              {d.architecture.items.map((it, i) => (
+                <li key={i}>{it}</li>
+              ))}
             </ul>
-            <p>
-              A robot is described entirely by <strong>data</strong> (its type +
-              capabilities), so new robot types need no core changes.
-            </p>
+            <p>{d.architecture.note}</p>
           </section>
 
           <section id="quickstart">
-            <h2>Quick start</h2>
-            <p>Connect a robot in three calls (no SDK required):</p>
+            <h2>{d.quickstart.title}</h2>
+            <p>{d.quickstart.lead}</p>
             <Code>{`# 1. Register (once) — returns a bearer token
 curl -X POST ${API_BASE}/robots/register \\
   -H "Content-Type: application/json" \\
@@ -138,18 +447,16 @@ curl -X POST ${API_BASE}/brain/decision \\
   -H "Content-Type: application/json" \\
   -d '{"task":"approach the bottle","state":{"battery":80}}'`}</Code>
             <p>
-              Or use the <a href="/sdk">Python SDK</a>, or try it live in the{" "}
-              <a href="/simulator">Simulator</a>.
+              {d.quickstart.afterPre}
+              <a href="/sdk">{d.quickstart.afterSdk}</a>
+              {d.quickstart.afterMid}
+              <a href="/simulator">{d.quickstart.afterSim}</a>.
             </p>
           </section>
 
           <section id="robots">
-            <h2>Robots &amp; Registry</h2>
-            <p>
-              A robot registers once with a <code>name</code>,{" "}
-              <code>robot_type</code> and a list of <code>capabilities</code> —
-              the commands it understands, each with optional value constraints:
-            </p>
+            <h2>{d.robots.title}</h2>
+            <p>{d.robots.p1}</p>
             <Code>{`{
   "name": "scout-01",
   "robot_type": "rover",
@@ -161,108 +468,57 @@ curl -X POST ${API_BASE}/brain/decision \\
     {"type": "stop"}
   ]
 }`}</Code>
-            <p>
-              Registration returns a <code>token</code> (bearer) and a one-time{" "}
-              <code>api_key</code>. The brain only ever returns commands from the
-              robot&apos;s own capability list. Presence (online/offline) is
-              tracked by heartbeats.
-            </p>
+            <p>{d.robots.p2}</p>
           </section>
 
           <section id="decisions">
-            <h2>Decision Engine</h2>
-            <p>
-              <code>POST /brain/decision</code> takes the task, an optional
-              camera frame (<code>image_b64</code> or <code>frame_url</code>)
-              and the current <code>state</code>. The brain assembles a prompt
-              from the robot&apos;s capabilities and recent decisions, calls
-              the AI engine with a strict JSON schema, validates the output and filters
-              out any unsupported command.
-            </p>
+            <h2>{d.decisions.title}</h2>
+            <p>{d.decisions.p1}</p>
           </section>
 
           <section id="tasks">
-            <h2>Task Engine</h2>
-            <p>
-              Tasks can be created <strong>top-down</strong> (operator/API
-              assigns them to a robot with a priority) or appear{" "}
-              <strong>bottom-up</strong> from a robot&apos;s own decision
-              request. Robots pull their next queued task and report the result.
-            </p>
+            <h2>{d.tasks.title}</h2>
+            <p>{d.tasks.p1}</p>
             <Code>{`# Assign a task (priority: higher is dequeued first)
 POST /tasks            {"robot_id":"...","description":"bring the box","priority":5}
 
 # Robot pulls its next queued task (marks it in_progress)
-GET  /tasks/next       (Authorization: Bearer <robot token>)  -> task | 204
+GET  /tasks/next       (Authorization: Bearer <token>)  -> task | 204
 
 # Robot reports the outcome
 POST /tasks/{id}/result {"status":"completed","result":"delivered"}`}</Code>
           </section>
 
           <section id="telemetry">
-            <h2>Telemetry</h2>
-            <p>
-              Robots push readings to <code>POST /telemetry</code>: battery,
-              speed, coordinates (x/y/z), error list and any extra sensor
-              channels. The latest values surface on the robot&apos;s dashboard
-              page.
-            </p>
+            <h2>{d.telemetry.title}</h2>
+            <p>{d.telemetry.p1}</p>
           </section>
 
           <section id="memory">
-            <h2>Memory</h2>
-            <p>
-              Every decision is persisted (goal, thought, confidence, actions,
-              frame, model, latency) along with task history — the full audit
-              trail, available via <code>GET /logs</code> and the dashboard.
-            </p>
+            <h2>{d.memory.title}</h2>
+            <p>{d.memory.p1}</p>
           </section>
 
           <section id="auth">
-            <h2>Authentication</h2>
-            <p>
-              Robots authenticate with the bearer <strong>token</strong> from
-              registration and act as themselves — the <code>robot_id</code> is
-              taken from the token, never the request body. Send it on every
-              call:
-            </p>
+            <h2>{d.auth.title}</h2>
+            <p>{d.auth.p1}</p>
             <Code>{`Authorization: Bearer <token>`}</Code>
           </section>
 
           <section id="apikeys">
-            <h2>API Keys</h2>
-            <p>
-              Each user/application can generate a personal API key from the{" "}
-              <a href="/api">API</a> tab. The secret is shown once; only a hash
-              and a short prefix are stored. Keys can be revoked at any time and
-              are sent as:
-            </p>
+            <h2>{d.apikeys.title}</h2>
+            <p>{d.apikeys.p1}</p>
             <Code>{`X-API-Key: cbk_xxxxxxxx...`}</Code>
           </section>
 
           <section id="dal">
-            <h2>Device Abstraction Layer (DAL)</h2>
-            <p>
-              The DAL lets the cloud control <strong>any</strong> device through
-              one protocol. The LLM never emits hardware commands — it emits{" "}
-              <strong>universal actions</strong>, and the platform translates
-              them into each device&apos;s own low-level commands based on its
-              declared capabilities. The result: new device types plug in with
-              no changes to the core.
-            </p>
+            <h2>{d.dal.title}</h2>
+            <p>{d.dal.p1}</p>
           </section>
 
           <section id="universal-actions">
-            <h2>Universal Actions</h2>
-            <p>
-              A device declares low-level <code>capabilities</code> (e.g.{" "}
-              <code>move_forward</code>, <code>arm_grasp</code>,{" "}
-              <code>camera_capture</code>, <code>speaker_say</code>,{" "}
-              <code>light_on</code>). From these the platform derives the{" "}
-              <strong>universal actions</strong> the device can perform (e.g.{" "}
-              <code>grasp</code>, <code>release</code>, <code>inspect</code>,{" "}
-              <code>say</code>). The brain is shown only these and returns:
-            </p>
+            <h2>{d.universal.title}</h2>
+            <p>{d.universal.p1}</p>
             <Code>{`{
   "goal": "inspect_object",
   "actions": [
@@ -274,140 +530,81 @@ POST /tasks/{id}/result {"status":"completed","result":"delivered"}`}</Code>
           </section>
 
           <section id="translator">
-            <h2>Action Translator</h2>
-            <p>
-              The translator maps each universal action to the first device
-              command the device supports, attaching a unique{" "}
-              <code>action_id</code> (used for execution feedback). Unsupported
-              actions are dropped. Example for an arm with a camera:
-            </p>
+            <h2>{d.translator.title}</h2>
+            <p>{d.translator.p1}</p>
             <Code>{`grasp    -> arm_grasp       (action_id: a1b2…)
 inspect  -> camera_capture  (action_id: c3d4…)
 release  -> arm_release     (action_id: e5f6…)`}</Code>
-            <p>
-              The device receives only commands it can actually run; the
-              response includes both <code>actions</code> (device commands) and{" "}
-              <code>universal_actions</code> (what the brain decided).
-            </p>
+            <p>{d.translator.p2}</p>
           </section>
 
           <section id="device-profile">
-            <h2>Device Profile</h2>
-            <p>
-              <code>GET /robots/&#123;id&#125;/profile</code> returns the unified
-              device description:
-            </p>
+            <h2>{d.deviceProfile.title}</h2>
+            <p>{d.deviceProfile.p1}</p>
             <ul>
-              <li><code>robot_type</code></li>
-              <li><code>capabilities</code> (low-level commands)</li>
-              <li><code>supported_commands</code></li>
-              <li><code>supported_actions</code> (universal actions)</li>
-              <li><code>firmware_version</code>, <code>protocol_version</code></li>
+              {d.deviceProfile.items.map((it, i) => (
+                <li key={i}><code>{it}</code></li>
+              ))}
             </ul>
-            <p>
-              Set <code>firmware_version</code> / <code>protocol_version</code>{" "}
-              at registration.
-            </p>
+            <p>{d.deviceProfile.p2}</p>
           </section>
 
           <section id="execution-feedback">
-            <h2>Execution Feedback</h2>
-            <p>
-              After running a command, the device reports the outcome to{" "}
-              <code>POST /executions</code>:
-            </p>
+            <h2>{d.exec.title}</h2>
+            <p>{d.exec.p1}</p>
             <Code>{`{"action_id": "123", "status": "success", "duration_ms": 450}
 // or
 {"action_id": "123", "status": "failed", "error": "object_not_found"}`}</Code>
-            <p>
-              Recent feedback is fed back into the next decision so the brain
-              learns from what actually happened.
-            </p>
+            <p>{d.exec.p2}</p>
           </section>
 
           <section id="memory-learning">
-            <h2>Memory &amp; Learning</h2>
-            <p>
-              Every decision is stored with its full context for learning: the
-              input <strong>state</strong>, the <strong>decision</strong>{" "}
-              (universal + translated device actions), and the linked{" "}
-              <strong>execution results</strong>. This history powers short-term
-              context and adaptation over time.
-            </p>
+            <h2>{d.memlearn.title}</h2>
+            <p>{d.memlearn.p1}</p>
           </section>
 
           <section id="model-router">
-            <h2>Model Router</h2>
-            <p>
-              The Decision Engine is provider-agnostic — it doesn&apos;t depend
-              on any single vendor. Switch engines via the <code>LLM_PROVIDER</code>{" "}
-              setting without changing the API:
-            </p>
+            <h2>{d.router.title}</h2>
+            <p>{d.router.p1}</p>
             <ul>
-              <li><code>claude</code> — Anthropic (or a tunnel via <code>ANTHROPIC_BASE_URL</code>)</li>
-              <li><code>openai</code> — OpenAI API</li>
-              <li><code>yandexgpt</code> — YandexGPT (via an OpenAI-compatible gateway)</li>
-              <li><code>gigachat</code> — GigaChat (via an OpenAI-compatible gateway)</li>
-              <li><code>local</code> — any OpenAI-compatible endpoint (Ollama, vLLM, LM Studio) via <code>OPENAI_BASE_URL</code></li>
-              <li><code>auto</code> — pick from configured credentials; falls back to a deterministic mock</li>
+              {d.router.items.map((it, i) => (
+                <li key={i}>{it}</li>
+              ))}
             </ul>
-            <h3>Russian models &amp; local / on-prem deploy</h3>
-            <p>
-              PolisOS is engine-neutral. <strong>YandexGPT</strong> and{" "}
-              <strong>GigaChat</strong> are supported through an
-              OpenAI-compatible gateway (set <code>LLM_PROVIDER=yandexgpt</code>{" "}
-              or <code>gigachat</code> + <code>OPENAI_BASE_URL</code> /{" "}
-              <code>OPENAI_API_KEY</code>). For fully <strong>local /
-              air-gapped</strong> deployment, run any OpenAI-compatible server
-              (Ollama, vLLM, LM Studio) and point <code>OPENAI_BASE_URL</code>{" "}
-              at it with <code>LLM_PROVIDER=local</code> — no data leaves your
-              infrastructure, and the entire platform self-hosts (single backend
-              service + PostgreSQL).
-            </p>
+            <h3>{d.router.ruTitle}</h3>
+            <p>{d.router.ruBody}</p>
           </section>
 
           <section id="endpoints">
-            <h2>API Endpoints</h2>
+            <h2>{d.endpoints.title}</h2>
             <table>
               <thead>
                 <tr>
-                  <th>Method</th>
-                  <th>Path</th>
-                  <th>Auth</th>
-                  <th>Description</th>
+                  <th>{d.endpoints.colM}</th>
+                  <th>{d.endpoints.colP}</th>
+                  <th>{d.endpoints.colA}</th>
+                  <th>{d.endpoints.colD}</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>POST</td><td className="mono">/robots/register</td><td>—</td><td>Register a robot</td></tr>
-                <tr><td>POST</td><td className="mono">/robots/heartbeat</td><td>token</td><td>Report liveness</td></tr>
-                <tr><td>GET</td><td className="mono">/robots</td><td>—</td><td>List robots</td></tr>
-                <tr><td>GET</td><td className="mono">/robots/&#123;id&#125;</td><td>—</td><td>Robot detail</td></tr>
-                <tr><td>GET</td><td className="mono">/robots/&#123;id&#125;/profile</td><td>—</td><td>Device profile (DAL)</td></tr>
-                <tr><td>POST</td><td className="mono">/brain/decision</td><td>token</td><td>Get a decision</td></tr>
-                <tr><td>POST</td><td className="mono">/executions</td><td>token</td><td>Report execution feedback</td></tr>
-                <tr><td>GET</td><td className="mono">/executions</td><td>—</td><td>Query execution feedback</td></tr>
-                <tr><td>POST</td><td className="mono">/telemetry</td><td>token</td><td>Ingest telemetry</td></tr>
-                <tr><td>GET</td><td className="mono">/telemetry</td><td>—</td><td>Query telemetry</td></tr>
-                <tr><td>POST</td><td className="mono">/tasks</td><td>—</td><td>Assign a task</td></tr>
-                <tr><td>GET</td><td className="mono">/tasks</td><td>—</td><td>List tasks</td></tr>
-                <tr><td>GET</td><td className="mono">/tasks/next</td><td>token</td><td>Pull next queued task</td></tr>
-                <tr><td>POST</td><td className="mono">/tasks/&#123;id&#125;/result</td><td>token</td><td>Report task result</td></tr>
-                <tr><td>GET</td><td className="mono">/logs</td><td>—</td><td>Decision logs</td></tr>
-                <tr><td>POST</td><td className="mono">/api-keys</td><td>—</td><td>Generate API key</td></tr>
-                <tr><td>GET</td><td className="mono">/api-keys</td><td>—</td><td>List API keys</td></tr>
-                <tr><td>DELETE</td><td className="mono">/api-keys/&#123;id&#125;</td><td>—</td><td>Revoke API key</td></tr>
+                {d.endpoints.rows.map((r, i) => (
+                  <tr key={i}>
+                    <td>{r.m}</td>
+                    <td className="mono">{r.p}</td>
+                    <td>{r.a}</td>
+                    <td>{r.d}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
             <p>
-              Full interactive reference: <a href={SWAGGER}>Swagger UI</a>.
+              {d.endpoints.swagger} <a href={SWAGGER}>Swagger UI</a>.
             </p>
           </section>
 
           <section id="decision-format">
-            <h2>Decision Format</h2>
-            <p>
-              The brain always returns strict JSON — no free text:
-            </p>
+            <h2>{d.decisionFormat.title}</h2>
+            <p>{d.decisionFormat.p1}</p>
             <Code>{`{
   "goal": "approach the object",
   "thought": "bottle detected on the table",
@@ -420,58 +617,36 @@ release  -> arm_release     (action_id: e5f6…)`}</Code>
           </section>
 
           <section id="sdk">
-            <h2>SDK</h2>
+            <h2>{d.sdk.title}</h2>
             <p>
-              The official Python SDK wraps every endpoint. See the{" "}
-              <a href="/sdk">SDK tab</a> for install and usage. Any language with
-              an HTTP client works too.
+              {d.sdk.p1}
+              <a href="/sdk">{d.sdk.sdkLink}</a>
+              {d.sdk.swaggerLink}
             </p>
           </section>
 
           <section id="dashboard">
-            <h2>Dashboard</h2>
+            <h2>{d.dashboard.title}</h2>
             <ul>
-              <li><strong>Robots</strong> — fleet overview and live status.</li>
-              <li><strong>Decision Logs</strong> — every decision the brain made.</li>
-              <li><strong>Tasks</strong> — assign tasks and watch the queue.</li>
-              <li><strong>Simulator</strong> — register a robot and request a decision.</li>
-              <li><strong>API</strong> — generate and revoke API keys.</li>
-              <li><strong>SDK</strong> — install and usage.</li>
-              <li>Click a robot to see its own tasks, decisions and telemetry.</li>
+              {d.dashboard.items.map((it, i) => (
+                <li key={i}>{it}</li>
+              ))}
             </ul>
           </section>
 
           <section id="deployment">
-            <h2>Deployment</h2>
-            <p>
-              Deploys from GitHub as a single backend service + PostgreSQL
-              (Redis not required; object storage optional). Set{" "}
-              <code>SECRET_KEY</code>, <code>DATABASE_URL</code>{" "}
-              (<code>postgresql+asyncpg://…</code>) and{" "}
-              <code>ANTHROPIC_API_KEY</code> (or <code>ANTHROPIC_BASE_URL</code>
-              ). The dashboard is an optional second service with{" "}
-              <code>NEXT_PUBLIC_API_BASE_URL</code>.
-            </p>
+            <h2>{d.deployment.title}</h2>
+            <p>{d.deployment.p1}</p>
           </section>
 
           <section id="faq">
-            <h2>FAQ</h2>
-            <h3>Do I have to add robots manually?</h3>
-            <p>
-              No. Robots self-register via the API from their own code (the
-              Simulator is only for testing).
-            </p>
-            <h3>What if no AI engine is configured?</h3>
-            <p>
-              The brain runs in deterministic mock mode, so the whole platform
-              works offline. Configure any engine (YandexGPT, GigaChat, Claude,
-              OpenAI or a local model) to get real decisions.
-            </p>
-            <h3>Can different robot types connect?</h3>
-            <p>
-              Yes — a robot is defined by its capabilities data; the core never
-              changes.
-            </p>
+            <h2>{d.faq.title}</h2>
+            <h3>{d.faq.q1}</h3>
+            <p>{d.faq.a1}</p>
+            <h3>{d.faq.q2}</h3>
+            <p>{d.faq.a2}</p>
+            <h3>{d.faq.q3}</h3>
+            <p>{d.faq.a3}</p>
           </section>
         </div>
       </div>
