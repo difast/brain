@@ -235,29 +235,35 @@ In `development` the app auto-creates tables on startup for convenience; in
 
 ---
 
-## Deployment (Railway)
+## Deployment (Timeweb Cloud Apps)
 
-The repo is deploy-ready for [Railway](https://railway.app) straight from
-GitHub as **a single service + one PostgreSQL plugin**:
+The repo is deploy-ready for [Timeweb Cloud Apps](https://timeweb.cloud/services/apps)
+straight from GitHub as **two apps + one managed PostgreSQL**:
 
-1. **Add a PostgreSQL plugin** in your Railway project.
-2. **One service from this GitHub repo** — set **Root Directory = `backend`**
-   (so Railway builds `backend/Dockerfile`). Variables:
+1. **Create a managed PostgreSQL database** in Timeweb Cloud. Copy the
+   connection string it gives you and **change the scheme to
+   `postgresql+asyncpg://…`** (SQLAlchemy's async driver) before using it as
+   `DATABASE_URL` below.
+2. **Backend app** — connect this GitHub repo, set **build directory =
+   `backend`** (Timeweb builds `backend/Dockerfile`), branch = `main`, and
+   enable auto-deploy on push. Health check path: `/api/v1/health`.
+   Variables:
    - `ENVIRONMENT=production`, `SECRET_KEY=<random>`, `RUN_MIGRATIONS=1`
+   - `DATABASE_URL=postgresql+asyncpg://…` (from step 1)
    - `ANTHROPIC_API_KEY=<your key>` *(or `ANTHROPIC_BASE_URL=<tunnel>`; leave
      both empty for mock mode)*
-   - `DATABASE_URL` from the Postgres plugin — **change the scheme to
-     `postgresql+asyncpg://…`**
-   - Railway provides `$PORT` automatically.
+   - Timeweb routes traffic to the container port declared by `EXPOSE` in the
+     Dockerfile (`8000`) — no extra port configuration needed.
    - *(optional)* `S3_*` for frame storage on any S3-compatible bucket.
+3. **Frontend app (optional dashboard)** — connect the same repo again, set
+   **build directory = `frontend`** (builds `frontend/Dockerfile`), branch =
+   `main`, auto-deploy on push, health check path: `/`. Set the
+   `NEXT_PUBLIC_API_BASE_URL` **Docker build argument** to
+   `https://<backend-domain>/api/v1` — it's baked into the client bundle at
+   build time, so it must be a build arg, not just a runtime env var.
 
 That's it — `scripts/start.sh` runs migrations then launches the server, so
-deploys are zero-touch.
-
-> **Dashboard (optional):** the `frontend/` app is a separate Next.js console.
-> Deploy it as a second service (Root Directory = `frontend`, build arg
-> `NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1`) only if you want
-> the web UI — the API works without it.
+backend deploys are zero-touch; pushing to `main` redeploys both apps.
 
 ---
 
