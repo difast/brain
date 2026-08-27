@@ -235,29 +235,52 @@ In `development` the app auto-creates tables on startup for convenience; in
 
 ---
 
-## Deployment (Railway)
+## Deployment (Timeweb Cloud Apps)
 
-The repo is deploy-ready for [Railway](https://railway.app) straight from
-GitHub as **a single service + one PostgreSQL plugin**:
+The repo is deploy-ready for [Timeweb Cloud Apps](https://timeweb.cloud/services/apps)
+as **one backend app + one managed PostgreSQL + (optionally) one frontend app**.
+Each app builds straight from this GitHub repo and **auto-deploys on every push
+to `main`** (Timeweb's native GitHub integration; a GitHub Actions workflow that
+mirrors CI + triggers a redeploy via the Timeweb API is in
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
 
-1. **Add a PostgreSQL plugin** in your Railway project.
-2. **One service from this GitHub repo** — set **Root Directory = `backend`**
-   (so Railway builds `backend/Dockerfile`). Variables:
-   - `ENVIRONMENT=production`, `SECRET_KEY=<random>`, `RUN_MIGRATIONS=1`
-   - `ANTHROPIC_API_KEY=<your key>` *(or `ANTHROPIC_BASE_URL=<tunnel>`; leave
-     both empty for mock mode)*
-   - `DATABASE_URL` from the Postgres plugin — **change the scheme to
-     `postgresql+asyncpg://…`**
-   - Railway provides `$PORT` automatically.
-   - *(optional)* `S3_*` for frame storage on any S3-compatible bucket.
+### 1. Managed PostgreSQL
 
-That's it — `scripts/start.sh` runs migrations then launches the server, so
-deploys are zero-touch.
+Create a **PostgreSQL** database in Timeweb Cloud → **Базы данных**. Note the
+host, port, user, password and database name — you'll assemble `DATABASE_URL`
+from them (async driver scheme, see below).
 
-> **Dashboard (optional):** the `frontend/` app is a separate Next.js console.
-> Deploy it as a second service (Root Directory = `frontend`, build arg
-> `NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1`) only if you want
-> the web UI — the API works without it.
+### 2. Backend app
+
+Create an **App** of type **Docker** (or **Backend**) from this GitHub repo:
+
+- **Build context / root directory = `backend`** (builds `backend/Dockerfile`).
+- **Port = `8000`** (the container listens on `$PORT`, default `8000`).
+- **Auto-deploy branch = `main`**.
+- Health check path = `/api/v1/health`.
+- Environment variables:
+  - `ENVIRONMENT=production`, `SECRET_KEY=<random>`, `RUN_MIGRATIONS=1`
+  - `ANTHROPIC_API_KEY=<your key>` *(or `ANTHROPIC_BASE_URL=<tunnel>`; leave
+    both empty for mock mode)*
+  - `DATABASE_URL=postgresql+asyncpg://<user>:<password>@<host>:<port>/<db>`
+    — **note the `+asyncpg` scheme** (SQLAlchemy async driver)
+  - *(optional)* `S3_*` for frame storage on any S3-compatible bucket.
+
+`scripts/start.sh` runs `alembic upgrade head` (because `RUN_MIGRATIONS=1`) and
+then launches the server, so deploys are zero-touch.
+
+### 3. Frontend app (optional dashboard)
+
+The `frontend/` app is a separate Next.js console — deploy it only if you want
+the web UI (the API works without it). Create a second **App** of type
+**Docker** from this repo:
+
+- **Build context / root directory = `frontend`** (builds `frontend/Dockerfile`).
+- **Port = `3000`**, **Auto-deploy branch = `main`**.
+- Build argument / env var:
+  `NEXT_PUBLIC_API_BASE_URL=https://<backend-app-domain>/api/v1` — the public
+  URL of the backend app above. **All API URLs come from this variable — no
+  host is hardcoded.**
 
 ---
 

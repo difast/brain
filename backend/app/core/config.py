@@ -2,7 +2,7 @@
 
 All settings are loaded from environment variables (12-factor app). A local
 ``.env`` file is read for convenience during development. In production,
-variables are injected by the platform (e.g. Railway).
+variables are injected by the platform (e.g. Timeweb Cloud Apps).
 """
 
 from __future__ import annotations
