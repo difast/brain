@@ -70,4 +70,4 @@ class Robot(UUIDMixin, TimestampMixin, Base):
     meta: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
 
     def command_types(self) -> set[str]:
-        return {c.get("type") for c in self.capabilities if c.get("type")}
+        return {t for c in self.capabilities if (t := c.get("type"))}

@@ -46,7 +46,7 @@ class MemoryService:
     async def list_executions(
         self, *, robot_id: str | None = None, limit: int = 100, offset: int = 0
     ) -> tuple[list[ActionExecution], int]:
-        return await self.executions.list(
+        return await self.executions.list_page(
             robot_id=robot_id, limit=limit, offset=offset
         )
 
@@ -81,7 +81,7 @@ class MemoryService:
     async def list_decisions(
         self, *, robot_id: str | None = None, limit: int = 50, offset: int = 0
     ) -> tuple[list[Decision], int]:
-        return await self.decisions.list(
+        return await self.decisions.list_page(
             robot_id=robot_id, limit=limit, offset=offset
         )
 
@@ -98,6 +98,6 @@ class MemoryService:
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[Task], int]:
-        return await self.tasks.list(
+        return await self.tasks.list_page(
             robot_id=robot_id, status=status, limit=limit, offset=offset
         )

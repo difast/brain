@@ -39,7 +39,7 @@ class ActionTranslator:
 
     @staticmethod
     def _device_command_types(capabilities: list[dict[str, Any]]) -> set[str]:
-        return {c.get("type") for c in capabilities if c.get("type")}
+        return {t for c in capabilities if (t := c.get("type"))}
 
     @classmethod
     def available_universal(

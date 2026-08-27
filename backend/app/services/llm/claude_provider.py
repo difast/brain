@@ -77,12 +77,15 @@ class ClaudeProvider(LLMProvider):
                 "format": {"type": "json_schema", "schema": schema}
             },
         }
+        # Built as a plain payload (typed Any) for SDK-version safety — the
+        # content blocks are assembled dynamically above.
+        messages: Any = [{"role": "user", "content": content}]
         try:
             response = await self._client.messages.create(
                 model=settings.claude_model,
                 max_tokens=settings.claude_max_tokens,
                 system=system,
-                messages=[{"role": "user", "content": content}],
+                messages=messages,
                 extra_body=extra_body,
             )
         except anthropic.BadRequestError as exc:

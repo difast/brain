@@ -16,11 +16,14 @@ No external hardware required — frames and telemetry are synthetic.
 from __future__ import annotations
 
 import base64
+import os
 import time
 
 import httpx
 
-API = "http://localhost:8000/api/v1"
+# Override with MEVRATEK_API to point at a deployed backend, e.g.
+#   MEVRATEK_API=https://<backend-app-domain>/api/v1 python examples/robot_client.py
+API = os.environ.get("MEVRATEK_API", "http://localhost:8000/api/v1")
 
 # A minimal valid 1x1 JPEG (enough for the API; real robots send camera frames).
 TINY_JPEG = base64.b64encode(bytes.fromhex("ffd8ffd9")).decode()

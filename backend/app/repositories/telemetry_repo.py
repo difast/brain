@@ -18,7 +18,7 @@ class TelemetryRepository:
         await self.session.refresh(telemetry)
         return telemetry
 
-    async def list(
+    async def list_page(
         self,
         *,
         robot_id: str | None = None,

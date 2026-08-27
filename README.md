@@ -238,32 +238,63 @@ In `development` the app auto-creates tables on startup for convenience; in
 ## Deployment (Timeweb Cloud Apps)
 
 The repo is deploy-ready for [Timeweb Cloud Apps](https://timeweb.cloud/services/apps)
-straight from GitHub as **two apps + one managed PostgreSQL**:
+as **one backend app + one managed PostgreSQL + (optionally) one frontend app**.
+Each app builds straight from this GitHub repo and **auto-deploys on every push
+to `main`** (Timeweb's native GitHub integration; a GitHub Actions workflow that
+mirrors CI + triggers a redeploy via the Timeweb API is in
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
 
-1. **Create a managed PostgreSQL database** in Timeweb Cloud. Copy the
-   connection string it gives you and **change the scheme to
-   `postgresql+asyncpg://…`** (SQLAlchemy's async driver) before using it as
-   `DATABASE_URL` below.
-2. **Backend app** — connect this GitHub repo, set **build directory =
-   `backend`** (Timeweb builds `backend/Dockerfile`), branch = `main`, and
-   enable auto-deploy on push. Health check path: `/api/v1/health`.
-   Variables:
-   - `ENVIRONMENT=production`, `SECRET_KEY=<random>`, `RUN_MIGRATIONS=1`
-   - `DATABASE_URL=postgresql+asyncpg://…` (from step 1)
-   - `ANTHROPIC_API_KEY=<your key>` *(or `ANTHROPIC_BASE_URL=<tunnel>`; leave
-     both empty for mock mode)*
-   - Timeweb routes traffic to the container port declared by `EXPOSE` in the
-     Dockerfile (`8000`) — no extra port configuration needed.
-   - *(optional)* `S3_*` for frame storage on any S3-compatible bucket.
-3. **Frontend app (optional dashboard)** — connect the same repo again, set
-   **build directory = `frontend`** (builds `frontend/Dockerfile`), branch =
-   `main`, auto-deploy on push, health check path: `/`. Set the
-   `NEXT_PUBLIC_API_BASE_URL` **Docker build argument** to
-   `https://<backend-domain>/api/v1` — it's baked into the client bundle at
-   build time, so it must be a build arg, not just a runtime env var.
+Works both as a **Docker** app (uses the committed `Dockerfile`s) and as a
+**Backend/Frontend buildpack** app (fill in the build/run fields below).
 
-That's it — `scripts/start.sh` runs migrations then launches the server, so
-backend deploys are zero-touch; pushing to `main` redeploys both apps.
+### 1. Managed PostgreSQL
+
+Create a **PostgreSQL** database in Timeweb Cloud → **Базы данных**. Note the
+host, port, user, password and database name — you'll assemble `DATABASE_URL`
+from them, **using the `postgresql+asyncpg://` scheme** (SQLAlchemy's async
+driver), not the plain `postgresql://` that Timeweb hands you.
+
+### 2. Backend app
+
+Create an **App** from this GitHub repo (branch = `main`, auto-deploy on):
+
+- **Project directory = `backend`**, **internal port = `8000`**, health check
+  path = `/api/v1/health`.
+- Docker app → builds `backend/Dockerfile` (nothing else to set).
+- Buildpack app (Python 3.12 / FastAPI):
+  - **Dependencies:** `pip install -r requirements.txt`
+  - **System dependencies / Build command:** *(leave empty)*
+  - **Start command:** `python -m app.entry`
+- The start command runs migrations (`RUN_MIGRATIONS=1`) then binds uvicorn to
+  `0.0.0.0:$PORT` — all in Python, so it needs no shell (`&&` / `${PORT}` do not
+  need to expand). `app.entry` and `backend/Dockerfile` use the same path.
+- Environment variables:
+  - `ENVIRONMENT=production`, `SECRET_KEY=<random>`, `RUN_MIGRATIONS=1`
+  - `DATABASE_URL=postgresql+asyncpg://<user>:<password>@<host>:<port>/<db>`
+  - `ANTHROPIC_API_KEY=<your key>` *(or `ANTHROPIC_BASE_URL=<tunnel>`; leave
+    both empty for mock mode)*
+  - `CORS_ORIGINS=https://<frontend-domain>` (the dashboard origin; `*` to allow
+    all), `DEMO_MODE=false`
+  - *(optional)* `S3_*` for frame storage on any S3-compatible bucket.
+
+> **Note:** in production the app refuses to start with the default placeholder
+> `SECRET_KEY` — set a real random value.
+
+### 3. Frontend app (optional dashboard)
+
+The `frontend/` app is a separate Next.js console — deploy it only if you want
+the web UI (the API works without it). Create a second **App** from this repo
+(branch = `main`, auto-deploy on):
+
+- **Project directory = `frontend`**, **internal port = `3000`**.
+- Docker app → builds `frontend/Dockerfile`.
+- Buildpack app (Node 20 / Next.js):
+  - **Dependencies:** `npm ci`
+  - **Build command:** `npm run build` (build output dir: `.next`)
+  - **Start command:** `npx next start -p ${PORT:-3000}`
+- Build-time variable (baked into the client bundle — **must be set before the
+  build**): `NEXT_PUBLIC_API_BASE_URL=https://<backend-app-domain>/api/v1`.
+  **All API URLs come from this variable — no host is hardcoded.**
 
 ---
 

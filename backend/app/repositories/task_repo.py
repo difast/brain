@@ -21,7 +21,7 @@ class TaskRepository:
     async def get(self, task_id: str) -> Task | None:
         return await self.session.get(Task, task_id)
 
-    async def list(
+    async def list_page(
         self,
         *,
         robot_id: str | None = None,

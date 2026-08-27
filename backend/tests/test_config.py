@@ -1,4 +1,21 @@
-from app.core.config import Settings
+import pytest
+
+from app.core.config import _DEFAULT_SECRET_KEY, Settings
+
+
+def test_production_rejects_default_secret_key():
+    with pytest.raises(ValueError, match="SECRET_KEY"):
+        Settings(environment="production", secret_key=_DEFAULT_SECRET_KEY)
+
+
+def test_production_accepts_custom_secret_key():
+    s = Settings(environment="production", secret_key="a-long-random-secret-value")
+    assert s.secret_key == "a-long-random-secret-value"
+
+
+def test_development_allows_default_secret_key():
+    s = Settings(environment="development", secret_key=_DEFAULT_SECRET_KEY)
+    assert s.secret_key == _DEFAULT_SECRET_KEY
 
 
 def test_mock_when_nothing_configured():

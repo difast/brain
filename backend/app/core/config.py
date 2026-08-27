@@ -10,8 +10,10 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Annotated, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+_DEFAULT_SECRET_KEY = "change-me-in-production-please-use-a-long-random-string"
 
 
 class Settings(BaseSettings):
@@ -32,7 +34,7 @@ class Settings(BaseSettings):
 
     # --- Security ---
     # Secret used to sign robot API tokens (JWT). MUST be overridden in prod.
-    secret_key: str = "change-me-in-production-please-use-a-long-random-string"
+    secret_key: str = _DEFAULT_SECRET_KEY
     jwt_algorithm: str = "HS256"
     # Robot access tokens are long-lived; rotate via re-registration.
     robot_token_ttl_days: int = 365
@@ -118,6 +120,21 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [o.strip() for o in v.split(",") if o.strip()]
         return v
+
+    @model_validator(mode="after")
+    def _require_secret_in_production(self) -> Settings:
+        """Fail fast if the placeholder SECRET_KEY is used in production.
+
+        The default key is a public placeholder — signing robot tokens with it
+        in production would let anyone forge tokens. Force operators to set a
+        real secret (as documented in .env.example / README).
+        """
+        if self.environment == "production" and self.secret_key == _DEFAULT_SECRET_KEY:
+            raise ValueError(
+                "SECRET_KEY must be set to a strong random value in production "
+                "(the default placeholder is not allowed)."
+            )
+        return self
 
     @property
     def storage_enabled(self) -> bool:

@@ -18,7 +18,7 @@ class DecisionRepository:
         await self.session.refresh(decision)
         return decision
 
-    async def list(
+    async def list_page(
         self,
         *,
         robot_id: str | None = None,
