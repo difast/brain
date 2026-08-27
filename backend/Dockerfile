@@ -28,6 +28,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -fsS http://localhost:8000/api/v1/health || exit 1
 
-# start.sh runs `alembic upgrade head` (RUN_MIGRATIONS defaults to 1) and then
-# launches uvicorn. Set RUN_MIGRATIONS=0 to skip migrations.
-CMD ["sh", "scripts/start.sh"]
+# entry.py applies migrations (RUN_MIGRATIONS defaults to 1) then launches
+# uvicorn on $PORT (default 8000). Pure Python — no shell needed, so it behaves
+# identically under Docker and buildpack platforms. Set RUN_MIGRATIONS=0 to skip.
+CMD ["python", "-m", "app.entry"]
