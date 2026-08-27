@@ -60,7 +60,7 @@ class TaskService:
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[Task], int]:
-        return await self.repo.list(
+        return await self.repo.list_page(
             robot_id=robot_id, status=status, limit=limit, offset=offset
         )
 

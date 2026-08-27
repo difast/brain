@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import random
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select
 
@@ -26,7 +27,7 @@ from app.models.telemetry import Telemetry
 logger = get_logger("demo")
 
 DEMO_NAME = "Demo Rover"
-DEMO_CAPS = [
+DEMO_CAPS: list[dict[str, Any]] = [
     {"type": "move_forward", "value": {"type": "number", "min": 0, "max": 1}},
     {"type": "turn_left", "value": {"type": "number", "min": 0, "max": 180}},
     {"type": "turn_right", "value": {"type": "number", "min": 0, "max": 180}},
@@ -36,7 +37,7 @@ DEMO_CAPS = [
     {"type": "light_off"},
 ]
 
-_GOALS = [
+_GOALS: list[tuple[str, list[dict[str, Any]]]] = [
     ("patrol the corridor", [{"type": "move_forward", "value": 0.4}]),
     ("inspect the object ahead", [{"type": "camera_capture", "value": None}]),
     ("avoid the obstacle", [{"type": "turn_left", "value": 20}]),
@@ -44,7 +45,7 @@ _GOALS = [
 ]
 
 
-def _device_actions(universal: list[dict]) -> list[dict]:
+def _device_actions(universal: list[dict[str, Any]]) -> list[dict[str, Any]]:
     translated = ActionTranslator.translate(universal, DEMO_CAPS)
     return [a.to_dict() for a in translated.actions]
 

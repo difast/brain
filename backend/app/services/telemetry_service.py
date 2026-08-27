@@ -39,4 +39,4 @@ class TelemetryService:
     async def list(
         self, *, robot_id: str | None = None, limit: int = 100, offset: int = 0
     ) -> tuple[list[Telemetry], int]:
-        return await self.repo.list(robot_id=robot_id, limit=limit, offset=offset)
+        return await self.repo.list_page(robot_id=robot_id, limit=limit, offset=offset)

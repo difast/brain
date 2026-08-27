@@ -23,7 +23,7 @@ class RobotRepository:
     async def get(self, robot_id: str) -> Robot | None:
         return await self.session.get(Robot, robot_id)
 
-    async def list(
+    async def list_page(
         self,
         *,
         status: RobotStatus | None = None,

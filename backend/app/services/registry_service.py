@@ -106,7 +106,7 @@ class RegistryService:
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[Robot], int]:
-        robots, total = await self.repo.list(
+        robots, total = await self.repo.list_page(
             status=None, robot_type=robot_type, limit=limit, offset=offset
         )
         for robot in robots:

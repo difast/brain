@@ -18,7 +18,7 @@ class ExecutionRepository:
         await self.session.refresh(execution)
         return execution
 
-    async def list(
+    async def list_page(
         self,
         *,
         robot_id: str | None = None,
