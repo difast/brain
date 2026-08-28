@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./logo";
+import { COMPANY } from "./company";
 
 const COLUMNS = [
   {
@@ -18,13 +19,20 @@ const COLUMNS = [
       { href: "/contacts", label: "Контакты" },
     ],
   },
+  {
+    title: "Документы",
+    links: [
+      { href: "/privacy", label: "Политика конфиденциальности" },
+      { href: "/consent", label: "Согласие на обработку ПД" },
+    ],
+  },
 ];
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-line bg-surface">
       <div className="container-x py-14">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
           <div className="max-w-sm">
             <Logo />
             <p className="mt-4 text-sm leading-relaxed text-muted">
@@ -55,9 +63,17 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-line pt-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Mevratek. Все права защищены.</span>
-          <span>Сделано в России · AI Decision Engine</span>
+        <div className="mt-12 border-t border-line pt-6 text-sm text-muted">
+          <p className="leading-relaxed">
+            {COMPANY.brand} · ОГРН {COMPANY.ogrn} · ИНН {COMPANY.inn}
+            <br className="sm:hidden" />
+            <span className="hidden sm:inline"> · </span>
+            {COMPANY.address}
+          </p>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span>© {new Date().getFullYear()} Mevratek. Все права защищены.</span>
+            <span>Сделано в России · AI Decision Engine</span>
+          </div>
         </div>
       </div>
     </footer>

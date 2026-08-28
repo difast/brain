@@ -142,16 +142,40 @@ export function ContactForm() {
         />
       </label>
 
+      <label className="mt-6 flex items-start gap-3 text-xs leading-relaxed text-muted">
+        <input
+          type="checkbox"
+          name="consent"
+          required
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-line text-accent-strong accent-accent-strong focus:ring-2 focus:ring-accent/20"
+        />
+        <span>
+          Я даю{" "}
+          <a
+            href="/consent"
+            target="_blank"
+            className="font-medium text-accent underline underline-offset-2 hover:text-ink"
+          >
+            согласие на обработку персональных данных
+          </a>{" "}
+          и ознакомлен с{" "}
+          <a
+            href="/privacy"
+            target="_blank"
+            className="font-medium text-accent underline underline-offset-2 hover:text-ink"
+          >
+            Политикой конфиденциальности
+          </a>
+          . *
+        </span>
+      </label>
+
       <button
         type="submit"
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent-strong px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink sm:w-auto"
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent-strong px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink sm:w-auto"
       >
         Отправить обращение <ArrowIcon />
       </button>
-      <p className="mt-3 text-xs text-muted">
-        Нажимая «Отправить», вы соглашаетесь на обработку указанных данных для
-        ответа на обращение.
-      </p>
     </form>
   );
 }
