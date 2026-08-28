@@ -11,7 +11,9 @@ export function Requisites() {
       <dl className="mt-4 grid gap-3 sm:grid-cols-2">
         <div>
           <dt className="text-muted">Наименование</dt>
-          <dd className="mt-0.5 font-medium text-ink">{COMPANY.brand}</dd>
+          <dd className="mt-0.5 font-medium text-ink">
+            {COMPANY.legalName} (бренд «{COMPANY.brand}»)
+          </dd>
         </div>
         <div>
           <dt className="text-muted">ОГРН</dt>

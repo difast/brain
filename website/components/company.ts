@@ -2,6 +2,7 @@
 
 export const COMPANY = {
   brand: "Mevratek",
+  legalName: "ООО «ИНТЕГРО»",
   ogrn: "1257700559269",
   inn: "9734021152",
   address:

@@ -65,7 +65,8 @@ export function SiteFooter() {
 
         <div className="mt-12 border-t border-line pt-6 text-sm text-muted">
           <p className="leading-relaxed">
-            {COMPANY.brand} · ОГРН {COMPANY.ogrn} · ИНН {COMPANY.inn}
+            {COMPANY.legalName} (бренд «{COMPANY.brand}») · ОГРН {COMPANY.ogrn} ·
+            ИНН {COMPANY.inn}
             <br className="sm:hidden" />
             <span className="hidden sm:inline"> · </span>
             {COMPANY.address}
