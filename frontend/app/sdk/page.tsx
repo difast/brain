@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { API_BASE } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 type LangId = "python" | "cpp" | "c" | "go" | "javascript";
 
@@ -193,15 +194,13 @@ const SNIPPETS: Record<LangId, string> = {
 };
 
 export default function SdkPage() {
+  const { t } = useT();
   const [lang, setLang] = useState<LangId>("python");
 
   return (
     <main className="container">
       <h1>SDK</h1>
-      <p className="sub">
-        Connect a device in any language. Python has a ready-made SDK; every
-        other language uses the same HTTP/JSON API with its own HTTP client.
-      </p>
+      <p className="sub">{t("sdk.sub")}</p>
 
       {/* Language sub-tabs */}
       <div
@@ -222,7 +221,7 @@ export default function SdkPage() {
 
       {lang === "python" && (
         <div className="panel" style={{ marginBottom: 16 }}>
-          <h2>Install</h2>
+          <h2>{t("sdk.install")}</h2>
           <pre className="mono">
 {`pip install "mevratek-sdk @ git+https://github.com/difast/brain#subdirectory=sdk/python"`}
           </pre>
@@ -230,15 +229,17 @@ export default function SdkPage() {
       )}
 
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h2>Connect &amp; get a decision — {LANGS.find((l) => l.id === lang)?.label}</h2>
+        <h2>
+          {t("sdk.connect")} — {LANGS.find((l) => l.id === lang)?.label}
+        </h2>
         <pre className="mono">{SNIPPETS[lang]}</pre>
         {lang !== "python" && (
           <p className="sub" style={{ margin: "12px 0 0" }}>
-            The device just makes HTTP calls: register once, then loop
-            <span className="mono"> heartbeat → decide → execute → report</span>.
-            Register in the browser on the{" "}
-            <a href="/connect">Connect</a> page to grab a token, or call{" "}
-            <span className="mono">POST /robots/register</span> from code.
+            {t("sdk.note.a")}
+            <span className="mono"> heartbeat → decide → execute → report</span>
+            {t("sdk.note.b")} <a href="/connect">{t("nav.connect")}</a>{" "}
+            {t("sdk.note.c")}{" "}
+            <span className="mono">POST /robots/register</span> {t("sdk.note.d")}
           </p>
         )}
       </div>
@@ -246,7 +247,7 @@ export default function SdkPage() {
       {lang === "python" && (
         <>
           <div className="panel" style={{ marginBottom: 16 }}>
-            <h2>Task Engine</h2>
+            <h2>{t("sdk.taskEngine")}</h2>
             <pre className="mono">
 {`task = bot.next_task()                 # pull next queued task (or None)
 if task:
@@ -257,22 +258,22 @@ if task:
           </div>
 
           <div className="panel">
-            <h2>Methods</h2>
+            <h2>{t("sdk.methods")}</h2>
             <table>
               <thead>
                 <tr>
-                  <th>Method</th>
-                  <th>Description</th>
+                  <th>{t("sdk.colMethod")}</th>
+                  <th>{t("sdk.colDesc")}</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td className="mono">BrainClient.register(url, name, robot_type, capabilities, meta)</td><td>Register and return a client</td></tr>
-                <tr><td className="mono">BrainClient(url, token=...)</td><td>Construct from an existing token</td></tr>
-                <tr><td className="mono">.heartbeat(status)</td><td>Report liveness</td></tr>
-                <tr><td className="mono">.decide(task, state, image_bytes/image_b64, frame_url, task_id)</td><td>Get a decision</td></tr>
-                <tr><td className="mono">.send_telemetry(battery, speed, x, y, z, errors, extra)</td><td>Send telemetry</td></tr>
-                <tr><td className="mono">.next_task()</td><td>Pull next queued task (or None)</td></tr>
-                <tr><td className="mono">.report_task_result(task_id, status, result)</td><td>Report task outcome</td></tr>
+                <tr><td className="mono">BrainClient.register(url, name, robot_type, capabilities, meta)</td><td>{t("sdk.m.register")}</td></tr>
+                <tr><td className="mono">BrainClient(url, token=...)</td><td>{t("sdk.m.construct")}</td></tr>
+                <tr><td className="mono">.heartbeat(status)</td><td>{t("sdk.m.heartbeat")}</td></tr>
+                <tr><td className="mono">.decide(task, state, image_bytes/image_b64, frame_url, task_id)</td><td>{t("sdk.m.decide")}</td></tr>
+                <tr><td className="mono">.send_telemetry(battery, speed, x, y, z, errors, extra)</td><td>{t("sdk.m.telemetry")}</td></tr>
+                <tr><td className="mono">.next_task()</td><td>{t("sdk.m.nextTask")}</td></tr>
+                <tr><td className="mono">.report_task_result(task_id, status, result)</td><td>{t("sdk.m.reportTask")}</td></tr>
               </tbody>
             </table>
           </div>
@@ -280,10 +281,9 @@ if task:
       )}
 
       <p className="sub" style={{ marginTop: 16 }}>
-        Full endpoint reference: the{" "}
-        <a href="/docs">Documentation</a> and the interactive{" "}
-        <a href={API_BASE.replace(/\/api\/v1$/, "/docs")}>OpenAPI / Swagger</a>{" "}
-        page.
+        {t("sdk.ref.a")} <a href="/docs">{t("nav.docs")}</a> {t("sdk.ref.b")}{" "}
+        <a href={API_BASE.replace(/\/api\/v1$/, "/docs")}>OpenAPI / Swagger</a>
+        {t("sdk.ref.c")}
       </p>
     </main>
   );
