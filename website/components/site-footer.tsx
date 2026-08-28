@@ -30,7 +30,7 @@ const COLUMNS = [
 
 export function SiteFooter() {
   return (
-    <footer className="relative z-10 -mt-8 rounded-t-[72px] border-t border-line bg-surface shadow-[0_-10px_30px_-18px_rgba(20,23,28,0.18)]">
+    <footer className="relative z-10 -mt-8 rounded-t-[72px] border-t border-line bg-footer shadow-[0_-10px_30px_-18px_rgba(20,23,28,0.22)]">
       <div className="container-x py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
           <div className="max-w-sm">

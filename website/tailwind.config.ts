@@ -12,6 +12,7 @@ const config: Config = {
         muted: "#5b6470",
         line: "#e5e8ec",
         surface: "#f6f7f9",
+        footer: "#e7eaef",
         accent: {
           DEFAULT: "#374151",
           strong: "#1f2937",

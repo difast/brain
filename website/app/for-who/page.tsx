@@ -83,16 +83,16 @@ export default function ForWhoPage() {
 
       <Section className="!pt-0">
         <Container>
-          <div className="rounded-[72px] border border-line bg-accent-strong px-6 py-12 text-center text-white sm:py-14">
-            <h2 className="mx-auto max-w-2xl text-3xl font-semibold sm:text-4xl">
+          <div className="rounded-[72px] border border-line bg-surface px-6 py-12 text-center sm:py-14">
+            <h2 className="mx-auto max-w-2xl text-3xl font-semibold text-ink sm:text-4xl">
               Не нашли свой сценарий?
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-white/70">
+            <p className="mx-auto mt-4 max-w-xl text-muted">
               Расскажите о вашей задаче — обсудим, как платформа подойдёт именно
               вам.
             </p>
             <div className="mt-8 flex justify-center">
-              <Button href="/contacts" variant="secondary">
+              <Button href="/contacts">
                 Обсудить задачу <ArrowIcon />
               </Button>
             </div>
