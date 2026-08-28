@@ -83,7 +83,7 @@ export default function ForWhoPage() {
 
       <Section className="!pt-0">
         <Container>
-          <div className="rounded-2xl border border-line bg-accent-strong px-6 py-12 text-center text-white sm:py-14">
+          <div className="rounded-3xl border border-line bg-accent-strong px-6 py-12 text-center text-white sm:py-14">
             <h2 className="mx-auto max-w-2xl text-3xl font-semibold sm:text-4xl">
               Не нашли свой сценарий?
             </h2>

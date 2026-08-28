@@ -60,7 +60,7 @@ export default function HomePage() {
       {/* Social proof */}
       <Section className="!py-0">
         <Container>
-          <div className="rounded-2xl border border-line bg-accent-strong px-6 py-8 text-white sm:px-10 sm:py-10">
+          <div className="rounded-3xl border border-line bg-accent-strong px-6 py-8 text-white sm:px-10 sm:py-10">
             <div className="grid gap-8 md:grid-cols-[1fr_1.1fr] md:items-center">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
@@ -188,7 +188,7 @@ export default function HomePage() {
       {/* CTA */}
       <Section>
         <Container>
-          <div className="rounded-2xl border border-line bg-white px-6 py-12 text-center sm:px-10 sm:py-16">
+          <div className="rounded-3xl border border-line bg-white px-6 py-12 text-center sm:px-10 sm:py-16">
             <h2 className="mx-auto max-w-2xl text-3xl font-semibold leading-tight sm:text-4xl">
               Подключите первое устройство за один день
             </h2>

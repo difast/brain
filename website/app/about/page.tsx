@@ -177,7 +177,7 @@ export default function AboutPage() {
 
       <Section>
         <Container>
-          <div className="rounded-2xl border border-line px-6 py-12 text-center sm:py-14">
+          <div className="rounded-3xl border border-line px-6 py-12 text-center sm:py-14">
             <h2 className="text-3xl font-semibold sm:text-4xl">
               Хотите стать частью пилота?
             </h2>

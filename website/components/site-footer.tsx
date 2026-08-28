@@ -30,7 +30,7 @@ const COLUMNS = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-line bg-surface">
+    <footer className="relative z-10 -mt-6 rounded-t-3xl border-t border-line bg-surface shadow-[0_-10px_30px_-18px_rgba(20,23,28,0.18)]">
       <div className="container-x py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
           <div className="max-w-sm">
@@ -65,8 +65,7 @@ export function SiteFooter() {
 
         <div className="mt-12 border-t border-line pt-6 text-sm text-muted">
           <p className="leading-relaxed">
-            {COMPANY.legalName} (бренд «{COMPANY.brand}») · ОГРН {COMPANY.ogrn} ·
-            ИНН {COMPANY.inn}
+            {COMPANY.legalName} · ОГРН {COMPANY.ogrn} · ИНН {COMPANY.inn}
             <br className="sm:hidden" />
             <span className="hidden sm:inline"> · </span>
             {COMPANY.address}
