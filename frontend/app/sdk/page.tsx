@@ -1,27 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { API_BASE } from "@/lib/api";
 
-export default function SdkPage() {
-  return (
-    <main className="container">
-      <h1>SDK</h1>
-      <p className="sub">
-        Official Python SDK — connect a robot in a few lines instead of
-        hand-building HTTP requests.
-      </p>
+type LangId = "python" | "cpp" | "c" | "go" | "javascript";
 
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <h2>Install</h2>
-        <pre className="mono">
-{`pip install "mevratek-sdk @ git+https://github.com/difast/brain#subdirectory=sdk/python"`}
-        </pre>
-      </div>
+const LANGS: { id: LangId; label: string }[] = [
+  { id: "python", label: "Python" },
+  { id: "cpp", label: "C++" },
+  { id: "c", label: "C" },
+  { id: "go", label: "Go" },
+  { id: "javascript", label: "JavaScript" },
+];
 
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <h2>Quick start</h2>
-        <pre className="mono">
-{`from mevratek import BrainClient
+const PY = `# pip install "mevratek-sdk @ git+https://github.com/difast/brain#subdirectory=sdk/python"
+from mevratek import BrainClient
 
 # 1. Register once (save bot.token to reuse next time)
 bot = BrainClient.register(
@@ -44,54 +37,250 @@ bot.send_telemetry(battery=82, speed=0.0, x=0, y=0)
 decision = bot.decide(
     task="find and approach the bottle",
     state={"battery": 82, "obstacle_distance_m": 1.4},
-    image_bytes=open("frame.jpg", "rb").read(),  # optional
 )
 for action in decision["actions"]:
-    print("execute", action["type"], action["value"])`}
-        </pre>
+    print("execute", action["type"], action["value"])
+
+# Reuse an existing token later:
+# bot = BrainClient("${API_BASE}", token="eyJ...")`;
+
+const JS = `// Node 18+ / browser — plain fetch, no dependencies.
+const API = "${API_BASE}";
+
+// 1. Register (save token to reuse next time)
+let res = await fetch(\`\${API}/robots/register\`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    name: "rover-01",
+    robot_type: "rover",
+    capabilities: [
+      { type: "move_forward", value: { type: "number", min: 0, max: 1 } },
+      { type: "stop" },
+    ],
+  }),
+});
+const { token, api_key, robot } = await res.json();
+
+// 2. Report liveness
+await fetch(\`\${API}/robots/heartbeat\`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Authorization: \`Bearer \${token}\` },
+  body: JSON.stringify({ status: "online" }),
+});
+
+// 3. Ask the brain what to do
+res = await fetch(\`\${API}/brain/decision\`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Authorization: \`Bearer \${token}\` },
+  body: JSON.stringify({ task: "approach the bottle", state: { battery: 82 } }),
+});
+const decision = await res.json();
+console.log(decision.actions);`;
+
+const GO = `// go run main.go
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+)
+
+const API = "${API_BASE}"
+
+func postJSON(url, bearer string, payload any) map[string]any {
+	body, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", url, bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	if bearer != "" {
+		req.Header.Set("Authorization", "Bearer "+bearer)
+	}
+	res, _ := http.DefaultClient.Do(req)
+	defer res.Body.Close()
+	var out map[string]any
+	json.NewDecoder(res.Body).Decode(&out)
+	return out
+}
+
+func main() {
+	// 1. Register
+	reg := postJSON(API+"/robots/register", "", map[string]any{
+		"name": "rover-01", "robot_type": "rover",
+		"capabilities": []map[string]any{{"type": "move_forward"}, {"type": "stop"}},
+	})
+	token := reg["token"].(string)
+
+	// 2. Ask the brain what to do
+	decision := postJSON(API+"/brain/decision", token, map[string]any{
+		"task": "approach the bottle", "state": map[string]any{"battery": 82},
+	})
+	fmt.Println(decision["actions"])
+}`;
+
+const CPP = `// g++ main.cpp -lcurl   (JSON parsing: use nlohmann/json or similar)
+#include <curl/curl.h>
+#include <string>
+
+static size_t sink(char* p, size_t s, size_t n, void* out) {
+  ((std::string*)out)->append(p, s * n);
+  return s * n;
+}
+
+std::string postJSON(const std::string& url, const std::string& body,
+                     const std::string& bearer = "") {
+  CURL* c = curl_easy_init();
+  std::string resp;
+  curl_slist* h = nullptr;
+  h = curl_slist_append(h, "Content-Type: application/json");
+  if (!bearer.empty())
+    h = curl_slist_append(h, ("Authorization: Bearer " + bearer).c_str());
+  curl_easy_setopt(c, CURLOPT_URL, url.c_str());
+  curl_easy_setopt(c, CURLOPT_HTTPHEADER, h);
+  curl_easy_setopt(c, CURLOPT_POSTFIELDS, body.c_str());
+  curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, sink);
+  curl_easy_setopt(c, CURLOPT_WRITEDATA, &resp);
+  curl_easy_perform(c);
+  curl_easy_cleanup(c);
+  return resp;
+}
+
+int main() {
+  const std::string API = "${API_BASE}";
+  // 1. Register -> response JSON contains "token"; parse it out.
+  std::string reg = postJSON(API + "/robots/register",
+    R"({"name":"rover-01","robot_type":"rover",)"
+    R"("capabilities":[{"type":"move_forward"},{"type":"stop"}]})");
+  std::string token = /* parse "token" from reg */ "";
+
+  // 2. Ask the brain what to do (send the bearer token).
+  std::string decision = postJSON(API + "/brain/decision",
+    R"({"task":"approach the bottle","state":{"battery":82}})", token);
+  // parse decision["actions"] and execute them
+}`;
+
+const C = `/* cc main.c -lcurl   (JSON parsing: use cJSON or similar) */
+#include <curl/curl.h>
+
+int main(void) {
+  const char *API = "${API_BASE}";
+  CURL *c = curl_easy_init();
+  struct curl_slist *h = NULL;
+  h = curl_slist_append(h, "Content-Type: application/json");
+
+  /* 1. Register — response body contains "token"; parse it (e.g. cJSON). */
+  curl_easy_setopt(c, CURLOPT_URL, "${API_BASE}/robots/register");
+  curl_easy_setopt(c, CURLOPT_HTTPHEADER, h);
+  curl_easy_setopt(c, CURLOPT_POSTFIELDS,
+      "{\\"name\\":\\"rover-01\\",\\"robot_type\\":\\"rover\\","
+      "\\"capabilities\\":[{\\"type\\":\\"move_forward\\"},{\\"type\\":\\"stop\\"}]}");
+  curl_easy_perform(c);
+
+  /* 2. Ask the brain: POST /brain/decision with an extra header
+        "Authorization: Bearer <token>" and body {"task":...,"state":...},
+        then parse "actions" from the response and execute them. */
+  curl_easy_cleanup(c);
+  return 0;
+}`;
+
+const SNIPPETS: Record<LangId, string> = {
+  python: PY,
+  javascript: JS,
+  go: GO,
+  cpp: CPP,
+  c: C,
+};
+
+export default function SdkPage() {
+  const [lang, setLang] = useState<LangId>("python");
+
+  return (
+    <main className="container">
+      <h1>SDK</h1>
+      <p className="sub">
+        Connect a device in any language. Python has a ready-made SDK; every
+        other language uses the same HTTP/JSON API with its own HTTP client.
+      </p>
+
+      {/* Language sub-tabs */}
+      <div
+        className="lang-switch"
+        style={{ display: "inline-flex", marginBottom: 16 }}
+      >
+        {LANGS.map((l) => (
+          <button
+            key={l.id}
+            className={lang === l.id ? "active" : ""}
+            onClick={() => setLang(l.id)}
+            style={{ fontSize: 13, padding: "6px 14px" }}
+          >
+            {l.label}
+          </button>
+        ))}
       </div>
 
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <h2>Reuse an existing token</h2>
-        <pre className="mono">
-{`bot = BrainClient("${API_BASE}", token="eyJ...")`}
-        </pre>
-      </div>
+      {lang === "python" && (
+        <div className="panel" style={{ marginBottom: 16 }}>
+          <h2>Install</h2>
+          <pre className="mono">
+{`pip install "mevratek-sdk @ git+https://github.com/difast/brain#subdirectory=sdk/python"`}
+          </pre>
+        </div>
+      )}
 
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h2>Task Engine</h2>
-        <pre className="mono">
+        <h2>Connect &amp; get a decision — {LANGS.find((l) => l.id === lang)?.label}</h2>
+        <pre className="mono">{SNIPPETS[lang]}</pre>
+        {lang !== "python" && (
+          <p className="sub" style={{ margin: "12px 0 0" }}>
+            The device just makes HTTP calls: register once, then loop
+            <span className="mono"> heartbeat → decide → execute → report</span>.
+            Register in the browser on the{" "}
+            <a href="/connect">Connect</a> page to grab a token, or call{" "}
+            <span className="mono">POST /robots/register</span> from code.
+          </p>
+        )}
+      </div>
+
+      {lang === "python" && (
+        <>
+          <div className="panel" style={{ marginBottom: 16 }}>
+            <h2>Task Engine</h2>
+            <pre className="mono">
 {`task = bot.next_task()                 # pull next queued task (or None)
 if task:
     decision = bot.decide(task=task["description"], state={...})
     # ... execute actions ...
     bot.report_task_result(task["id"], status="completed", result="done")`}
-        </pre>
-      </div>
+            </pre>
+          </div>
 
-      <div className="panel">
-        <h2>Methods</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Method</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td className="mono">BrainClient.register(url, name, robot_type, capabilities, meta)</td><td>Register and return a client</td></tr>
-            <tr><td className="mono">BrainClient(url, token=...)</td><td>Construct from an existing token</td></tr>
-            <tr><td className="mono">.heartbeat(status)</td><td>Report liveness</td></tr>
-            <tr><td className="mono">.decide(task, state, image_bytes/image_b64, frame_url, task_id)</td><td>Get a decision</td></tr>
-            <tr><td className="mono">.send_telemetry(battery, speed, x, y, z, errors, extra)</td><td>Send telemetry</td></tr>
-            <tr><td className="mono">.next_task()</td><td>Pull next queued task (or None)</td></tr>
-            <tr><td className="mono">.report_task_result(task_id, status, result)</td><td>Report task outcome</td></tr>
-          </tbody>
-        </table>
-      </div>
+          <div className="panel">
+            <h2>Methods</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Method</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td className="mono">BrainClient.register(url, name, robot_type, capabilities, meta)</td><td>Register and return a client</td></tr>
+                <tr><td className="mono">BrainClient(url, token=...)</td><td>Construct from an existing token</td></tr>
+                <tr><td className="mono">.heartbeat(status)</td><td>Report liveness</td></tr>
+                <tr><td className="mono">.decide(task, state, image_bytes/image_b64, frame_url, task_id)</td><td>Get a decision</td></tr>
+                <tr><td className="mono">.send_telemetry(battery, speed, x, y, z, errors, extra)</td><td>Send telemetry</td></tr>
+                <tr><td className="mono">.next_task()</td><td>Pull next queued task (or None)</td></tr>
+                <tr><td className="mono">.report_task_result(task_id, status, result)</td><td>Report task outcome</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       <p className="sub" style={{ marginTop: 16 }}>
-        Other languages: any HTTP client works — see the{" "}
+        Full endpoint reference: the{" "}
         <a href="/docs">Documentation</a> and the interactive{" "}
         <a href={API_BASE.replace(/\/api\/v1$/, "/docs")}>OpenAPI / Swagger</a>{" "}
         page.

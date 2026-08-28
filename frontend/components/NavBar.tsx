@@ -11,6 +11,7 @@ export function NavBar() {
         ◎ Mevra<span>tek</span>
       </Link>
       <Link href="/">{t("nav.robots")}</Link>
+      <Link href="/connect">{t("nav.connect")}</Link>
       <Link href="/logs">{t("nav.logs")}</Link>
       <Link href="/tasks">{t("nav.tasks")}</Link>
       <Link href="/simulator">{t("nav.simulator")}</Link>
