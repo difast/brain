@@ -183,7 +183,7 @@ export default function PlatformPage() {
 
       <Section>
         <Container>
-          <div className="rounded-3xl border border-line px-6 py-12 text-center sm:py-14">
+          <div className="rounded-[72px] border border-line px-6 py-12 text-center sm:py-14">
             <h2 className="text-3xl font-semibold sm:text-4xl">
               Готовы протестировать на своём устройстве?
             </h2>
