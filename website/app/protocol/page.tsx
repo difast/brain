@@ -213,15 +213,13 @@ while True:
                   Долгосрочная цель
                 </span>
               </div>
-              <h2 className="text-3xl font-semibold sm:text-4xl">
+              <h2 className="text-3xl font-semibold text-white sm:text-4xl">
                 Основа межпроизводственной совместимости устройств в России
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-white/85">
-                Мы развиваем Mevratek Protocol как открытый контракт, к которому
-                могут подключаться устройства разных производителей. Наша цель —
-                чтобы он стал основой совместимости роботов на российском рынке.
-                Это направление развития, а не свершившийся отраслевой стандарт —
-                и мы идём к нему через реальные внедрения.
+                Наша цель — сделать Mevratek Protocol основой совместимости
+                роботов на российском рынке. Это направление развития, а не
+                свершившийся стандарт.
               </p>
               <div className="mt-8 flex justify-center">
                 <Button href="/contacts" variant="secondary">

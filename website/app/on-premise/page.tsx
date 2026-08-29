@@ -189,7 +189,7 @@ export default function OnPremisePage() {
       <Section className="!pt-0">
         <Container>
           <div className="rounded-[72px] border border-line bg-accent-strong px-6 py-12 text-center text-white sm:py-14">
-            <h2 className="mx-auto max-w-2xl text-3xl font-semibold sm:text-4xl">
+            <h2 className="mx-auto max-w-2xl text-3xl font-semibold text-white sm:text-4xl">
               Нужен деплой в закрытом контуре?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-white/85">
