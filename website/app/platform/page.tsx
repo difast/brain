@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   Button,
   Container,
@@ -111,8 +112,59 @@ export default function PlatformPage() {
         </Container>
       </Section>
 
+      {/* Key technologies hub */}
+      <Section>
+        <Container>
+          <SectionHeading
+            eyebrow="Ключевые технологии"
+            title="Протокол и локальный деплой"
+            intro="Два направления, на которых строится независимость платформы: единый протокол управления любым железом и возможность развернуть всё внутри контура заказчика."
+          />
+          <div className="mt-10 grid gap-4 md:grid-cols-2">
+            <Link
+              href="/protocol"
+              className="group flex flex-col rounded-2xl border border-line bg-white p-7 transition-shadow hover:shadow-[0_1px_2px_rgba(20,23,28,0.04),0_8px_24px_-12px_rgba(20,23,28,0.12)]"
+            >
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+                Технология
+              </div>
+              <div className="mt-1 text-xl font-semibold text-ink">
+                Mevratek Protocol
+              </div>
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">
+                Единый протокол взаимодействия облака и роботов: подключение
+                устройств разных производителей через один API и набор команд,
+                независимо от аппаратной архитектуры.
+              </p>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-accent group-hover:text-ink">
+                Подробнее о протоколе <ArrowIcon />
+              </span>
+            </Link>
+            <Link
+              href="/on-premise"
+              className="group flex flex-col rounded-2xl border border-line bg-white p-7 transition-shadow hover:shadow-[0_1px_2px_rgba(20,23,28,0.04),0_8px_24px_-12px_rgba(20,23,28,0.12)]"
+            >
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+                Развёртывание
+              </div>
+              <div className="mt-1 text-xl font-semibold text-ink">
+                Mevratek On-Premise
+              </div>
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">
+                Развёртывание платформы полностью внутри инфраструктуры
+                заказчика: телеметрия, логи, AI-модели и данные устройств
+                остаются в закрытом контуре предприятия.
+              </p>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-accent group-hover:text-ink">
+                Подробнее о On-Premise <ArrowIcon />
+              </span>
+            </Link>
+          </div>
+        </Container>
+      </Section>
+
       {/* AI models */}
-      <Section id="models">
+      <Section id="models" className="bg-surface">
         <Container>
           <SectionHeading
             eyebrow="Model Router"
@@ -136,7 +188,7 @@ export default function PlatformPage() {
       </Section>
 
       {/* Simulator */}
-      <Section id="simulator" className="bg-surface">
+      <Section id="simulator">
         <Container>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
             <div>

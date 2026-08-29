@@ -8,6 +8,8 @@ import { Button } from "./ui";
 
 const NAV = [
   { href: "/platform", label: "Платформа" },
+  { href: "/protocol", label: "Протокол" },
+  { href: "/on-premise", label: "On-Premise" },
   { href: "/for-who", label: "Для кого" },
   { href: "/about", label: "О проекте" },
   { href: "/contacts", label: "Контакты" },
@@ -33,7 +35,7 @@ export function SiteHeader() {
       <div className="container-x flex h-16 items-center justify-between">
         <Logo />
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-5 lg:gap-7 md:flex">
           {NAV.map((item) => {
             const active = pathname === item.href;
             return (

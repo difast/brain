@@ -7,8 +7,9 @@ const COLUMNS = [
     title: "Продукт",
     links: [
       { href: "/platform", label: "Платформа" },
+      { href: "/protocol", label: "Mevratek Protocol" },
+      { href: "/on-premise", label: "On-Premise" },
       { href: "/platform#simulator", label: "Симулятор" },
-      { href: "/platform#models", label: "AI-модели" },
     ],
   },
   {
