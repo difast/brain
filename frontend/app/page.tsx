@@ -15,6 +15,16 @@ export default function RobotsPage() {
   const { data, error, loading } = usePoll(() => api.listRobots());
   const robots = data?.items ?? [];
   const online = robots.filter((r) => r.status === "online").length;
+  const errors = robots.filter((r) => r.status === "error").length;
+
+  // Lightweight overview: decisions in the last 24h (recent window).
+  const logs = usePoll(() => api.listLogs(undefined, { limit: 200 }), 15000);
+  const decisions24h = useMemo(() => {
+    const since = Date.now() - 86_400_000;
+    return (logs.data?.items ?? []).filter(
+      (d) => new Date(d.created_at).getTime() >= since,
+    ).length;
+  }, [logs.data]);
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -58,22 +68,29 @@ export default function RobotsPage() {
         </div>
       )}
 
-      <div className="grid cards" style={{ marginBottom: 24 }}>
-        <div className="panel">
-          <h2>{t("robots.total")}</h2>
-          <div className="stat">{robots.length}</div>
+      <div className="kpi-strip">
+        <div className="kpi">
+          <div className="kpi-label">{t("robots.total")}</div>
+          <div className="kpi-value">{robots.length}</div>
         </div>
-        <div className="panel">
-          <h2>{t("robots.online")}</h2>
-          <div className="stat" style={{ color: "var(--online)" }}>
+        <div className="kpi">
+          <div className="kpi-label">{t("robots.online")}</div>
+          <div className="kpi-value" style={{ color: "var(--online)" }}>
             {online}
           </div>
         </div>
-        <div className="panel">
-          <h2>{t("robots.types")}</h2>
-          <div className="stat">
-            {new Set(robots.map((r) => r.robot_type)).size}
+        <div className="kpi">
+          <div className="kpi-label">{t("robots.errors")}</div>
+          <div
+            className="kpi-value"
+            style={{ color: errors > 0 ? "var(--error)" : undefined }}
+          >
+            {errors}
           </div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">{t("robots.decisions24h")}</div>
+          <div className="kpi-value">{decisions24h}</div>
         </div>
       </div>
 
