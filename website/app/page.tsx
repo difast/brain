@@ -11,6 +11,7 @@ import {
 } from "@/components/ui";
 import { FlowDiagram } from "@/components/diagrams";
 import { PLATFORM_COMPONENTS } from "@/components/content";
+import { SoftwareApplicationJsonLd } from "@/components/schema";
 
 export const metadata: Metadata = {
   title: "Облачная платформа управления роботами",
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
+      <SoftwareApplicationJsonLd />
       {/* Hero */}
       <Section className="pt-14 sm:pt-20">
         <Container>
@@ -174,12 +176,21 @@ export default function HomePage() {
               </Card>
             ))}
           </div>
-          <div className="mt-8">
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-semibold">
             <Link
               href="/platform"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-ink"
+              className="inline-flex items-center gap-1.5 text-accent hover:text-ink"
             >
               Подробно о платформе <ArrowIcon />
+            </Link>
+            <Link
+              href="/documentation"
+              className="text-accent hover:text-ink"
+            >
+              Документация
+            </Link>
+            <Link href="/blog" className="text-accent hover:text-ink">
+              Блог
             </Link>
           </div>
         </Container>

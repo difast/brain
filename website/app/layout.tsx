@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/schema";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mevratek.ru";
 
@@ -55,6 +56,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           К содержимому
         </a>
+        <OrganizationJsonLd />
+        <WebSiteJsonLd />
         <SiteHeader />
         <main id="main">{children}</main>
         <SiteFooter />

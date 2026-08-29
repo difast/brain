@@ -9,6 +9,7 @@ const COLUMNS = [
       { href: "/platform", label: "Платформа" },
       { href: "/protocol", label: "Mevratek Protocol" },
       { href: "/on-premise", label: "On-Premise" },
+      { href: "/documentation", label: "Документация" },
       { href: "/platform#simulator", label: "Симулятор" },
     ],
   },
@@ -17,6 +18,7 @@ const COLUMNS = [
     links: [
       { href: "/about", label: "О проекте" },
       { href: "/for-who", label: "Для кого" },
+      { href: "/blog", label: "Блог" },
       { href: "/contacts", label: "Контакты" },
     ],
   },
