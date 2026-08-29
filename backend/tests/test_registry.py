@@ -15,6 +15,29 @@ async def test_register_returns_token_and_key(client, rover_payload):
 
 
 @pytest.mark.asyncio
+async def test_rename_device(client, rover_payload):
+    reg = (await client.post(f"{API}/robots/register", json=rover_payload)).json()
+    robot_id = reg["robot"]["id"]
+
+    resp = await client.patch(
+        f"{API}/robots/{robot_id}", json={"name": "Склад-1 · тележка"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["name"] == "Склад-1 · тележка"
+
+    fetched = (await client.get(f"{API}/robots/{robot_id}")).json()
+    assert fetched["name"] == "Склад-1 · тележка"
+
+
+@pytest.mark.asyncio
+async def test_rename_rejects_empty(client, rover_payload):
+    reg = (await client.post(f"{API}/robots/register", json=rover_payload)).json()
+    robot_id = reg["robot"]["id"]
+    resp = await client.patch(f"{API}/robots/{robot_id}", json={"name": ""})
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_heartbeat_requires_auth(client):
     resp = await client.post(f"{API}/robots/heartbeat", json={"status": "online"})
     assert resp.status_code == 401

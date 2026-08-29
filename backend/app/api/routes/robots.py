@@ -19,6 +19,7 @@ from app.schemas.robot import (
     RobotRegisterRequest,
     RobotRegisterResponse,
     RobotResponse,
+    RobotUpdateRequest,
 )
 from app.services.registry_service import RegistryService
 
@@ -98,6 +99,21 @@ async def get_robot(
 ) -> RobotResponse:
     service = RegistryService(session)
     robot = await service.get(robot_id)
+    return RobotResponse.model_validate(robot)
+
+
+@router.patch(
+    "/robots/{robot_id}",
+    response_model=RobotResponse,
+    summary="Update a device (rename)",
+)
+async def update_robot(
+    robot_id: str,
+    payload: RobotUpdateRequest,
+    session: SessionDep,
+) -> RobotResponse:
+    service = RegistryService(session)
+    robot = await service.rename(robot_id, payload.name)
     return RobotResponse.model_validate(robot)
 
 

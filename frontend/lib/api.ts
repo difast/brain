@@ -144,6 +144,19 @@ async function post<T>(path: string, body: unknown, token?: string): Promise<T> 
   return res.json() as Promise<T>;
 }
 
+async function patch<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`${res.status}: ${text}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 async function del<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { method: "DELETE" });
   if (!res.ok) {
@@ -191,6 +204,8 @@ export const api = {
 
   pauseRobot: (id: string) => post<Robot>(`/robots/${id}/pause`, {}),
   resumeRobot: (id: string) => post<Robot>(`/robots/${id}/resume`, {}),
+  renameRobot: (id: string, name: string) =>
+    patch<Robot>(`/robots/${id}`, { name }),
 
   // Task Engine
   createTask: (body: {

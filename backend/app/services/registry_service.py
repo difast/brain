@@ -87,6 +87,19 @@ class RegistryService:
             )
         return robot
 
+    async def rename(self, robot_id: str, name: str) -> Robot:
+        robot = await self.repo.get(robot_id)
+        if robot is None:
+            raise RobotNotFoundError()
+        robot.name = name.strip()
+        await self.repo.touch(robot)
+        if robot.status != RobotStatus.error:
+            robot.status = (
+                RobotStatus.online if _is_online(robot) else RobotStatus.offline
+            )
+        logger.info("robot_renamed", robot_id=robot_id)
+        return robot
+
     async def set_paused(self, robot_id: str, paused: bool) -> Robot:
         robot = await self.repo.get(robot_id)
         if robot is None:

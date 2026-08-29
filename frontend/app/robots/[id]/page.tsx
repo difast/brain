@@ -14,6 +14,10 @@ export default function RobotDetail({
   const { t } = useT();
   const { id } = params;
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [renaming, setRenaming] = useState(false);
+  const [nameOverride, setNameOverride] = useState<string | null>(null);
   const robot = usePoll(() => api.getRobot(id), 5000);
   const profile = usePoll(() => api.getProfile(id), 8000);
   const logs = usePoll(() => api.listLogs(id), 4000);
@@ -28,6 +32,20 @@ export default function RobotDetail({
   const readings = telemetry.data?.items ?? [];
   const execs = executions.data?.items ?? [];
   const latest = readings[0];
+  const displayName = nameOverride ?? r?.name ?? "";
+
+  async function saveName() {
+    const name = draft.trim();
+    if (!name) return;
+    setRenaming(true);
+    try {
+      const updated = await api.renameRobot(id, name);
+      setNameOverride(updated.name);
+      setEditing(false);
+    } finally {
+      setRenaming(false);
+    }
+  }
 
   return (
     <main className="container">
@@ -35,7 +53,69 @@ export default function RobotDetail({
       {r && (
         <>
           <div className="row" style={{ alignItems: "center", gap: 14 }}>
-            <h1 style={{ margin: 0 }}>{r.name}</h1>
+            {editing ? (
+              <div className="row" style={{ gap: 8, alignItems: "center" }}>
+                <input
+                  autoFocus
+                  value={draft}
+                  maxLength={255}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveName();
+                    if (e.key === "Escape") setEditing(false);
+                  }}
+                  style={{ fontSize: 18, fontWeight: 700, padding: "7px 11px", minWidth: 240 }}
+                />
+                <button
+                  onClick={saveName}
+                  disabled={renaming || !draft.trim()}
+                  style={{ padding: "7px 14px" }}
+                >
+                  {t("common.save")}
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  disabled={renaming}
+                  style={{
+                    background: "var(--panel-2)",
+                    color: "var(--text)",
+                    padding: "7px 14px",
+                  }}
+                >
+                  {t("common.cancel")}
+                </button>
+              </div>
+            ) : (
+              <div className="row" style={{ gap: 8, alignItems: "center" }}>
+                <h1 style={{ margin: 0 }}>{displayName}</h1>
+                <button
+                  title={t("rd.rename")}
+                  aria-label={t("rd.rename")}
+                  onClick={() => {
+                    setDraft(displayName);
+                    setEditing(true);
+                  }}
+                  style={{
+                    background: "transparent",
+                    color: "var(--muted)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 7,
+                    padding: "5px 9px",
+                    lineHeight: 1,
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path
+                      d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinejoin="round"
+                    />
+                    <path d="M13.5 8l2.5 2.5" stroke="currentColor" strokeWidth="1.6" />
+                  </svg>
+                </button>
+              </div>
+            )}
             <StatusBadge status={r.status} />
             <span className="chip">{r.robot_type}</span>
             <DemoBadge meta={r.meta} />

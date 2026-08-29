@@ -23,6 +23,12 @@ class RobotRegisterRequest(BaseModel):
     meta: dict[str, Any] = Field(default_factory=dict)
 
 
+class RobotUpdateRequest(BaseModel):
+    """Editable device fields (currently just the display name)."""
+
+    name: str = Field(..., min_length=1, max_length=255, examples=["Склад-1 · тележка"])
+
+
 class RobotResponse(ORMModel):
     id: str
     name: str
