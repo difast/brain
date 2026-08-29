@@ -27,6 +27,7 @@ interface Docs {
   tasks: { title: string; p1: string };
   telemetry: { title: string; p1: string };
   memory: { title: string; p1: string };
+  accounts: { title: string; p1: string; p2: string };
   auth: { title: string; p1: string };
   apikeys: { title: string; p1: string };
   dal: { title: string; p1: string };
@@ -49,7 +50,8 @@ const EN: Docs = {
   nav: {
     overview: "Overview", architecture: "Architecture", quickstart: "Quick start",
     robots: "Devices & Registry", decisions: "Decision Engine", tasks: "Task Engine",
-    telemetry: "Telemetry", memory: "Memory", auth: "Authentication", apikeys: "API Keys",
+    telemetry: "Telemetry", memory: "Memory", accounts: "Accounts & Organizations",
+    auth: "Authentication", apikeys: "API Keys",
     dal: "DAL overview", "universal-actions": "Universal Actions", translator: "Action Translator",
     "device-profile": "Device Profile", "execution-feedback": "Execution Feedback",
     "memory-learning": "Memory & Learning", "model-router": "Model Router",
@@ -104,13 +106,18 @@ const EN: Docs = {
     title: "Memory",
     p1: "Every decision is persisted (goal, thought, confidence, actions, frame, model, latency) along with task history — the full audit trail, available via GET /logs and the dashboard.",
   },
+  accounts: {
+    title: "Accounts & Organizations",
+    p1: "The dashboard is multi-tenant. Every device, task, log, telemetry reading and API key belongs to an organization, and each request is scoped to the caller's organization — one organization never sees another's data. Users do not self-register: an administrator provisions accounts from a hidden admin panel and issues an invite link; the invited person opens it, sets their own password, and can then sign in with email + password.",
+    p2: "Signing in is protected by Yandex SmartCaptcha when configured — the login button unlocks only after the check passes. Device registration is org-scoped too: it is authorized by a dashboard session or by an organization API key (Authorization: Bearer cbk_…), and the new device is attached to that organization.",
+  },
   auth: {
     title: "Authentication",
-    p1: "Devices authenticate with the bearer token from registration and act as themselves — the robot_id is taken from the token, never the request body. Send it on every call: Authorization: Bearer <token>",
+    p1: "Two kinds of caller authenticate here. Devices use the bearer token from registration and act as themselves — the robot_id comes from the token, never the request body. Dashboard users sign in with email + password (POST /auth/login) and receive a session token scoped to their organization. Send the relevant token on every call: Authorization: Bearer <token>",
   },
   apikeys: {
     title: "API Keys",
-    p1: "Each user/application can generate a personal API key from the API tab. The secret is shown once; only a hash and a short prefix are stored. Keys can be revoked at any time and are sent as the X-API-Key header.",
+    p1: "Each organization can generate API keys from the API tab. The secret is shown once; only a hash and a short prefix are stored. An API key authorizes device registration from outside the dashboard (SDK / device firmware) — send it as a bearer token. Keys are scoped to their organization and can be revoked at any time.",
   },
   dal: {
     title: "Device Abstraction Layer (DAL)",
@@ -158,22 +165,24 @@ const EN: Docs = {
     title: "API Endpoints",
     colM: "Method", colP: "Path", colA: "Auth", colD: "Description",
     rows: [
-      { m: "POST", p: "/robots/register", a: "—", d: "Register a device" },
+      { m: "POST", p: "/auth/login", a: "—", d: "Sign in (email + password + captcha)" },
+      { m: "GET", p: "/auth/me", a: "session", d: "Current user + organization" },
+      { m: "POST", p: "/robots/register", a: "session / key", d: "Register a device" },
       { m: "POST", p: "/robots/heartbeat", a: "token", d: "Report liveness" },
-      { m: "GET", p: "/robots", a: "—", d: "List devices" },
-      { m: "GET", p: "/robots/{id}", a: "—", d: "Device detail" },
-      { m: "GET", p: "/robots/{id}/profile", a: "—", d: "Device profile (DAL)" },
-      { m: "POST", p: "/robots/{id}/pause", a: "—", d: "Pause a device" },
-      { m: "POST", p: "/robots/{id}/resume", a: "—", d: "Resume a device" },
+      { m: "GET", p: "/robots", a: "session", d: "List devices" },
+      { m: "GET", p: "/robots/{id}", a: "session", d: "Device detail" },
+      { m: "GET", p: "/robots/{id}/profile", a: "session", d: "Device profile (DAL)" },
+      { m: "POST", p: "/robots/{id}/pause", a: "session", d: "Pause a device" },
+      { m: "POST", p: "/robots/{id}/resume", a: "session", d: "Resume a device" },
       { m: "POST", p: "/brain/decision", a: "token", d: "Get a decision" },
       { m: "POST", p: "/executions", a: "token", d: "Report execution feedback" },
-      { m: "GET", p: "/executions", a: "—", d: "Query execution feedback" },
+      { m: "GET", p: "/executions", a: "session", d: "Query execution feedback" },
       { m: "POST", p: "/telemetry", a: "token", d: "Ingest telemetry" },
-      { m: "POST", p: "/tasks", a: "—", d: "Assign a task" },
+      { m: "POST/GET", p: "/tasks", a: "session", d: "Assign / list tasks" },
       { m: "GET", p: "/tasks/next", a: "token", d: "Pull next queued task" },
       { m: "POST", p: "/tasks/{id}/result", a: "token", d: "Report task result" },
-      { m: "GET", p: "/logs", a: "—", d: "Decision logs" },
-      { m: "POST/GET/DELETE", p: "/api-keys", a: "—", d: "API key management" },
+      { m: "GET", p: "/logs", a: "session", d: "Decision logs" },
+      { m: "POST/GET/DELETE", p: "/api-keys", a: "session", d: "API key management" },
     ],
     swagger: "Full interactive reference:",
   },
@@ -201,7 +210,7 @@ const EN: Docs = {
   },
   deployment: {
     title: "Deployment",
-    p1: "Deploys from GitHub as a single backend service + PostgreSQL (Redis not required; object storage optional). Set SECRET_KEY, DATABASE_URL (postgresql+asyncpg://…) and an AI engine (ANTHROPIC_API_KEY / OPENAI_* / LLM_PROVIDER). The dashboard is an optional second service with NEXT_PUBLIC_API_BASE_URL.",
+    p1: "Deploys from GitHub as a single backend service + PostgreSQL (Redis not required; object storage optional). Set SECRET_KEY, DATABASE_URL (postgresql+asyncpg://…) and an AI engine (ANTHROPIC_API_KEY / OPENAI_* / LLM_PROVIDER). The dashboard is an optional second service with NEXT_PUBLIC_API_BASE_URL. Optional: ADMIN_PANEL_PASSWORD for the hidden admin panel, and YANDEX_CAPTCHA_SERVER_KEY + YANDEX_CAPTCHA_SITE_KEY to enable the login captcha (both set on the backend; the dashboard reads the sitekey at runtime).",
   },
   faq: {
     title: "FAQ",
@@ -219,7 +228,8 @@ const RU: Docs = {
   nav: {
     overview: "Обзор", architecture: "Архитектура", quickstart: "Быстрый старт",
     robots: "Устройства и реестр", decisions: "Движок решений", tasks: "Движок задач",
-    telemetry: "Телеметрия", memory: "Память", auth: "Аутентификация", apikeys: "API-ключи",
+    telemetry: "Телеметрия", memory: "Память", accounts: "Аккаунты и организации",
+    auth: "Аутентификация", apikeys: "API-ключи",
     dal: "Обзор DAL", "universal-actions": "Универсальные действия", translator: "Транслятор действий",
     "device-profile": "Профиль устройства", "execution-feedback": "Обратная связь",
     "memory-learning": "Память и обучение", "model-router": "Маршрутизатор моделей",
@@ -274,13 +284,18 @@ const RU: Docs = {
     title: "Память",
     p1: "Каждое решение сохраняется (цель, мысль, уверенность, действия, кадр, модель, задержка) вместе с историей задач — полный журнал, доступный через GET /logs и в дашборде.",
   },
+  accounts: {
+    title: "Аккаунты и организации",
+    p1: "Дашборд мультитенантный. Каждое устройство, задача, лог, показание телеметрии и API-ключ принадлежат организации, и каждый запрос ограничен организацией вызывающего — одна организация никогда не видит данные другой. Пользователи не регистрируются сами: администратор заводит аккаунты в скрытой админ-панели и выдаёт ссылку-приглашение; приглашённый открывает её, задаёт свой пароль и затем входит по email + паролю.",
+    p2: "Вход защищён Яндекс SmartCaptcha (когда ключи заданы) — кнопка входа разблокируется только после успешной проверки. Регистрация устройства тоже привязана к организации: она авторизуется сессией дашборда или API-ключом организации (Authorization: Bearer cbk_…), и новое устройство привязывается к этой организации.",
+  },
   auth: {
     title: "Аутентификация",
-    p1: "Устройства аутентифицируются bearer-токеном из регистрации и действуют «от себя» — robot_id берётся из токена, а не из тела запроса. Передавайте его в каждом вызове: Authorization: Bearer <token>",
+    p1: "Здесь аутентифицируются два типа вызывающих. Устройства используют bearer-токен из регистрации и действуют «от себя» — robot_id берётся из токена, а не из тела запроса. Пользователи дашборда входят по email + паролю (POST /auth/login) и получают токен сессии, ограниченный их организацией. Передавайте нужный токен в каждом вызове: Authorization: Bearer <token>",
   },
   apikeys: {
     title: "API-ключи",
-    p1: "Каждый пользователь/приложение может сгенерировать персональный API-ключ на вкладке API. Секрет показывается один раз; хранится только хэш и короткий префикс. Ключи можно отозвать в любой момент; передаются в заголовке X-API-Key.",
+    p1: "Каждая организация может сгенерировать API-ключи на вкладке API. Секрет показывается один раз; хранится только хэш и короткий префикс. API-ключ авторизует регистрацию устройства вне дашборда (SDK / прошивка устройства) — передавайте его как bearer-токен. Ключи ограничены своей организацией и отзываются в любой момент.",
   },
   dal: {
     title: "Слой абстракции устройств (DAL)",
@@ -328,22 +343,24 @@ const RU: Docs = {
     title: "Эндпоинты API",
     colM: "Метод", colP: "Путь", colA: "Авториз.", colD: "Описание",
     rows: [
-      { m: "POST", p: "/robots/register", a: "—", d: "Регистрация устройства" },
+      { m: "POST", p: "/auth/login", a: "—", d: "Вход (email + пароль + капча)" },
+      { m: "GET", p: "/auth/me", a: "сессия", d: "Текущий пользователь + организация" },
+      { m: "POST", p: "/robots/register", a: "сессия / ключ", d: "Регистрация устройства" },
       { m: "POST", p: "/robots/heartbeat", a: "токен", d: "Сигнал «жив»" },
-      { m: "GET", p: "/robots", a: "—", d: "Список устройств" },
-      { m: "GET", p: "/robots/{id}", a: "—", d: "Детали устройства" },
-      { m: "GET", p: "/robots/{id}/profile", a: "—", d: "Профиль устройства (DAL)" },
-      { m: "POST", p: "/robots/{id}/pause", a: "—", d: "Остановить устройство" },
-      { m: "POST", p: "/robots/{id}/resume", a: "—", d: "Запустить устройство" },
+      { m: "GET", p: "/robots", a: "сессия", d: "Список устройств" },
+      { m: "GET", p: "/robots/{id}", a: "сессия", d: "Детали устройства" },
+      { m: "GET", p: "/robots/{id}/profile", a: "сессия", d: "Профиль устройства (DAL)" },
+      { m: "POST", p: "/robots/{id}/pause", a: "сессия", d: "Остановить устройство" },
+      { m: "POST", p: "/robots/{id}/resume", a: "сессия", d: "Запустить устройство" },
       { m: "POST", p: "/brain/decision", a: "токен", d: "Получить решение" },
       { m: "POST", p: "/executions", a: "токен", d: "Отправить результат выполнения" },
-      { m: "GET", p: "/executions", a: "—", d: "Запросить результаты выполнения" },
+      { m: "GET", p: "/executions", a: "сессия", d: "Запросить результаты выполнения" },
       { m: "POST", p: "/telemetry", a: "токен", d: "Принять телеметрию" },
-      { m: "POST", p: "/tasks", a: "—", d: "Назначить задачу" },
+      { m: "POST/GET", p: "/tasks", a: "сессия", d: "Назначить / список задач" },
       { m: "GET", p: "/tasks/next", a: "токен", d: "Забрать следующую задачу" },
       { m: "POST", p: "/tasks/{id}/result", a: "токен", d: "Отчитаться о задаче" },
-      { m: "GET", p: "/logs", a: "—", d: "Логи решений" },
-      { m: "POST/GET/DELETE", p: "/api-keys", a: "—", d: "Управление API-ключами" },
+      { m: "GET", p: "/logs", a: "сессия", d: "Логи решений" },
+      { m: "POST/GET/DELETE", p: "/api-keys", a: "сессия", d: "Управление API-ключами" },
     ],
     swagger: "Полный интерактивный справочник:",
   },
@@ -371,7 +388,7 @@ const RU: Docs = {
   },
   deployment: {
     title: "Развёртывание",
-    p1: "Деплой из GitHub как один backend-сервис + PostgreSQL (Redis не нужен; объектное хранилище опционально). Задайте SECRET_KEY, DATABASE_URL (postgresql+asyncpg://…) и AI-движок (ANTHROPIC_API_KEY / OPENAI_* / LLM_PROVIDER). Дашборд — необязательный второй сервис с NEXT_PUBLIC_API_BASE_URL.",
+    p1: "Деплой из GitHub как один backend-сервис + PostgreSQL (Redis не нужен; объектное хранилище опционально). Задайте SECRET_KEY, DATABASE_URL (postgresql+asyncpg://…) и AI-движок (ANTHROPIC_API_KEY / OPENAI_* / LLM_PROVIDER). Дашборд — необязательный второй сервис с NEXT_PUBLIC_API_BASE_URL. Опционально: ADMIN_PANEL_PASSWORD для скрытой админ-панели и YANDEX_CAPTCHA_SERVER_KEY + YANDEX_CAPTCHA_SITE_KEY для капчи на входе (оба задаются на бэкенде; дашборд читает клиентский ключ в рантайме).",
   },
   faq: {
     title: "Частые вопросы",
@@ -386,7 +403,7 @@ const RU: Docs = {
 
 const NAV_GROUPS: { key: keyof Docs["groups"]; ids: string[] }[] = [
   { key: "gs", ids: ["overview", "architecture", "quickstart"] },
-  { key: "concepts", ids: ["robots", "decisions", "tasks", "telemetry", "memory", "auth", "apikeys"] },
+  { key: "concepts", ids: ["robots", "decisions", "tasks", "telemetry", "memory", "accounts", "auth", "apikeys"] },
   { key: "dal", ids: ["dal", "universal-actions", "translator", "device-profile", "execution-feedback", "memory-learning", "model-router"] },
   { key: "ref", ids: ["endpoints", "decision-format", "sdk", "dashboard", "deployment", "faq"] },
 ];
@@ -499,6 +516,12 @@ POST /tasks/{id}/result {"status":"completed","result":"delivered"}`}</Code>
             <p>{d.memory.p1}</p>
           </section>
 
+          <section id="accounts">
+            <h2>{d.accounts.title}</h2>
+            <p>{d.accounts.p1}</p>
+            <p>{d.accounts.p2}</p>
+          </section>
+
           <section id="auth">
             <h2>{d.auth.title}</h2>
             <p>{d.auth.p1}</p>
@@ -508,7 +531,7 @@ POST /tasks/{id}/result {"status":"completed","result":"delivered"}`}</Code>
           <section id="apikeys">
             <h2>{d.apikeys.title}</h2>
             <p>{d.apikeys.p1}</p>
-            <Code>{`X-API-Key: cbk_xxxxxxxx...`}</Code>
+            <Code>{`Authorization: Bearer cbk_xxxxxxxx...`}</Code>
           </section>
 
           <section id="dal">
