@@ -130,6 +130,16 @@ export function Pager({
   );
 }
 
+export function Spinner({ size = 16 }: { size?: number }) {
+  return (
+    <span
+      className="spinner"
+      style={{ width: size, height: size }}
+      aria-hidden
+    />
+  );
+}
+
 export function timeAgo(iso: string): string {
   const d = new Date(iso).getTime();
   const s = Math.floor((Date.now() - d) / 1000);

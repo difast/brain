@@ -11,7 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.exceptions import AuthError
-from app.core.security import decode_robot_token, decode_user_token
+from app.core.security import (
+    decode_admin_token,
+    decode_robot_token,
+    decode_user_token,
+)
 from app.models.user import User
 from app.services.api_key_service import ApiKeyService
 from app.services.decision_engine import DecisionEngine
@@ -125,3 +129,22 @@ async def get_org_principal(
 
 
 OrgPrincipal = Annotated[str, Depends(get_org_principal)]
+
+
+async def require_admin(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+) -> None:
+    """Guard the admin-panel endpoints with the admin-panel token."""
+    if credentials is None or not credentials.credentials:
+        raise AuthError("Missing admin token.")
+    try:
+        payload = decode_admin_token(credentials.credentials)
+    except jwt.ExpiredSignatureError as exc:
+        raise AuthError("Admin session expired.") from exc
+    except jwt.PyJWTError as exc:
+        raise AuthError("Invalid admin session.") from exc
+    if payload.get("type") != "admin":
+        raise AuthError("Not an admin token.")
+
+
+AdminGuard = Annotated[None, Depends(require_admin)]

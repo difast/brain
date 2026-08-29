@@ -17,11 +17,13 @@ from fastapi.responses import JSONResponse
 
 from app import __version__
 from app.api.routes import (
+    admin,
     api_keys,
     auth,
     brain,
     executions,
     health,
+    invites,
     logs,
     robots,
     tasks,
@@ -130,6 +132,8 @@ def create_app() -> FastAPI:
     for module in (
         health,
         auth,
+        admin,
+        invites,
         robots,
         brain,
         telemetry,

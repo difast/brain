@@ -17,16 +17,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { t } = useT();
 
-  const isLogin = pathname === "/login";
+  // Pages that render outside the authenticated dashboard shell.
+  const isBare =
+    pathname === "/login" ||
+    pathname === "/admin" ||
+    pathname.startsWith("/invite/");
 
   useEffect(() => {
-    if (status === "anon" && !isLogin) {
+    if (status === "anon" && !isBare) {
       router.replace("/login");
     }
-  }, [status, isLogin, router]);
+  }, [status, isBare, router]);
 
-  // The login page manages its own layout (no nav/footer).
-  if (isLogin) return <>{children}</>;
+  // Login / admin / invite pages manage their own layout (no nav/footer).
+  if (isBare) return <>{children}</>;
 
   if (status === "loading") {
     return (

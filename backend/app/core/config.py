@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     # Robot access tokens are long-lived; rotate via re-registration.
     robot_token_ttl_days: int = 365
 
+    # Single password that unlocks the hidden admin panel (no email login).
+    # Override in production via the ADMIN_PANEL_PASSWORD env var.
+    admin_panel_password: str = "mevra2026"
+    # How long an issued invite link stays valid.
+    invite_ttl_hours: int = 72
+
     # --- Database ---
     database_url: str = (
         "postgresql+asyncpg://brain:brain@postgres:5432/brain"

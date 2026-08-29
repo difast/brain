@@ -4,6 +4,7 @@ from app.models.api_key import ApiKey
 from app.models.base import TimestampMixin, UUIDMixin
 from app.models.decision import Decision
 from app.models.execution import ActionExecution, ExecutionStatus
+from app.models.invite import Invite
 from app.models.organization import Organization
 from app.models.robot import Robot, RobotStatus
 from app.models.task import Task, TaskSource, TaskStatus
@@ -15,6 +16,7 @@ __all__ = [
     "ApiKey",
     "Decision",
     "ExecutionStatus",
+    "Invite",
     "Organization",
     "Robot",
     "RobotStatus",

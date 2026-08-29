@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
+import { PasswordInput } from "@/components/PasswordInput";
+import { Spinner } from "@/components/ui";
 
 const CONTACTS_URL = "https://mevratek.ru/contacts";
 
@@ -77,13 +79,11 @@ export default function LoginPage() {
         />
 
         <label htmlFor="password">{t("auth.password")}</label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
-          autoComplete="current-password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
+          onChange={setPassword}
+          autoComplete="current-password"
         />
 
         <button
@@ -91,7 +91,13 @@ export default function LoginPage() {
           className="login-submit"
           disabled={busy || !email.trim() || !password}
         >
-          {busy ? t("auth.signingIn") : t("auth.signIn")}
+          {busy ? (
+            <span className="btn-loading">
+              <Spinner /> {t("auth.signingIn")}
+            </span>
+          ) : (
+            t("auth.signIn")
+          )}
         </button>
 
         <p className="login-hint">{t("auth.forgot")}</p>

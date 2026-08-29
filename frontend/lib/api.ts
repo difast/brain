@@ -33,6 +33,28 @@ function authHeaders(explicit?: string): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// --- Admin-panel token (separate from the user session) -------------------
+const ADMIN_TOKEN_KEY = "mevratek.admin";
+
+export function getAdminToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(ADMIN_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setAdminToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (token) window.localStorage.setItem(ADMIN_TOKEN_KEY, token);
+    else window.localStorage.removeItem(ADMIN_TOKEN_KEY);
+  } catch {
+    /* storage unavailable — a no-op keeps the app rendering */
+  }
+}
+
 /** Thrown on 401 so the UI can drop the session and redirect to /login. */
 export class UnauthorizedError extends Error {
   constructor(message = "Unauthorized") {
@@ -222,6 +244,73 @@ async function del<T>(path: string): Promise<T> {
   if (!res.ok) raiseForStatus(res.status, await res.text());
   return res.json() as Promise<T>;
 }
+
+// --- Admin panel + invites ------------------------------------------------
+
+export interface AdminOrg {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface AdminInvite {
+  id: string;
+  email: string;
+  role: UserRole;
+  organization_id: string;
+  organization_name: string;
+  token: string;
+  expires_at: string;
+  accepted_at: string | null;
+  created_at: string;
+}
+
+export interface InvitePublic {
+  email: string;
+  organization_name: string;
+  role: UserRole;
+  valid: boolean;
+}
+
+async function adminGet<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    cache: "no-store",
+    headers: authHeaders(getAdminToken() ?? undefined),
+  });
+  if (!res.ok) raiseForStatus(res.status, await res.text());
+  return res.json() as Promise<T>;
+}
+
+async function adminPost<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(getAdminToken() ?? undefined),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) raiseForStatus(res.status, await res.text());
+  return res.json() as Promise<T>;
+}
+
+export const adminApi = {
+  login: (password: string) =>
+    post<{ token: string }>("/admin/login", { password }),
+  listOrgs: () => adminGet<AdminOrg[]>("/admin/organizations"),
+  createOrg: (name: string) =>
+    adminPost<AdminOrg>("/admin/organizations", { name }),
+  listUsers: () => adminGet<AuthUser[]>("/admin/users"),
+  listInvites: () => adminGet<AdminInvite[]>("/admin/invites"),
+  createInvite: (email: string, organization_id: string, role: UserRole) =>
+    adminPost<AdminInvite>("/admin/invites", { email, organization_id, role }),
+};
+
+export const inviteApi = {
+  get: (token: string) => get<InvitePublic>(`/invites/${token}`),
+  accept: (token: string, password: string) =>
+    post<AuthResponse>(`/invites/${token}/accept`, { password }),
+};
 
 export const api = {
   // Auth

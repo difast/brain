@@ -86,3 +86,35 @@ def decode_user_token(token: str) -> dict[str, Any]:
         settings.secret_key,
         algorithms=[settings.jwt_algorithm],
     )
+
+
+# --- Admin panel tokens ----------------------------------------------------
+
+# The hidden admin panel unlocks with a single shared password (no email).
+ADMIN_TOKEN_TTL_HOURS = 12
+
+
+def create_admin_token() -> str:
+    """Issue a signed JWT for an unlocked admin-panel session."""
+    now = datetime.now(UTC)
+    payload: dict[str, Any] = {
+        "sub": "admin-panel",
+        "type": "admin",
+        "iat": now,
+        "exp": now + timedelta(hours=ADMIN_TOKEN_TTL_HOURS),
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+
+
+def decode_admin_token(token: str) -> dict[str, Any]:
+    """Decode and validate an admin-panel JWT. Raises on failure."""
+    return jwt.decode(
+        token,
+        settings.secret_key,
+        algorithms=[settings.jwt_algorithm],
+    )
+
+
+def generate_invite_token() -> str:
+    """Random opaque token embedded in an invite link."""
+    return secrets.token_urlsafe(32)
