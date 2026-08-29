@@ -1001,3 +1001,10 @@ pre {
   font-size: 13px;
   line-height: 1.7;
 }
+
+/* SmartCaptcha widget spacing on the login card */
+.captcha-box:not(:empty) {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}

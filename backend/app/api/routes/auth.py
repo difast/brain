@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 
 from app.api.deps import CurrentUser, SessionDep
+from app.core.config import settings
 from app.core.exceptions import AuthError
 from app.schemas.auth import (
     LoginRequest,
@@ -16,6 +17,16 @@ from app.services.auth_service import AuthService
 from app.services.captcha_service import verify_captcha
 
 router = APIRouter(tags=["auth"])
+
+
+@router.get(
+    "/auth/config",
+    summary="Public login config (captcha sitekey) read at runtime",
+)
+async def auth_config() -> dict[str, str]:
+    # Public client key only — never the server secret. Lets the dashboard
+    # enable the captcha widget without a frontend rebuild.
+    return {"captcha_site_key": settings.yandex_captcha_site_key}
 
 
 @router.post(

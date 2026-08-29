@@ -13,7 +13,8 @@ const CONTACTS_URL = "https://mevratek.ru/contacts";
 export default function LoginPage() {
   const { t, lang, setLang } = useT();
   const { status, login } = useAuth();
-  const { execute: runCaptcha, containerRef } = useSmartCaptcha();
+  const { enabled: captchaEnabled, token: captchaToken, containerRef, reset } =
+    useSmartCaptcha();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -29,24 +30,21 @@ export default function LoginPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim() || !password) return;
+    // Login proceeds only after the captcha (when enabled) has been passed.
+    if (captchaEnabled && !captchaToken) {
+      setError(t("auth.captchaNeeded"));
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      // Credentials entered → run the captcha check, then sign in only if it
-      // passes. When no sitekey is configured this resolves null (no-op).
-      let captchaToken: string | null = null;
-      try {
-        captchaToken = await runCaptcha();
-      } catch {
-        setError(t("auth.captchaFailed"));
-        setBusy(false);
-        return;
-      }
       await login(email.trim(), password, captchaToken);
       router.replace("/");
     } catch {
-      // Backend returns a generic 401 for any bad credential.
+      // Backend returns a generic 401 for any bad credential. The captcha
+      // token is single-use, so reset the widget for another attempt.
       setError(t("auth.invalid"));
+      reset();
     } finally {
       setBusy(false);
     }
@@ -98,13 +96,18 @@ export default function LoginPage() {
           autoComplete="current-password"
         />
 
-        {/* Invisible SmartCaptcha — a challenge appears on submit when needed. */}
-        <div ref={containerRef} />
+        {/* Yandex SmartCaptcha — appears here when a sitekey is configured. */}
+        <div ref={containerRef} className="captcha-box" />
 
         <button
           type="submit"
           className="login-submit"
-          disabled={busy || !email.trim() || !password}
+          disabled={
+            busy ||
+            !email.trim() ||
+            !password ||
+            (captchaEnabled === true && !captchaToken)
+          }
         >
           {busy ? (
             <span className="btn-loading">

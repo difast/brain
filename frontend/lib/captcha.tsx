@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { API_BASE } from "@/lib/api";
 
-// Client-side sitekey for Yandex SmartCaptcha. When unset, the captcha is
-// disabled and login proceeds without it (matches the backend, which only
-// enforces the check when its server key is configured).
-export const CAPTCHA_SITE_KEY =
-  process.env.NEXT_PUBLIC_YANDEX_CAPTCHA_SITE_KEY ?? "";
+// Client-side sitekey for Yandex SmartCaptcha. Read from NEXT_PUBLIC (baked at
+// build time) first; if absent, fetched from the backend at runtime so the
+// widget works without a frontend rebuild. When it resolves empty the captcha
+// is disabled and login proceeds without it.
+const ENV_SITE_KEY = process.env.NEXT_PUBLIC_YANDEX_CAPTCHA_SITE_KEY ?? "";
 
 const SCRIPT_SRC = "https://smartcaptcha.yandexcloud.net/captcha.js";
 
@@ -54,54 +55,60 @@ function loadScript(): Promise<void> {
   return scriptPromise;
 }
 
+async function resolveSiteKey(): Promise<string> {
+  if (ENV_SITE_KEY) return ENV_SITE_KEY;
+  try {
+    const res = await fetch(`${API_BASE}/auth/config`, { cache: "no-store" });
+    if (res.ok) {
+      const data = (await res.json()) as { captcha_site_key?: string };
+      return data.captcha_site_key ?? "";
+    }
+  } catch {
+    /* backend unreachable — treat captcha as disabled */
+  }
+  return "";
+}
+
 /**
- * Invisible Yandex SmartCaptcha. `execute()` triggers the check (showing a
- * challenge popup when needed) and resolves with a one-time token, or rejects
- * if the user dismisses the challenge. When no sitekey is configured it is a
- * no-op that resolves `null`, so local/dev login keeps working.
+ * Visible Yandex SmartCaptcha. Renders the widget into `containerRef`; when the
+ * user passes it, `token` holds the one-time answer to send with login. When no
+ * sitekey resolves, `enabled` is false and login proceeds without a captcha.
  */
 export function useSmartCaptcha() {
-  const enabled = !!CAPTCHA_SITE_KEY;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<number | null>(null);
-  const pendingRef = useRef<{
-    resolve: (t: string | null) => void;
-    reject: (e: Error) => void;
-  } | null>(null);
-  const [ready, setReady] = useState(!enabled);
+  const [siteKey, setSiteKey] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
+  // Resolve the sitekey once (build-time env, else backend at runtime).
   useEffect(() => {
-    if (!enabled) return;
+    let active = true;
+    resolveSiteKey().then((k) => active && setSiteKey(k));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Render the widget once the key + container are ready.
+  useEffect(() => {
+    if (!siteKey) return;
     let cancelled = false;
     loadScript()
       .then(() => {
         if (cancelled || !window.smartCaptcha || !containerRef.current) return;
         if (widgetIdRef.current !== null) return;
         const id = window.smartCaptcha.render(containerRef.current, {
-          sitekey: CAPTCHA_SITE_KEY,
-          invisible: true,
-          hideShield: true,
-          callback: (token: string) => {
-            pendingRef.current?.resolve(token);
-            pendingRef.current = null;
-            window.smartCaptcha?.reset(id);
-          },
+          sitekey: siteKey,
+          hl: "ru",
+          callback: (t: string) => setToken(t),
         });
         widgetIdRef.current = id;
-        // Fired when the challenge popup closes — if nothing resolved it, the
-        // user cancelled.
-        window.smartCaptcha.subscribe(id, "challenge-hidden", () => {
-          if (pendingRef.current) {
-            pendingRef.current.reject(new Error("captcha-cancelled"));
-            pendingRef.current = null;
-          }
-        });
-        setReady(true);
+        window.smartCaptcha.subscribe(id, "token-expired", () =>
+          setToken(null),
+        );
       })
       .catch(() => {
-        // Script blocked/unavailable — surface as ready so the button isn't
-        // stuck; execute() will reject and the UI shows an error.
-        if (!cancelled) setReady(true);
+        /* script blocked — login falls back to no captcha */
       });
     return () => {
       cancelled = true;
@@ -110,18 +117,14 @@ export function useSmartCaptcha() {
         widgetIdRef.current = null;
       }
     };
-  }, [enabled]);
+  }, [siteKey]);
 
-  const execute = useCallback((): Promise<string | null> => {
-    if (!enabled) return Promise.resolve(null);
-    if (!window.smartCaptcha || widgetIdRef.current === null) {
-      return Promise.reject(new Error("captcha not ready"));
-    }
-    return new Promise<string | null>((resolve, reject) => {
-      pendingRef.current = { resolve, reject };
-      window.smartCaptcha!.execute(widgetIdRef.current!);
-    });
-  }, [enabled]);
+  const reset = useCallback(() => {
+    setToken(null);
+    if (widgetIdRef.current !== null) window.smartCaptcha?.reset(widgetIdRef.current);
+  }, []);
 
-  return { enabled, ready, execute, containerRef };
+  // `enabled` is unknown until the key resolves; treat null as "still deciding".
+  const enabled = siteKey === null ? undefined : !!siteKey;
+  return { enabled, token, containerRef, reset };
 }

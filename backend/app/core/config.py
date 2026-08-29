@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     # Server-side secret used to validate the captcha token. When empty, the
     # captcha check is disabled (dev / tests) and login proceeds without it.
     yandex_captcha_server_key: str = ""
+    # Public client (site) key. Exposed to the dashboard via /auth/config so the
+    # widget works without rebuilding the frontend (NEXT_PUBLIC_* is baked in at
+    # build time; a backend env var is read at runtime).
+    yandex_captcha_site_key: str = ""
     yandex_captcha_validate_url: str = (
         "https://smartcaptcha.yandexcloud.net/validate"
     )
