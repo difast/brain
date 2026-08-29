@@ -42,6 +42,7 @@ export const metadata: Metadata = {
       "Единый протокол для промышленного робота, складской тележки и симулятора. AI-движок на базе российских языковых моделей.",
   },
   robots: { index: true, follow: true },
+  verification: { yandex: "ce336c8c62e979fc" },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

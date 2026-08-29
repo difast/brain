@@ -314,8 +314,12 @@ export const inviteApi = {
 
 export const api = {
   // Auth
-  login: (email: string, password: string) =>
-    post<AuthResponse>("/auth/login", { email, password }),
+  login: (email: string, password: string, captchaToken?: string | null) =>
+    post<AuthResponse>("/auth/login", {
+      email,
+      password,
+      captcha_token: captchaToken ?? undefined,
+    }),
   logout: () => post<{ ok: boolean }>("/auth/logout", {}),
   me: () => get<AuthResponse>("/auth/me"),
 

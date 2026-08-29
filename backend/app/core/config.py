@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     # How long an issued invite link stays valid.
     invite_ttl_hours: int = 72
 
+    # --- Yandex SmartCaptcha (dashboard login) ---
+    # Server-side secret used to validate the captcha token. When empty, the
+    # captcha check is disabled (dev / tests) and login proceeds without it.
+    yandex_captcha_server_key: str = ""
+    yandex_captcha_validate_url: str = (
+        "https://smartcaptcha.yandexcloud.net/validate"
+    )
+
     # --- Database ---
     database_url: str = (
         "postgresql+asyncpg://brain:brain@postgres:5432/brain"
@@ -141,6 +149,11 @@ class Settings(BaseSettings):
                 "(the default placeholder is not allowed)."
             )
         return self
+
+    @property
+    def captcha_enabled(self) -> bool:
+        """Captcha is enforced only when a server key is configured."""
+        return bool(self.yandex_captcha_server_key)
 
     @property
     def storage_enabled(self) -> bool:

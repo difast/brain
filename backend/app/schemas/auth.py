@@ -14,6 +14,9 @@ class LoginRequest(BaseModel):
     # dependency (email-validator) we deliberately avoid for build simplicity.
     email: str = Field(min_length=3, max_length=320)
     password: str = Field(min_length=1)
+    # Yandex SmartCaptcha token. Required only when captcha is configured
+    # server-side (YANDEX_CAPTCHA_SERVER_KEY set).
+    captcha_token: str | None = None
 
     @field_validator("email")
     @classmethod

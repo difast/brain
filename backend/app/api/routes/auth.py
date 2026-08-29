@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.exceptions import AuthError
@@ -13,6 +13,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.services.auth_service import AuthService
+from app.services.captcha_service import verify_captcha
 
 router = APIRouter(tags=["auth"])
 
@@ -20,9 +21,15 @@ router = APIRouter(tags=["auth"])
 @router.post(
     "/auth/login",
     response_model=LoginResponse,
-    summary="Log in with email + password; returns a session token",
+    summary="Log in with email + password (+ captcha); returns a session token",
 )
-async def login(payload: LoginRequest, session: SessionDep) -> LoginResponse:
+async def login(
+    payload: LoginRequest, request: Request, session: SessionDep
+) -> LoginResponse:
+    # Verify the SmartCaptcha token first (no-op when captcha is disabled).
+    client_ip = request.client.host if request.client else None
+    if not await verify_captcha(payload.captcha_token, client_ip):
+        raise AuthError("Captcha verification failed.")
     service = AuthService(session)
     user, org, token = await service.authenticate(payload.email, payload.password)
     return LoginResponse(

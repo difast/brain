@@ -23,7 +23,11 @@ interface AuthState {
   status: Status;
   user: AuthUser | null;
   organization: Organization | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    captchaToken?: string | null,
+  ) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -60,13 +64,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await api.login(email, password);
-    setToken(res.token);
-    setUser(res.user);
-    setOrganization(res.organization);
-    setStatus("authed");
-  }, []);
+  const login = useCallback(
+    async (email: string, password: string, captchaToken?: string | null) => {
+      const res = await api.login(email, password, captchaToken);
+      setToken(res.token);
+      setUser(res.user);
+      setOrganization(res.organization);
+      setStatus("authed");
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
     try {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
+import { useSmartCaptcha } from "@/lib/captcha";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Spinner } from "@/components/ui";
 
@@ -12,6 +13,7 @@ const CONTACTS_URL = "https://mevratek.ru/contacts";
 export default function LoginPage() {
   const { t, lang, setLang } = useT();
   const { status, login } = useAuth();
+  const { execute: runCaptcha, containerRef } = useSmartCaptcha();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -30,7 +32,17 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await login(email.trim(), password);
+      // Credentials entered → run the captcha check, then sign in only if it
+      // passes. When no sitekey is configured this resolves null (no-op).
+      let captchaToken: string | null = null;
+      try {
+        captchaToken = await runCaptcha();
+      } catch {
+        setError(t("auth.captchaFailed"));
+        setBusy(false);
+        return;
+      }
+      await login(email.trim(), password, captchaToken);
       router.replace("/");
     } catch {
       // Backend returns a generic 401 for any bad credential.
@@ -85,6 +97,9 @@ export default function LoginPage() {
           onChange={setPassword}
           autoComplete="current-password"
         />
+
+        {/* Invisible SmartCaptcha — a challenge appears on submit when needed. */}
+        <div ref={containerRef} />
 
         <button
           type="submit"
