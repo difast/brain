@@ -188,19 +188,23 @@ export default function HomePage() {
       {/* CTA */}
       <Section>
         <Container>
-          <div className="rounded-[72px] border border-line bg-white px-6 py-12 text-center sm:px-10 sm:py-16">
-            <h2 className="mx-auto max-w-2xl text-3xl font-semibold leading-tight sm:text-4xl">
+          <div className="rounded-[72px] border border-line bg-accent-strong px-6 py-12 text-center sm:px-10 sm:py-16">
+            <h2 className="mx-auto max-w-2xl text-3xl font-semibold leading-tight text-white sm:text-4xl">
               Подключите первое устройство за один день
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
+            <p className="mx-auto mt-4 max-w-xl text-lg text-white/85">
               Расскажите о вашей задаче — предложим сценарий пилота и поможем с
               интеграцией через SDK.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Button href="/contacts">
+              <Button href="/contacts" variant="secondary">
                 Подключить устройство <ArrowIcon />
               </Button>
-              <Button href="/for-who" variant="secondary">
+              <Button
+                href="/for-who"
+                variant="secondary"
+                className="!bg-transparent !text-white !ring-white/40 hover:!bg-white/10 hover:!ring-white/60"
+              >
                 Для кого платформа
               </Button>
             </div>

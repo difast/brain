@@ -183,12 +183,12 @@ export default function PlatformPage() {
 
       <Section>
         <Container>
-          <div className="rounded-[72px] border border-line px-6 py-12 text-center sm:py-14">
-            <h2 className="text-3xl font-semibold sm:text-4xl">
+          <div className="rounded-[72px] border border-line bg-accent-strong px-6 py-12 text-center sm:py-14">
+            <h2 className="text-3xl font-semibold text-white sm:text-4xl">
               Готовы протестировать на своём устройстве?
             </h2>
             <div className="mt-8 flex justify-center">
-              <Button href="/contacts">
+              <Button href="/contacts" variant="secondary">
                 Подключить устройство <ArrowIcon />
               </Button>
             </div>
