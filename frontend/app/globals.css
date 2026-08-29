@@ -394,6 +394,117 @@ label {
   text-align: center;
 }
 
+/* --- Toolbar: search + filter chips + sort --- */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.toolbar .search {
+  flex: 1 1 240px;
+  min-width: 180px;
+}
+.toolbar .search input {
+  width: 100%;
+}
+.chips {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.filter-chip {
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.filter-chip:hover {
+  color: var(--text);
+}
+.filter-chip.active {
+  background: var(--accent-strong);
+  color: #fff;
+  border-color: var(--accent-strong);
+}
+
+/* --- Pagination --- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 4px 2px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.pager button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  font-weight: 600;
+}
+.pager button:hover:not(:disabled) {
+  background: var(--panel-2);
+}
+
+/* Dense tables scroll horizontally on small screens instead of breaking. */
+.table-scroll {
+  overflow-x: auto;
+}
+
+/* --- Responsive card table (Devices) --- */
+@media (max-width: 720px) {
+  .cards-table,
+  .cards-table thead,
+  .cards-table tbody,
+  .cards-table tr,
+  .cards-table td {
+    display: block;
+    width: 100%;
+  }
+  .cards-table thead {
+    display: none;
+  }
+  .cards-table tr {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+    background: var(--panel);
+  }
+  .cards-table tr:hover td {
+    background: transparent;
+  }
+  .cards-table td {
+    border: none;
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    text-align: right;
+  }
+  .cards-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+  }
+  .cards-table td[data-label=""]::before {
+    content: "";
+  }
+}
+
 /* --- Documentation layout --- */
 .docs {
   display: grid;

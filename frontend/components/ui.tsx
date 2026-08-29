@@ -49,6 +49,39 @@ export function Actions({
   );
 }
 
+export function Pager({
+  offset,
+  page,
+  total,
+  onChange,
+}: {
+  offset: number;
+  page: number;
+  total: number;
+  onChange: (offset: number) => void;
+}) {
+  const { t } = useT();
+  if (total <= page && offset === 0) return null; // single page, no controls
+  const start = total === 0 ? 0 : offset + 1;
+  const end = Math.min(offset + page, total);
+  return (
+    <div className="pager">
+      <span className="mono">
+        {start}–{end} {t("page.of")} {total}
+      </span>
+      <button disabled={offset === 0} onClick={() => onChange(Math.max(0, offset - page))}>
+        ← {t("page.prev")}
+      </button>
+      <button
+        disabled={offset + page >= total}
+        onClick={() => onChange(offset + page)}
+      >
+        {t("page.next")} →
+      </button>
+    </div>
+  );
+}
+
 export function timeAgo(iso: string): string {
   const d = new Date(iso).getTime();
   const s = Math.floor((Date.now() - d) / 1000);

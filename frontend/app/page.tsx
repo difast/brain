@@ -1,16 +1,51 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, type Robot } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { DemoBadge, StatusBadge, timeAgo } from "@/components/ui";
 import { useT } from "@/lib/i18n";
+
+type Sort = "recent" | "name" | "status";
+const STATUS_ORDER: Record<string, number> = { online: 0, error: 1, offline: 2 };
 
 export default function RobotsPage() {
   const { t } = useT();
   const { data, error, loading } = usePoll(() => api.listRobots());
   const robots = data?.items ?? [];
   const online = robots.filter((r) => r.status === "online").length;
+
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [sort, setSort] = useState<Sort>("recent");
+
+  const shown = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    let list = robots.filter((r) => {
+      if (statusFilter && r.status !== statusFilter) return false;
+      if (!needle) return true;
+      return (
+        r.name.toLowerCase().includes(needle) ||
+        r.robot_type.toLowerCase().includes(needle) ||
+        r.id.toLowerCase().includes(needle)
+      );
+    });
+    list = [...list].sort((a: Robot, b: Robot) => {
+      if (sort === "name") return a.name.localeCompare(b.name);
+      if (sort === "status")
+        return (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9);
+      return b.created_at.localeCompare(a.created_at); // recent
+    });
+    return list;
+  }, [robots, q, statusFilter, sort]);
+
+  const chips: { value: string; label: string }[] = [
+    { value: "", label: t("common.all") },
+    { value: "online", label: t("common.online") },
+    { value: "offline", label: t("common.offline") },
+    { value: "error", label: t("common.error") },
+  ];
 
   return (
     <main className="container">
@@ -42,8 +77,38 @@ export default function RobotsPage() {
         </div>
       </div>
 
+      <div className="toolbar">
+        <div className="search">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={`${t("common.search")}: ${t("robots.searchPlaceholder")}`}
+          />
+        </div>
+        <div className="chips">
+          {chips.map((c) => (
+            <button
+              key={c.value || "all"}
+              className={`filter-chip${statusFilter === c.value ? " active" : ""}`}
+              onClick={() => setStatusFilter(c.value)}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as Sort)}
+          aria-label={t("common.sort")}
+        >
+          <option value="recent">{t("sort.recent")}</option>
+          <option value="name">{t("sort.name")}</option>
+          <option value="status">{t("sort.status")}</option>
+        </select>
+      </div>
+
       <div className="panel">
-        <table>
+        <table className="cards-table">
           <thead>
             <tr>
               <th>{t("robots.name")}</th>
@@ -56,22 +121,28 @@ export default function RobotsPage() {
             </tr>
           </thead>
           <tbody>
-            {robots.map((r) => (
+            {shown.map((r) => (
               <tr key={r.id}>
-                <td>
-                  <Link href={`/robots/${r.id}`}>{r.name}</Link>{" "}
-                  <DemoBadge meta={r.meta} />
-                  <div className="mono muted">{r.id.slice(0, 12)}…</div>
+                <td data-label={t("robots.name")}>
+                  <span>
+                    <Link href={`/robots/${r.id}`}>{r.name}</Link>{" "}
+                    <DemoBadge meta={r.meta} />
+                    <div className="mono muted">{r.id.slice(0, 12)}…</div>
+                  </span>
                 </td>
-                <td>
+                <td data-label={t("robots.type")}>
                   <span className="chip">{r.robot_type}</span>
                 </td>
-                <td>
+                <td data-label={t("common.status")}>
                   <StatusBadge status={r.status} />
                 </td>
-                <td className="mono">{r.capabilities.length}</td>
-                <td className="muted">{timeAgo(r.created_at)}</td>
-                <td>
+                <td className="mono" data-label={t("robots.commands")}>
+                  {r.capabilities.length}
+                </td>
+                <td className="muted" data-label={t("robots.registered")}>
+                  {timeAgo(r.created_at)}
+                </td>
+                <td data-label={t("common.actions")}>
                   <button
                     onClick={() =>
                       r.paused ? api.resumeRobot(r.id) : api.pauseRobot(r.id)
@@ -86,7 +157,7 @@ export default function RobotsPage() {
                     {r.paused ? t("common.resume") : t("common.pause")}
                   </button>
                 </td>
-                <td>
+                <td data-label="">
                   <Link href={`/robots/${r.id}`}>{t("common.view")}</Link>
                 </td>
               </tr>
@@ -95,6 +166,9 @@ export default function RobotsPage() {
         </table>
         {!loading && robots.length === 0 && (
           <div className="empty">{t("robots.empty")}</div>
+        )}
+        {!loading && robots.length > 0 && shown.length === 0 && (
+          <div className="empty">{t("robots.nothing")}</div>
         )}
       </div>
     </main>

@@ -2,8 +2,16 @@
 
 import { useEffect, useState } from "react";
 
-/** Poll an async loader on an interval; returns data, error and loading. */
-export function usePoll<T>(loader: () => Promise<T>, intervalMs = 4000) {
+/**
+ * Poll an async loader on an interval; returns data, error and loading.
+ * Pass `deps` (e.g. the current page offset or a filter) to re-run the loader
+ * immediately when they change, not only on the next interval tick.
+ */
+export function usePoll<T>(
+  loader: () => Promise<T>,
+  intervalMs = 4000,
+  deps: unknown[] = [],
+) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,7 +38,7 @@ export function usePoll<T>(loader: () => Promise<T>, intervalMs = 4000) {
       clearInterval(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [intervalMs]);
+  }, [intervalMs, ...deps]);
 
   return { data, error, loading };
 }

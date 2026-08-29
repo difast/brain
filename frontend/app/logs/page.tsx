@@ -1,15 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
-import { Actions, Confidence, timeAgo } from "@/components/ui";
+import { Actions, Confidence, Pager, timeAgo } from "@/components/ui";
 import { useT } from "@/lib/i18n";
+
+const PAGE = 25;
 
 export default function LogsPage() {
   const { t } = useT();
-  const { data, error } = usePoll(() => api.listLogs());
+  const [offset, setOffset] = useState(0);
+  const { data, error } = usePoll(
+    () => api.listLogs(undefined, { limit: PAGE, offset }),
+    4000,
+    [offset],
+  );
   const logs = data?.items ?? [];
+  const total = data?.total ?? 0;
 
   return (
     <main className="container">
@@ -23,58 +32,61 @@ export default function LogsPage() {
       )}
 
       <div className="panel">
-        <table>
-          <thead>
-            <tr>
-              <th>{t("common.when")}</th>
-              <th>{t("common.robot")}</th>
-              <th>{t("logs.goalThought")}</th>
-              <th>{t("logs.actions")}</th>
-              <th>{t("logs.confidence")}</th>
-              <th>{t("logs.provider")}</th>
-              <th>{t("logs.model")}</th>
-              <th>{t("logs.latency")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((d) => (
-              <tr key={d.id}>
-                <td className="muted" style={{ whiteSpace: "nowrap" }}>
-                  {timeAgo(d.created_at)}
-                </td>
-                <td>
-                  <Link href={`/robots/${d.robot_id}`} className="mono">
-                    {d.robot_id.slice(0, 8)}…
-                  </Link>
-                </td>
-                <td style={{ maxWidth: 320 }}>
-                  <div>{d.goal}</div>
-                  {d.thought && (
-                    <div className="muted" style={{ fontSize: 12 }}>
-                      {d.thought}
-                    </div>
-                  )}
-                </td>
-                <td>
-                  <Actions actions={d.actions} />
-                </td>
-                <td style={{ minWidth: 110 }}>
-                  <Confidence value={d.confidence} />
-                </td>
-                <td>
-                  <span className="chip">{d.provider ?? "—"}</span>
-                </td>
-                <td>
-                  <span className="chip">{d.model ?? "—"}</span>
-                </td>
-                <td className="mono muted">
-                  {d.latency_ms != null ? `${d.latency_ms}ms` : "—"}
-                </td>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{t("common.when")}</th>
+                <th>{t("common.robot")}</th>
+                <th>{t("logs.goalThought")}</th>
+                <th>{t("logs.actions")}</th>
+                <th>{t("logs.confidence")}</th>
+                <th>{t("logs.provider")}</th>
+                <th>{t("logs.model")}</th>
+                <th>{t("logs.latency")}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {logs.map((d) => (
+                <tr key={d.id}>
+                  <td className="muted" style={{ whiteSpace: "nowrap" }}>
+                    {timeAgo(d.created_at)}
+                  </td>
+                  <td>
+                    <Link href={`/robots/${d.robot_id}`} className="mono">
+                      {d.robot_id.slice(0, 8)}…
+                    </Link>
+                  </td>
+                  <td style={{ maxWidth: 320 }}>
+                    <div>{d.goal}</div>
+                    {d.thought && (
+                      <div className="muted" style={{ fontSize: 12 }}>
+                        {d.thought}
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    <Actions actions={d.actions} />
+                  </td>
+                  <td style={{ minWidth: 110 }}>
+                    <Confidence value={d.confidence} />
+                  </td>
+                  <td>
+                    <span className="chip">{d.provider ?? "—"}</span>
+                  </td>
+                  <td>
+                    <span className="chip">{d.model ?? "—"}</span>
+                  </td>
+                  <td className="mono muted">
+                    {d.latency_ms != null ? `${d.latency_ms}ms` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {logs.length === 0 && <div className="empty">{t("logs.empty")}</div>}
+        <Pager offset={offset} page={PAGE} total={total} onChange={setOffset} />
       </div>
     </main>
   );

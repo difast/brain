@@ -174,13 +174,17 @@ export const api = {
     get<Page<Execution>>(
       `/executions?limit=50${robotId ? `&robot_id=${robotId}` : ""}`,
     ),
-  listLogs: (robotId?: string) =>
+  listLogs: (robotId?: string, opts?: { limit?: number; offset?: number }) =>
     get<Page<Decision>>(
-      `/logs?limit=100${robotId ? `&robot_id=${robotId}` : ""}`,
+      `/logs?limit=${opts?.limit ?? 100}&offset=${opts?.offset ?? 0}${
+        robotId ? `&robot_id=${robotId}` : ""
+      }`,
     ),
-  listTasks: (robotId?: string) =>
+  listTasks: (robotId?: string, opts?: { limit?: number; offset?: number }) =>
     get<Page<Task>>(
-      `/tasks?limit=100${robotId ? `&robot_id=${robotId}` : ""}`,
+      `/tasks?limit=${opts?.limit ?? 100}&offset=${opts?.offset ?? 0}${
+        robotId ? `&robot_id=${robotId}` : ""
+      }`,
     ),
   listTelemetry: (robotId?: string) =>
     get<Page<Telemetry>>(
