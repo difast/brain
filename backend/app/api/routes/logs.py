@@ -2,19 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from fastapi import APIRouter, Query
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.database import get_session
+from app.api.deps import CurrentUser, SessionDep
 from app.schemas.common import Page
 from app.schemas.decision import DecisionResponse
 from app.services.memory_service import MemoryService
 
 router = APIRouter(tags=["logs"])
-
-SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
 @router.get(
@@ -23,6 +18,7 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
     summary="List brain decision logs",
 )
 async def list_logs(
+    current_user: CurrentUser,
     session: SessionDep,
     robot_id: str | None = None,
     limit: int = Query(50, ge=1, le=200),
@@ -30,7 +26,10 @@ async def list_logs(
 ) -> Page[DecisionResponse]:
     service = MemoryService(session)
     items, total = await service.list_decisions(
-        robot_id=robot_id, limit=limit, offset=offset
+        organization_id=current_user.organization_id,
+        robot_id=robot_id,
+        limit=limit,
+        offset=offset,
     )
     return Page(
         items=[DecisionResponse.model_validate(d) for d in items],

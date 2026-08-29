@@ -3,6 +3,44 @@
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
+// --- Session token (dashboard auth) ---------------------------------------
+// Stored in localStorage and attached as a Bearer token to every dashboard
+// request. Device (robot) calls pass their own token explicitly, which
+// overrides the session token.
+const TOKEN_KEY = "mevratek.token";
+
+export function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (token) window.localStorage.setItem(TOKEN_KEY, token);
+    else window.localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* storage unavailable — a no-op keeps the app rendering */
+  }
+}
+
+function authHeaders(explicit?: string): Record<string, string> {
+  const token = explicit ?? getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/** Thrown on 401 so the UI can drop the session and redirect to /login. */
+export class UnauthorizedError extends Error {
+  constructor(message = "Unauthorized") {
+    super(message);
+    this.name = "UnauthorizedError";
+  }
+}
+
 export type RobotStatus = "online" | "offline" | "error";
 
 export interface CommandSpec {
@@ -121,52 +159,77 @@ export interface Page<T> {
   offset: number;
 }
 
+export type UserRole = "admin" | "member";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  organization_id: string;
+  created_at: string;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+  organization: Organization;
+}
+
+function raiseForStatus(status: number, text: string): never {
+  if (status === 401) throw new UnauthorizedError(text || "Unauthorized");
+  throw new Error(text ? `${status}: ${text}` : `${status}`);
+}
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText}`);
-  }
+  const res = await fetch(`${API_BASE}${path}`, {
+    cache: "no-store",
+    headers: authHeaders(),
+  });
+  if (!res.ok) raiseForStatus(res.status, await res.text());
   return res.json() as Promise<T>;
 }
 
 async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
   const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
-    headers,
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`${res.status}: ${text}`);
-  }
+  if (!res.ok) raiseForStatus(res.status, await res.text());
   return res.json() as Promise<T>;
 }
 
 async function patch<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`${res.status}: ${text}`);
-  }
+  if (!res.ok) raiseForStatus(res.status, await res.text());
   return res.json() as Promise<T>;
 }
 
 async function del<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { method: "DELETE" });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`${res.status}: ${text}`);
-  }
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok) raiseForStatus(res.status, await res.text());
   return res.json() as Promise<T>;
 }
 
 export const api = {
+  // Auth
+  login: (email: string, password: string) =>
+    post<AuthResponse>("/auth/login", { email, password }),
+  logout: () => post<{ ok: boolean }>("/auth/logout", {}),
+  me: () => get<AuthResponse>("/auth/me"),
+
   listRobots: () => get<Page<Robot>>("/robots?limit=200"),
   getRobot: (id: string) => get<Robot>(`/robots/${id}`),
   getProfile: (id: string) => get<DeviceProfile>(`/robots/${id}/profile`),

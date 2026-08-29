@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentRobotId
+from app.api.deps import CurrentRobotId, CurrentUser, OrgPrincipal
 from app.core.database import get_session
 from app.dal.translator import ActionTranslator
 from app.models.robot import RobotStatus
@@ -36,10 +36,11 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
 )
 async def register_robot(
     payload: RobotRegisterRequest,
+    organization_id: OrgPrincipal,
     session: SessionDep,
 ) -> RobotRegisterResponse:
     service = RegistryService(session)
-    robot, api_key, token = await service.register(payload)
+    robot, api_key, token = await service.register(payload, organization_id)
     return RobotRegisterResponse(
         robot=RobotResponse.model_validate(robot),
         api_key=api_key,
@@ -70,6 +71,7 @@ async def heartbeat(
     summary="List robots",
 )
 async def list_robots(
+    current_user: CurrentUser,
     session: SessionDep,
     status_filter: Annotated[RobotStatus | None, Query(alias="status")] = None,
     robot_type: str | None = None,
@@ -78,7 +80,11 @@ async def list_robots(
 ) -> Page[RobotResponse]:
     service = RegistryService(session)
     robots, total = await service.list_with_presence(
-        status=status_filter, robot_type=robot_type, limit=limit, offset=offset
+        organization_id=current_user.organization_id,
+        status=status_filter,
+        robot_type=robot_type,
+        limit=limit,
+        offset=offset,
     )
     return Page(
         items=[RobotResponse.model_validate(r) for r in robots],
@@ -95,10 +101,11 @@ async def list_robots(
 )
 async def get_robot(
     robot_id: str,
+    current_user: CurrentUser,
     session: SessionDep,
 ) -> RobotResponse:
     service = RegistryService(session)
-    robot = await service.get(robot_id)
+    robot = await service.get(robot_id, organization_id=current_user.organization_id)
     return RobotResponse.model_validate(robot)
 
 
@@ -110,10 +117,13 @@ async def get_robot(
 async def update_robot(
     robot_id: str,
     payload: RobotUpdateRequest,
+    current_user: CurrentUser,
     session: SessionDep,
 ) -> RobotResponse:
     service = RegistryService(session)
-    robot = await service.rename(robot_id, payload.name)
+    robot = await service.rename(
+        robot_id, payload.name, organization_id=current_user.organization_id
+    )
     return RobotResponse.model_validate(robot)
 
 
@@ -122,9 +132,13 @@ async def update_robot(
     response_model=RobotResponse,
     summary="Pause a device (stops decisions + demo activity)",
 )
-async def pause_robot(robot_id: str, session: SessionDep) -> RobotResponse:
+async def pause_robot(
+    robot_id: str, current_user: CurrentUser, session: SessionDep
+) -> RobotResponse:
     service = RegistryService(session)
-    robot = await service.set_paused(robot_id, True)
+    robot = await service.set_paused(
+        robot_id, True, organization_id=current_user.organization_id
+    )
     return RobotResponse.model_validate(robot)
 
 
@@ -133,9 +147,13 @@ async def pause_robot(robot_id: str, session: SessionDep) -> RobotResponse:
     response_model=RobotResponse,
     summary="Resume a paused device",
 )
-async def resume_robot(robot_id: str, session: SessionDep) -> RobotResponse:
+async def resume_robot(
+    robot_id: str, current_user: CurrentUser, session: SessionDep
+) -> RobotResponse:
     service = RegistryService(session)
-    robot = await service.set_paused(robot_id, False)
+    robot = await service.set_paused(
+        robot_id, False, organization_id=current_user.organization_id
+    )
     return RobotResponse.model_validate(robot)
 
 
@@ -146,10 +164,11 @@ async def resume_robot(robot_id: str, session: SessionDep) -> RobotResponse:
 )
 async def device_profile(
     robot_id: str,
+    current_user: CurrentUser,
     session: SessionDep,
 ) -> DeviceProfile:
     service = RegistryService(session)
-    robot = await service.get(robot_id)
+    robot = await service.get(robot_id, organization_id=current_user.organization_id)
     return DeviceProfile(
         robot_id=robot.id,
         robot_type=robot.robot_type,

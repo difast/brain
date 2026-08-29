@@ -26,11 +26,15 @@ class TaskService:
         self.repo = TaskRepository(session)
         self.robots = RobotRepository(session)
 
-    async def create(self, payload: TaskCreate) -> Task:
+    async def create(
+        self, payload: TaskCreate, organization_id: str
+    ) -> Task:
         robot = await self.robots.get(payload.robot_id)
-        if robot is None:
+        # A task can only target a device inside the caller's organization.
+        if robot is None or robot.organization_id != organization_id:
             raise RobotNotFoundError()
         task = Task(
+            organization_id=organization_id,
             robot_id=payload.robot_id,
             description=payload.description,
             priority=payload.priority,
@@ -46,26 +50,38 @@ class TaskService:
         )
         return task
 
-    async def get(self, task_id: str) -> Task:
+    async def get(
+        self, task_id: str, organization_id: str | None = None
+    ) -> Task:
         task = await self.repo.get(task_id)
         if task is None:
+            raise NotFoundError("Task not found.")
+        # Cross-tenant id is reported as not found, never as another org's task.
+        if organization_id is not None and task.organization_id != organization_id:
             raise NotFoundError("Task not found.")
         return task
 
     async def list(
         self,
         *,
+        organization_id: str | None = None,
         robot_id: str | None = None,
         status: TaskStatus | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[Task], int]:
         return await self.repo.list_page(
-            robot_id=robot_id, status=status, limit=limit, offset=offset
+            organization_id=organization_id,
+            robot_id=robot_id,
+            status=status,
+            limit=limit,
+            offset=offset,
         )
 
-    async def update(self, task_id: str, payload: TaskUpdate) -> Task:
-        task = await self.get(task_id)
+    async def update(
+        self, task_id: str, payload: TaskUpdate, organization_id: str | None = None
+    ) -> Task:
+        task = await self.get(task_id, organization_id=organization_id)
         if payload.status is not None:
             task.status = payload.status
         if payload.result is not None:

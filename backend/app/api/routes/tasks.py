@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentRobotId
+from app.api.deps import CurrentRobotId, CurrentUser
 from app.core.database import get_session
 from app.models.task import TaskStatus
 from app.schemas.common import Page
@@ -30,9 +30,11 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
     status_code=status.HTTP_201_CREATED,
     summary="Assign a task to a robot (Task Engine)",
 )
-async def create_task(payload: TaskCreate, session: SessionDep) -> TaskResponse:
+async def create_task(
+    payload: TaskCreate, current_user: CurrentUser, session: SessionDep
+) -> TaskResponse:
     service = TaskService(session)
-    task = await service.create(payload)
+    task = await service.create(payload, current_user.organization_id)
     return TaskResponse.model_validate(task)
 
 
@@ -42,6 +44,7 @@ async def create_task(payload: TaskCreate, session: SessionDep) -> TaskResponse:
     summary="List tasks",
 )
 async def list_tasks(
+    current_user: CurrentUser,
     session: SessionDep,
     robot_id: str | None = None,
     status_filter: Annotated[TaskStatus | None, Query(alias="status")] = None,
@@ -50,7 +53,11 @@ async def list_tasks(
 ) -> Page[TaskResponse]:
     service = TaskService(session)
     items, total = await service.list(
-        robot_id=robot_id, status=status_filter, limit=limit, offset=offset
+        organization_id=current_user.organization_id,
+        robot_id=robot_id,
+        status=status_filter,
+        limit=limit,
+        offset=offset,
     )
     return Page(
         items=[TaskResponse.model_validate(t) for t in items],
@@ -83,9 +90,11 @@ async def next_task(
     response_model=TaskResponse,
     summary="Get a task by id",
 )
-async def get_task(task_id: str, session: SessionDep) -> TaskResponse:
+async def get_task(
+    task_id: str, current_user: CurrentUser, session: SessionDep
+) -> TaskResponse:
     service = TaskService(session)
-    task = await service.get(task_id)
+    task = await service.get(task_id, organization_id=current_user.organization_id)
     return TaskResponse.model_validate(task)
 
 
@@ -95,10 +104,15 @@ async def get_task(task_id: str, session: SessionDep) -> TaskResponse:
     summary="Update a task (status / result)",
 )
 async def update_task(
-    task_id: str, payload: TaskUpdate, session: SessionDep
+    task_id: str,
+    payload: TaskUpdate,
+    current_user: CurrentUser,
+    session: SessionDep,
 ) -> TaskResponse:
     service = TaskService(session)
-    task = await service.update(task_id, payload)
+    task = await service.update(
+        task_id, payload, organization_id=current_user.organization_id
+    )
     return TaskResponse.model_validate(task)
 
 

@@ -44,10 +44,18 @@ class MemoryService:
         return await self.executions.create(execution)
 
     async def list_executions(
-        self, *, robot_id: str | None = None, limit: int = 100, offset: int = 0
+        self,
+        *,
+        organization_id: str | None = None,
+        robot_id: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> tuple[list[ActionExecution], int]:
         return await self.executions.list_page(
-            robot_id=robot_id, limit=limit, offset=offset
+            organization_id=organization_id,
+            robot_id=robot_id,
+            limit=limit,
+            offset=offset,
         )
 
     async def recent_feedback(self, robot_id: str, limit: int = 8) -> list[dict]:
@@ -79,16 +87,28 @@ class MemoryService:
         ]
 
     async def list_decisions(
-        self, *, robot_id: str | None = None, limit: int = 50, offset: int = 0
+        self,
+        *,
+        organization_id: str | None = None,
+        robot_id: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
     ) -> tuple[list[Decision], int]:
         return await self.decisions.list_page(
-            robot_id=robot_id, limit=limit, offset=offset
+            organization_id=organization_id,
+            robot_id=robot_id,
+            limit=limit,
+            offset=offset,
         )
 
     # --- Tasks ---
 
-    async def ensure_task(self, robot_id: str, description: str) -> Task:
-        return await self.tasks.get_or_create_active(robot_id, description)
+    async def ensure_task(
+        self, robot_id: str, description: str, organization_id: str
+    ) -> Task:
+        return await self.tasks.get_or_create_active(
+            robot_id, description, organization_id
+        )
 
     async def list_tasks(
         self,

@@ -55,3 +55,34 @@ def decode_robot_token(token: str) -> dict[str, Any]:
         settings.secret_key,
         algorithms=[settings.jwt_algorithm],
     )
+
+
+# --- Dashboard user tokens -------------------------------------------------
+
+# Dashboard sessions are shorter-lived than robot tokens.
+USER_TOKEN_TTL_HOURS = 24 * 7
+
+
+def create_user_token(
+    user_id: str, organization_id: str, role: str
+) -> str:
+    """Issue a signed JWT session token for a dashboard user."""
+    now = datetime.now(UTC)
+    payload: dict[str, Any] = {
+        "sub": user_id,
+        "type": "user",
+        "org": organization_id,
+        "role": role,
+        "iat": now,
+        "exp": now + timedelta(hours=USER_TOKEN_TTL_HOURS),
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+
+
+def decode_user_token(token: str) -> dict[str, Any]:
+    """Decode and validate a user session JWT. Raises on failure."""
+    return jwt.decode(
+        token,
+        settings.secret_key,
+        algorithms=[settings.jwt_algorithm],
+    )

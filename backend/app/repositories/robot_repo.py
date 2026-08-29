@@ -26,6 +26,7 @@ class RobotRepository:
     async def list_page(
         self,
         *,
+        organization_id: str | None = None,
         status: RobotStatus | None = None,
         robot_type: str | None = None,
         limit: int = 50,
@@ -33,6 +34,9 @@ class RobotRepository:
     ) -> tuple[list[Robot], int]:
         stmt = select(Robot)
         count_stmt = select(func.count()).select_from(Robot)
+        if organization_id is not None:
+            stmt = stmt.where(Robot.organization_id == organization_id)
+            count_stmt = count_stmt.where(Robot.organization_id == organization_id)
         if status is not None:
             stmt = stmt.where(Robot.status == status)
             count_stmt = count_stmt.where(Robot.status == status)

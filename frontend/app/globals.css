@@ -784,3 +784,134 @@ pre {
   border-radius: 8px;
   padding: 12px;
 }
+
+/* --- Auth: login page + nav user + gate --- */
+.auth-loading {
+  color: var(--muted);
+  padding: 48px 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+}
+.login-card {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 28px 28px;
+  box-shadow: 0 10px 40px rgba(43, 48, 58, 0.08);
+}
+.login-lang {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.login-lang button {
+  background: var(--panel);
+  color: var(--muted);
+  border: none;
+  border-radius: 0;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.login-lang button.active {
+  background: var(--accent-strong);
+  color: #fff;
+}
+.login-brand {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+.login-brand span {
+  color: var(--accent);
+}
+.login-title {
+  margin: 6px 0 20px;
+  font-size: 19px;
+}
+.login-card label {
+  margin-top: 14px;
+}
+.login-card input {
+  width: 100%;
+}
+.login-submit {
+  width: 100%;
+  margin-top: 20px;
+  padding: 11px;
+  font-size: 14px;
+}
+.login-hint {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.login-request {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-user-email {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+.nav-logout {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.nav-logout:hover {
+  background: var(--panel-2);
+}
+.nav-m-email {
+  color: var(--muted);
+  font-size: 12px;
+  padding: 8px 10px 2px;
+}
+.nav-m-logout {
+  text-align: left;
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+}
+
+@media (max-width: 860px) {
+  .nav-user {
+    display: none;
+  }
+}

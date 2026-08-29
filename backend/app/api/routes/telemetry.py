@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentRobotId
+from app.api.deps import CurrentRobotId, CurrentUser
 from app.core.database import get_session
 from app.schemas.common import Page
 from app.schemas.telemetry import TelemetryIngest, TelemetryResponse
@@ -40,13 +40,19 @@ async def ingest_telemetry(
     summary="Query telemetry",
 )
 async def list_telemetry(
+    current_user: CurrentUser,
     session: SessionDep,
     robot_id: str | None = None,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ) -> Page[TelemetryResponse]:
     service = TelemetryService(session)
-    items, total = await service.list(robot_id=robot_id, limit=limit, offset=offset)
+    items, total = await service.list(
+        organization_id=current_user.organization_id,
+        robot_id=robot_id,
+        limit=limit,
+        offset=offset,
+    )
     return Page(
         items=[TelemetryResponse.model_validate(t) for t in items],
         total=total,

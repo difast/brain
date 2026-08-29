@@ -28,6 +28,11 @@ class TaskSource(str, enum.Enum):
 class Task(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "tasks"
 
+    organization_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
     robot_id: Mapped[str] = mapped_column(
         ForeignKey("robots.id", ondelete="CASCADE"), index=True, nullable=False
     )

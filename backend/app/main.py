@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 from app import __version__
 from app.api.routes import (
     api_keys,
+    auth,
     brain,
     executions,
     health,
@@ -33,6 +34,7 @@ from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestContextMiddleware
 from app.services import demo_service
 from app.services.decision_engine import DecisionEngine
+from app.services.seed_service import seed_identity
 from app.services.storage import FrameStorage
 
 logger = get_logger("app")
@@ -53,6 +55,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             await conn.run_sync(Base.metadata.create_all)
         if settings.storage_enabled:
             await app.state.storage.ensure_bucket()
+
+    # Provision the seed organization + admin user (idempotent) and backfill
+    # any pre-tenancy data onto it. Runs in every environment so the admin can
+    # always log in; the Alembic migration performs the same seed in prod.
+    try:
+        await seed_identity()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("seed_identity_failed", error=str(exc))
 
     # Demo device: seed it and keep it live in the background.
     demo_stop = asyncio.Event()
@@ -119,6 +129,7 @@ def create_app() -> FastAPI:
     api = settings.api_v1_prefix
     for module in (
         health,
+        auth,
         robots,
         brain,
         telemetry,

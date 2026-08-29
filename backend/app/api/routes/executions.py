@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentRobotId
+from app.api.deps import CurrentRobotId, CurrentUser
 from app.core.database import get_session
 from app.schemas.common import Page
 from app.schemas.execution import ExecutionFeedback, ExecutionResponse
@@ -40,6 +40,7 @@ async def report_execution(
     summary="Query execution feedback",
 )
 async def list_executions(
+    current_user: CurrentUser,
     session: SessionDep,
     robot_id: str | None = None,
     limit: int = Query(100, ge=1, le=500),
@@ -47,7 +48,10 @@ async def list_executions(
 ) -> Page[ExecutionResponse]:
     memory = MemoryService(session)
     items, total = await memory.list_executions(
-        robot_id=robot_id, limit=limit, offset=offset
+        organization_id=current_user.organization_id,
+        robot_id=robot_id,
+        limit=limit,
+        offset=offset,
     )
     return Page(
         items=[ExecutionResponse.model_validate(e) for e in items],

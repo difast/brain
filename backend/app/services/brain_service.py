@@ -48,7 +48,9 @@ class BrainService:
         if robot.paused:
             raise ConflictError("Device is paused; resume it to get decisions.")
 
-        task = await self.memory.ensure_task(robot_id, req.task)
+        task = await self.memory.ensure_task(
+            robot_id, req.task, robot.organization_id
+        )
 
         frame_url = req.frame_url
         if req.image_b64 and not frame_url and settings.storage_enabled:

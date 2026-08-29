@@ -6,6 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.decision import Decision
+from app.models.robot import Robot
 
 
 class DecisionRepository:
@@ -21,12 +22,20 @@ class DecisionRepository:
     async def list_page(
         self,
         *,
+        organization_id: str | None = None,
         robot_id: str | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[Decision], int]:
         stmt = select(Decision)
         count_stmt = select(func.count()).select_from(Decision)
+        # Decisions inherit their tenant from the owning robot.
+        if organization_id is not None:
+            robot_ids = select(Robot.id).where(
+                Robot.organization_id == organization_id
+            )
+            stmt = stmt.where(Decision.robot_id.in_(robot_ids))
+            count_stmt = count_stmt.where(Decision.robot_id.in_(robot_ids))
         if robot_id is not None:
             stmt = stmt.where(Decision.robot_id == robot_id)
             count_stmt = count_stmt.where(Decision.robot_id == robot_id)

@@ -41,11 +41,12 @@ class RegistryService:
         self.repo = RobotRepository(session)
 
     async def register(
-        self, payload: RobotRegisterRequest
+        self, payload: RobotRegisterRequest, organization_id: str
     ) -> tuple[Robot, str, str]:
         """Register a new robot; returns (robot, api_key, bearer_token)."""
         api_key = generate_api_key()
         robot = Robot(
+            organization_id=organization_id,
             name=payload.name,
             robot_type=payload.robot_type,
             api_key_hash=hash_api_key(api_key),
@@ -76,10 +77,25 @@ class RegistryService:
         await self.repo.touch(robot)
         return robot, now
 
-    async def get(self, robot_id: str) -> Robot:
+    async def _get_owned(
+        self, robot_id: str, organization_id: str | None
+    ) -> Robot:
+        """Fetch a robot, enforcing tenant ownership.
+
+        A cross-organization id is reported as *not found* (404) rather than
+        forbidden, so one tenant cannot probe another's device ids.
+        """
         robot = await self.repo.get(robot_id)
         if robot is None:
             raise RobotNotFoundError()
+        if organization_id is not None and robot.organization_id != organization_id:
+            raise RobotNotFoundError()
+        return robot
+
+    async def get(
+        self, robot_id: str, organization_id: str | None = None
+    ) -> Robot:
+        robot = await self._get_owned(robot_id, organization_id)
         # Reflect live presence in the returned status.
         if robot.status != RobotStatus.error:
             robot.status = (
@@ -87,10 +103,10 @@ class RegistryService:
             )
         return robot
 
-    async def rename(self, robot_id: str, name: str) -> Robot:
-        robot = await self.repo.get(robot_id)
-        if robot is None:
-            raise RobotNotFoundError()
+    async def rename(
+        self, robot_id: str, name: str, organization_id: str | None = None
+    ) -> Robot:
+        robot = await self._get_owned(robot_id, organization_id)
         robot.name = name.strip()
         await self.repo.touch(robot)
         if robot.status != RobotStatus.error:
@@ -100,10 +116,10 @@ class RegistryService:
         logger.info("robot_renamed", robot_id=robot_id)
         return robot
 
-    async def set_paused(self, robot_id: str, paused: bool) -> Robot:
-        robot = await self.repo.get(robot_id)
-        if robot is None:
-            raise RobotNotFoundError()
+    async def set_paused(
+        self, robot_id: str, paused: bool, organization_id: str | None = None
+    ) -> Robot:
+        robot = await self._get_owned(robot_id, organization_id)
         robot.paused = paused
         if paused:
             robot.status = RobotStatus.offline
@@ -114,13 +130,18 @@ class RegistryService:
     async def list_with_presence(
         self,
         *,
+        organization_id: str | None = None,
         status: RobotStatus | None = None,
         robot_type: str | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[Robot], int]:
         robots, total = await self.repo.list_page(
-            status=None, robot_type=robot_type, limit=limit, offset=offset
+            organization_id=organization_id,
+            status=None,
+            robot_type=robot_type,
+            limit=limit,
+            offset=offset,
         )
         for robot in robots:
             if robot.status != RobotStatus.error:

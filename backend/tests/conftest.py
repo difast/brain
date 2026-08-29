@@ -31,8 +31,18 @@ from sqlalchemy.pool import StaticPool
 
 from app.api.deps import get_brain, get_storage
 from app.core.database import Base, get_session
+from app.core.security import create_user_token
 from app.main import create_app
+from app.models.organization import Organization
+from app.models.user import User, UserRole
 from app.services.decision_engine import DecisionEngine
+from app.services.seed_service import (
+    SEED_ADMIN_EMAIL,
+    SEED_ADMIN_ID,
+    SEED_ADMIN_PASSWORD,
+    SEED_ORG_ID,
+    SEED_ORG_NAME,
+)
 
 
 class FakeStorage:
@@ -60,10 +70,16 @@ async def engine():
 
 
 @pytest_asyncio.fixture
-async def client(engine) -> AsyncIterator[AsyncClient]:
-    session_factory = async_sessionmaker(
+async def session_factory(engine):
+    """A session factory bound to the test engine (for direct DB setup)."""
+    return async_sessionmaker(
         bind=engine, class_=AsyncSession, expire_on_commit=False
     )
+
+
+@pytest_asyncio.fixture
+async def app(engine, session_factory):
+    """The configured FastAPI app with a seeded org + admin user."""
 
     async def _get_session() -> AsyncIterator[AsyncSession]:
         async with session_factory() as session:
@@ -77,14 +93,58 @@ async def client(engine) -> AsyncIterator[AsyncClient]:
     storage = FakeStorage()
     brain = DecisionEngine()  # mock mode (no provider configured)
 
-    app = create_app()
-    app.dependency_overrides[get_session] = _get_session
-    app.dependency_overrides[get_storage] = lambda: storage
-    app.dependency_overrides[get_brain] = lambda: brain
+    # Seed the tenant identity (org + admin) on the test engine, mirroring what
+    # the app does at startup, so login and data isolation can be exercised.
+    async with session_factory() as s:
+        s.add(Organization(id=SEED_ORG_ID, name=SEED_ORG_NAME))
+        await s.flush()
+        s.add(
+            User(
+                id=SEED_ADMIN_ID,
+                email=SEED_ADMIN_EMAIL,
+                password=SEED_ADMIN_PASSWORD,
+                organization_id=SEED_ORG_ID,
+                role=UserRole.admin,
+            )
+        )
+        await s.commit()
 
+    application = create_app()
+    application.dependency_overrides[get_session] = _get_session
+    application.dependency_overrides[get_storage] = lambda: storage
+    application.dependency_overrides[get_brain] = lambda: brain
+    return application
+
+
+@pytest_asyncio.fixture
+async def client(app) -> AsyncIterator[AsyncClient]:
+    # Default all dashboard requests to the seeded admin (org: Mevratek). Device
+    # endpoints receive an explicit robot-token header per request, which
+    # overrides this default — so device auth is still exercised, and a user
+    # token presented to a device endpoint is correctly rejected (not a robot).
+    admin_token = create_user_token(SEED_ADMIN_ID, SEED_ORG_ID, "admin")
+    default_headers = {"Authorization": f"Bearer {admin_token}"}
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(
+        transport=transport, base_url="http://test", headers=default_headers
+    ) as ac:
+        yield ac
+
+
+@pytest_asyncio.fixture
+async def anon_client(app) -> AsyncIterator[AsyncClient]:
+    """A client that sends no Authorization header by default."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+
+
+@pytest.fixture
+def auth() -> dict[str, str]:
+    """Explicit Authorization header for the seeded admin (org: Mevratek)."""
+    token = create_user_token(SEED_ADMIN_ID, SEED_ORG_ID, "admin")
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture

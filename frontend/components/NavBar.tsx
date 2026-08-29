@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 
 type Item = { href: string; key: string; hint?: string };
 
@@ -28,6 +29,7 @@ function isActive(pathname: string, href: string): boolean {
 
 export function NavBar() {
   const { t, lang, setLang } = useT();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -80,6 +82,21 @@ export function NavBar() {
               EN
             </button>
           </div>
+          {user && (
+            <div className="nav-user">
+              <span className="nav-user-email" title={user.email}>
+                {user.email}
+              </span>
+              <button
+                type="button"
+                className="nav-logout"
+                onClick={logout}
+                title={t("auth.logout")}
+              >
+                {t("auth.logout")}
+              </button>
+            </div>
+          )}
           <button
             type="button"
             className="nav-burger"
@@ -113,6 +130,21 @@ export function NavBar() {
           <div className="nav-m-group">{renderLinks(OPS, true)}</div>
           <div className="nav-m-divider" />
           <div className="nav-m-group">{renderLinks(DEV, true)}</div>
+          {user && (
+            <>
+              <div className="nav-m-divider" />
+              <div className="nav-m-group">
+                <span className="nav-m-email">{user.email}</span>
+                <button
+                  type="button"
+                  className="nav-m-link nav-m-logout"
+                  onClick={logout}
+                >
+                  {t("auth.logout")}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </nav>

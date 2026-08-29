@@ -11,7 +11,7 @@ import enum
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, String
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -27,6 +27,13 @@ class RobotStatus(str, enum.Enum):
 class Robot(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "robots"
 
+    # Owning organization (tenant). All dashboard queries filter on this so a
+    # device is only ever visible to its own organization.
+    organization_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     robot_type: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
 

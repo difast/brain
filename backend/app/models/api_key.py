@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -18,6 +18,11 @@ from app.models.base import TimestampMixin, UUIDMixin
 class ApiKey(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "api_keys"
 
+    organization_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     # Short, non-secret prefix shown in the UI, e.g. "cbk_a1b2c3…".
     prefix: Mapped[str] = mapped_column(String(32), nullable=False, index=True)

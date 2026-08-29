@@ -23,6 +23,7 @@ from app.dal.translator import ActionTranslator
 from app.models.decision import Decision
 from app.models.robot import Robot, RobotStatus
 from app.models.telemetry import Telemetry
+from app.services.seed_service import SEED_ORG_ID
 
 logger = get_logger("demo")
 
@@ -57,6 +58,7 @@ async def ensure_demo() -> str | None:
         now = datetime.now(UTC)
         if robot is None:
             robot = Robot(
+                organization_id=SEED_ORG_ID,
                 name=DEMO_NAME,
                 robot_type="rover",
                 api_key_hash=hash_api_key(generate_api_key()),

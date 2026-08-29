@@ -24,6 +24,7 @@ class TaskRepository:
     async def list_page(
         self,
         *,
+        organization_id: str | None = None,
         robot_id: str | None = None,
         status: TaskStatus | None = None,
         limit: int = 50,
@@ -31,6 +32,9 @@ class TaskRepository:
     ) -> tuple[list[Task], int]:
         stmt = select(Task)
         count_stmt = select(func.count()).select_from(Task)
+        if organization_id is not None:
+            stmt = stmt.where(Task.organization_id == organization_id)
+            count_stmt = count_stmt.where(Task.organization_id == organization_id)
         if robot_id is not None:
             stmt = stmt.where(Task.robot_id == robot_id)
             count_stmt = count_stmt.where(Task.robot_id == robot_id)
@@ -60,7 +64,9 @@ class TaskRepository:
     async def flush(self) -> None:
         await self.session.flush()
 
-    async def get_or_create_active(self, robot_id: str, description: str) -> Task:
+    async def get_or_create_active(
+        self, robot_id: str, description: str, organization_id: str
+    ) -> Task:
         """Return the latest matching active task or create one (robot-driven)."""
         stmt = (
             select(Task)
@@ -76,6 +82,7 @@ class TaskRepository:
         if existing:
             return existing
         task = Task(
+            organization_id=organization_id,
             robot_id=robot_id,
             description=description,
             status=TaskStatus.in_progress,

@@ -2,8 +2,9 @@ import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { LanguageProvider } from "@/lib/i18n";
-import { NavBar } from "@/components/NavBar";
-import { ApiStatusBanner, FeedbackProvider } from "@/components/feedback";
+import { AuthProvider } from "@/lib/auth";
+import { AppShell } from "@/components/AppShell";
+import { FeedbackProvider } from "@/components/feedback";
 
 export const metadata: Metadata = {
   title: "Mevratek — Device Control",
@@ -15,15 +16,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="ru">
       <body>
         <LanguageProvider>
-          <FeedbackProvider>
-            <ApiStatusBanner />
-            <NavBar />
-            {children}
-            <footer className="footer">
-              Mevratek · AI Decision Engine (YandexGPT · GigaChat · Claude ·
-              local models)
-            </footer>
-          </FeedbackProvider>
+          <AuthProvider>
+            <FeedbackProvider>
+              <AppShell>{children}</AppShell>
+            </FeedbackProvider>
+          </AuthProvider>
         </LanguageProvider>
       </body>
     </html>

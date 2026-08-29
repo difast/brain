@@ -26,9 +26,10 @@ class ApiKeyService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def create(self, name: str) -> tuple[ApiKey, str]:
+    async def create(self, name: str, organization_id: str) -> tuple[ApiKey, str]:
         raw = _generate_key()
         api_key = ApiKey(
+            organization_id=organization_id,
             name=name,
             prefix=raw[:_PREFIX_LEN],
             key_hash=hash_api_key(raw),
@@ -37,16 +38,30 @@ class ApiKeyService:
         self.session.add(api_key)
         await self.session.flush()
         await self.session.refresh(api_key)
-        logger.info("api_key_created", api_key_id=api_key.id, name=name)
+        logger.info(
+            "api_key_created",
+            api_key_id=api_key.id,
+            name=name,
+            org_id=organization_id,
+        )
         return api_key, raw
 
-    async def list(self) -> list[ApiKey]:
+    async def list(self, organization_id: str | None = None) -> list[ApiKey]:
         stmt = select(ApiKey).order_by(ApiKey.created_at.desc())
+        if organization_id is not None:
+            stmt = stmt.where(ApiKey.organization_id == organization_id)
         return list((await self.session.scalars(stmt)).all())
 
-    async def revoke(self, api_key_id: str) -> ApiKey:
+    async def revoke(
+        self, api_key_id: str, organization_id: str | None = None
+    ) -> ApiKey:
         api_key = await self.session.get(ApiKey, api_key_id)
         if api_key is None:
+            raise NotFoundError("API key not found.")
+        if (
+            organization_id is not None
+            and api_key.organization_id != organization_id
+        ):
             raise NotFoundError("API key not found.")
         api_key.revoked = True
         await self.session.flush()
