@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { Actions, Confidence, DemoBadge, StatusBadge, timeAgo } from "@/components/ui";
+import { useFeedback } from "@/components/feedback";
 import { useT } from "@/lib/i18n";
 
 export default function RobotDetail({
@@ -12,6 +13,7 @@ export default function RobotDetail({
   params: { id: string };
 }) {
   const { t } = useT();
+  const { toast, confirm } = useFeedback();
   const { id } = params;
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -42,8 +44,30 @@ export default function RobotDetail({
       const updated = await api.renameRobot(id, name);
       setNameOverride(updated.name);
       setEditing(false);
+      toast(t("toast.renamed"));
     } finally {
       setRenaming(false);
+    }
+  }
+
+  async function togglePause() {
+    if (!r) return;
+    if (!r.paused) {
+      const ok = await confirm({
+        title: t("confirm.pauseTitle"),
+        body: t("confirm.pauseBody"),
+        confirmLabel: t("confirm.stop"),
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    setBusy(true);
+    try {
+      if (r.paused) await api.resumeRobot(r.id);
+      else await api.pauseRobot(r.id);
+      toast(r.paused ? t("toast.resumed") : t("toast.paused"));
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -121,15 +145,7 @@ export default function RobotDetail({
             <DemoBadge meta={r.meta} />
             <button
               disabled={busy}
-              onClick={async () => {
-                setBusy(true);
-                try {
-                  if (r.paused) await api.resumeRobot(r.id);
-                  else await api.pauseRobot(r.id);
-                } finally {
-                  setBusy(false);
-                }
-              }}
+              onClick={togglePause}
               style={{
                 marginLeft: "auto",
                 background: r.paused ? "var(--online)" : "transparent",

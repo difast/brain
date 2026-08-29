@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { Actions, Confidence, Pager, timeAgo } from "@/components/ui";
+import { EmptyState, SkeletonRows } from "@/components/feedback";
 import { useT } from "@/lib/i18n";
 
 const PAGE = 25;
@@ -12,7 +13,7 @@ const PAGE = 25;
 export default function LogsPage() {
   const { t } = useT();
   const [offset, setOffset] = useState(0);
-  const { data, error } = usePoll(
+  const { data, loading } = usePoll(
     () => api.listLogs(undefined, { limit: PAGE, offset }),
     4000,
     [offset],
@@ -24,12 +25,6 @@ export default function LogsPage() {
     <main className="container">
       <h1>{t("logs.title")}</h1>
       <p className="sub">{t("logs.sub")}</p>
-
-      {error && (
-        <div className="error-box">
-          {t("common.cannotReach")} {error}
-        </div>
-      )}
 
       <div className="panel">
         <div className="table-scroll">
@@ -47,6 +42,7 @@ export default function LogsPage() {
               </tr>
             </thead>
             <tbody>
+              {loading && logs.length === 0 && <SkeletonRows cols={8} />}
               {logs.map((d) => (
                 <tr key={d.id}>
                   <td className="muted" style={{ whiteSpace: "nowrap" }}>
@@ -85,7 +81,9 @@ export default function LogsPage() {
             </tbody>
           </table>
         </div>
-        {logs.length === 0 && <div className="empty">{t("logs.empty")}</div>}
+        {!loading && logs.length === 0 && (
+          <EmptyState title={t("logs.empty")} />
+        )}
         <Pager offset={offset} page={PAGE} total={total} onChange={setOffset} />
       </div>
     </main>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { Pager, timeAgo } from "@/components/ui";
+import { EmptyState, SkeletonRows } from "@/components/feedback";
 import { useT } from "@/lib/i18n";
 
 const PAGE = 25;
@@ -12,7 +13,7 @@ const PAGE = 25;
 export default function TasksPage() {
   const { t } = useT();
   const [offset, setOffset] = useState(0);
-  const { data, error } = usePoll(
+  const { data, loading } = usePoll(
     () => api.listTasks(undefined, { limit: PAGE, offset }),
     4000,
     [offset],
@@ -96,12 +97,6 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {error && (
-        <div className="error-box">
-          {t("common.cannotReach")} {error}
-        </div>
-      )}
-
       <div className="panel">
         <h2>{t("tasks.queue")}</h2>
         <div className="table-scroll">
@@ -117,6 +112,7 @@ export default function TasksPage() {
               </tr>
             </thead>
             <tbody>
+              {loading && tasks.length === 0 && <SkeletonRows cols={6} />}
               {tasks.map((tk) => (
                 <tr key={tk.id}>
                   <td className="mono">{tk.priority}</td>
@@ -136,7 +132,9 @@ export default function TasksPage() {
             </tbody>
           </table>
         </div>
-        {tasks.length === 0 && <div className="empty">{t("tasks.empty")}</div>}
+        {!loading && tasks.length === 0 && (
+          <EmptyState title={t("tasks.empty")} />
+        )}
         <Pager offset={offset} page={PAGE} total={total} onChange={setOffset} />
       </div>
     </main>

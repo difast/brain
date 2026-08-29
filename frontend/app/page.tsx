@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api, type Robot } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { DemoBadge, StatusBadge, timeAgo } from "@/components/ui";
+import { EmptyState, SkeletonRows, useFeedback } from "@/components/feedback";
 import { useT } from "@/lib/i18n";
 
 type Sort = "recent" | "name" | "status";
@@ -12,7 +13,8 @@ const STATUS_ORDER: Record<string, number> = { online: 0, error: 1, offline: 2 }
 
 export default function RobotsPage() {
   const { t } = useT();
-  const { data, error, loading } = usePoll(() => api.listRobots());
+  const { toast, confirm } = useFeedback();
+  const { data, loading } = usePoll(() => api.listRobots());
   const robots = data?.items ?? [];
   const online = robots.filter((r) => r.status === "online").length;
   const errors = robots.filter((r) => r.status === "error").length;
@@ -50,6 +52,25 @@ export default function RobotsPage() {
     return list;
   }, [robots, q, statusFilter, sort]);
 
+  async function togglePause(r: Robot) {
+    if (!r.paused) {
+      const ok = await confirm({
+        title: t("confirm.pauseTitle"),
+        body: t("confirm.pauseBody"),
+        confirmLabel: t("confirm.stop"),
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    try {
+      if (r.paused) await api.resumeRobot(r.id);
+      else await api.pauseRobot(r.id);
+      toast(r.paused ? t("toast.resumed") : t("toast.paused"));
+    } catch (e) {
+      toast(e instanceof Error ? e.message : String(e), "error");
+    }
+  }
+
   const chips: { value: string; label: string }[] = [
     { value: "", label: t("common.all") },
     { value: "online", label: t("common.online") },
@@ -61,12 +82,6 @@ export default function RobotsPage() {
     <main className="container">
       <h1>{t("robots.title")}</h1>
       <p className="sub">{t("robots.sub")}</p>
-
-      {error && (
-        <div className="error-box">
-          {t("common.cannotReach")} {error}
-        </div>
-      )}
 
       <div className="kpi-strip">
         <div className="kpi">
@@ -138,6 +153,7 @@ export default function RobotsPage() {
             </tr>
           </thead>
           <tbody>
+            {loading && robots.length === 0 && <SkeletonRows cols={7} />}
             {shown.map((r) => (
               <tr key={r.id}>
                 <td data-label={t("robots.name")}>
@@ -161,9 +177,7 @@ export default function RobotsPage() {
                 </td>
                 <td data-label={t("common.actions")}>
                   <button
-                    onClick={() =>
-                      r.paused ? api.resumeRobot(r.id) : api.pauseRobot(r.id)
-                    }
+                    onClick={() => togglePause(r)}
                     style={{
                       background: r.paused ? "var(--online)" : "transparent",
                       color: r.paused ? "#04121f" : "var(--error)",
@@ -182,10 +196,17 @@ export default function RobotsPage() {
           </tbody>
         </table>
         {!loading && robots.length === 0 && (
-          <div className="empty">{t("robots.empty")}</div>
+          <EmptyState
+            title={t("robots.empty")}
+            action={
+              <Link href="/connect" className="filter-chip" style={{ padding: "8px 14px" }}>
+                {t("nav.connect")}
+              </Link>
+            }
+          />
         )}
         {!loading && robots.length > 0 && shown.length === 0 && (
-          <div className="empty">{t("robots.nothing")}</div>
+          <EmptyState title={t("robots.nothing")} />
         )}
       </div>
     </main>

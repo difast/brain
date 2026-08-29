@@ -4,11 +4,13 @@ import { useState } from "react";
 import { api, API_BASE, type ApiKeyCreated } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { timeAgo } from "@/components/ui";
+import { useFeedback } from "@/components/feedback";
 import { useT } from "@/lib/i18n";
 
 export default function ApiPage() {
   const { t } = useT();
-  const { data, error } = usePoll(() => api.listApiKeys(), 6000);
+  const { toast, confirm } = useFeedback();
+  const { data } = usePoll(() => api.listApiKeys(), 6000);
   const keys = data ?? [];
 
   const [name, setName] = useState("");
@@ -27,6 +29,7 @@ export default function ApiPage() {
       const key = await api.createApiKey(name);
       setCreated(key);
       setName("");
+      toast(t("toast.keyCreated"));
     } catch (e) {
       setFormError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -35,7 +38,19 @@ export default function ApiPage() {
   }
 
   async function revoke(id: string) {
-    await api.revokeApiKey(id);
+    const ok = await confirm({
+      title: t("confirm.revokeTitle"),
+      body: t("confirm.revokeBody"),
+      confirmLabel: t("confirm.revoke"),
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await api.revokeApiKey(id);
+      toast(t("toast.keyRevoked"));
+    } catch (e) {
+      toast(e instanceof Error ? e.message : String(e), "error");
+    }
   }
 
   return (
@@ -93,12 +108,6 @@ export default function ApiPage() {
           <span className="chip">Ollama / vLLM / LM Studio (local)</span>
         </div>
       </div>
-
-      {error && (
-        <div className="error-box">
-          {t("common.cannotReach")} {error}
-        </div>
-      )}
 
       <div className="panel">
         <h2>{t("api.yourKeys")}</h2>
