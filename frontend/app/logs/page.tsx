@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
-import { Actions, Confidence, Pager, timeAgo } from "@/components/ui";
+import { Actions, Confidence, Pager, Sparkline, timeAgo } from "@/components/ui";
 import { EmptyState, SkeletonRows } from "@/components/feedback";
 import { useT } from "@/lib/i18n";
 
@@ -13,18 +13,62 @@ const PAGE = 25;
 export default function LogsPage() {
   const { t } = useT();
   const [offset, setOffset] = useState(0);
+  const [deviceId, setDeviceId] = useState("");
+
   const { data, loading } = usePoll(
-    () => api.listLogs(undefined, { limit: PAGE, offset }),
+    () => api.listLogs(deviceId || undefined, { limit: PAGE, offset }),
     4000,
-    [offset],
+    [offset, deviceId],
   );
+  const robots = usePoll(() => api.listRobots(), 10000);
   const logs = data?.items ?? [];
   const total = data?.total ?? 0;
+  const robotList = robots.data?.items ?? [];
+
+  // Chronological (oldest→newest) series for the sparklines.
+  const chrono = [...logs].reverse();
+  const confSeries = chrono.map((d) => d.confidence * 100);
+  const latSeries = chrono
+    .filter((d) => d.latency_ms != null)
+    .map((d) => d.latency_ms as number);
 
   return (
     <main className="container">
       <h1>{t("logs.title")}</h1>
       <p className="sub">{t("logs.sub")}</p>
+
+      <div className="toolbar">
+        <label className="row" style={{ gap: 8, alignItems: "center", margin: 0 }}>
+          <span className="muted" style={{ fontSize: 13 }}>
+            {t("logs.device")}
+          </span>
+          <select
+            value={deviceId}
+            onChange={(e) => {
+              setDeviceId(e.target.value);
+              setOffset(0);
+            }}
+          >
+            <option value="">{t("logs.allDevices")}</option>
+            {robotList.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="spark-cards">
+          <div className="spark-card">
+            <div className="spark-label">{t("logs.trendConfidence")}</div>
+            <Sparkline values={confSeries} color="var(--online)" />
+          </div>
+          <div className="spark-card">
+            <div className="spark-label">{t("logs.trendLatency")}</div>
+            <Sparkline values={latSeries} color="var(--accent)" />
+          </div>
+        </div>
+      </div>
 
       <div className="panel">
         <div className="table-scroll">

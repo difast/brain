@@ -3,9 +3,19 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
-import { Actions, Confidence, DemoBadge, StatusBadge, timeAgo } from "@/components/ui";
+import {
+  Actions,
+  Confidence,
+  DemoBadge,
+  Pager,
+  Sparkline,
+  StatusBadge,
+  timeAgo,
+} from "@/components/ui";
 import { useFeedback } from "@/components/feedback";
 import { useT } from "@/lib/i18n";
+
+const DECISIONS_PAGE = 10;
 
 export default function RobotDetail({
   params,
@@ -20,9 +30,14 @@ export default function RobotDetail({
   const [draft, setDraft] = useState("");
   const [renaming, setRenaming] = useState(false);
   const [nameOverride, setNameOverride] = useState<string | null>(null);
+  const [offset, setOffset] = useState(0);
   const robot = usePoll(() => api.getRobot(id), 5000);
   const profile = usePoll(() => api.getProfile(id), 8000);
-  const logs = usePoll(() => api.listLogs(id), 4000);
+  const logs = usePoll(
+    () => api.listLogs(id, { limit: DECISIONS_PAGE, offset }),
+    4000,
+    [offset],
+  );
   const tasks = usePoll(() => api.listTasks(id), 4000);
   const telemetry = usePoll(() => api.listTelemetry(id), 4000);
   const executions = usePoll(() => api.listExecutions(id), 4000);
@@ -30,11 +45,23 @@ export default function RobotDetail({
   const r = robot.data;
   const prof = profile.data;
   const decisions = logs.data?.items ?? [];
+  const decisionsTotal = logs.data?.total ?? 0;
   const robotTasks = tasks.data?.items ?? [];
   const readings = telemetry.data?.items ?? [];
   const execs = executions.data?.items ?? [];
   const latest = readings[0];
   const displayName = nameOverride ?? r?.name ?? "";
+
+  // Chronological (oldest→newest) series for the trend sparklines.
+  const chrono = [...decisions].reverse();
+  const confSeries = chrono.map((d) => d.confidence * 100);
+  const latSeries = chrono
+    .filter((d) => d.latency_ms != null)
+    .map((d) => d.latency_ms as number);
+
+  // Map a decision id to its goal, so execution feedback rows can link back
+  // to the decision that produced them.
+  const decisionGoalById = new Map(decisions.map((d) => [d.id, d.goal]));
 
   async function saveName() {
     const name = draft.trim();
@@ -254,8 +281,25 @@ export default function RobotDetail({
           </div>
 
           <div className="panel" style={{ marginTop: 16 }}>
-            <h2>{t("rd.decisions")}</h2>
-            <table>
+            <div
+              className="row"
+              style={{ alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}
+            >
+              <h2 style={{ margin: 0 }}>{t("rd.decisions")}</h2>
+              {decisions.length >= 2 && (
+                <div className="spark-cards">
+                  <div className="spark-card">
+                    <div className="spark-label">{t("logs.trendConfidence")}</div>
+                    <Sparkline values={confSeries} color="var(--online)" />
+                  </div>
+                  <div className="spark-card">
+                    <div className="spark-label">{t("logs.trendLatency")}</div>
+                    <Sparkline values={latSeries} color="var(--accent)" />
+                  </div>
+                </div>
+              )}
+            </div>
+            <table style={{ marginTop: 12 }}>
               <thead>
                 <tr>
                   <th>{t("common.when")}</th>
@@ -293,6 +337,12 @@ export default function RobotDetail({
             {decisions.length === 0 && (
               <div className="empty">{t("rd.decisionsEmpty")}</div>
             )}
+            <Pager
+              offset={offset}
+              page={DECISIONS_PAGE}
+              total={decisionsTotal}
+              onChange={setOffset}
+            />
           </div>
 
           <div className="panel" style={{ marginTop: 16 }}>
@@ -313,8 +363,15 @@ export default function RobotDetail({
                     <td className="muted" style={{ whiteSpace: "nowrap" }}>
                       {timeAgo(e.created_at)}
                     </td>
-                    <td className="mono">
-                      {e.action_type ?? e.action_id.slice(0, 8)}
+                    <td>
+                      <div className="mono">
+                        {e.action_type ?? e.action_id.slice(0, 8)}
+                      </div>
+                      {e.decision_id && decisionGoalById.has(e.decision_id) && (
+                        <div className="muted" style={{ fontSize: 12 }}>
+                          {t("rd.forDecision")}: {decisionGoalById.get(e.decision_id)}
+                        </div>
+                      )}
                     </td>
                     <td>
                       <span

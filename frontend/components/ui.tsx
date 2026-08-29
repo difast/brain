@@ -49,6 +49,54 @@ export function Actions({
   );
 }
 
+export function Sparkline({
+  values,
+  color = "var(--accent)",
+  width = 130,
+  height = 34,
+}: {
+  values: number[];
+  color?: string;
+  width?: number;
+  height?: number;
+}) {
+  if (values.length < 2)
+    return (
+      <span className="muted mono" style={{ fontSize: 12 }}>
+        —
+      </span>
+    );
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const pad = 2;
+  const pts = values
+    .map((v, i) => {
+      const x = (i / (values.length - 1)) * (width - pad * 2) + pad;
+      const y = height - pad - ((v - min) / span) * (height - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
+      aria-hidden
+    >
+      <polyline
+        points={pts}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function Pager({
   offset,
   page,

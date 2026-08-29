@@ -599,6 +599,28 @@ label {
   border-color: var(--accent-strong);
 }
 
+/* --- Sparkline cards (logs observability) --- */
+.spark-cards {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.spark-card {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+  padding: 6px 12px;
+}
+.spark-card .spark-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 2px;
+}
+
 /* --- Pagination --- */
 .pager {
   display: flex;
