@@ -54,7 +54,7 @@ const EN: Docs = {
     auth: "Authentication", apikeys: "API Keys",
     dal: "DAL overview", "universal-actions": "Universal Actions", translator: "Action Translator",
     "device-profile": "Device Profile", "execution-feedback": "Execution Feedback",
-    "memory-learning": "Memory & Learning", "model-router": "Model Router",
+    "memory-learning": "Memory & Learning", "model-router": "Model choice",
     endpoints: "API Endpoints", "decision-format": "Decision Format", sdk: "SDK",
     dashboard: "Dashboard", deployment: "Deployment", faq: "FAQ",
   },
@@ -108,8 +108,8 @@ const EN: Docs = {
   },
   accounts: {
     title: "Accounts & Organizations",
-    p1: "The dashboard is multi-tenant. Every device, task, log, telemetry reading and API key belongs to an organization, and each request is scoped to the caller's organization — one organization never sees another's data. Users do not self-register: an administrator provisions accounts from a hidden admin panel and issues an invite link; the invited person opens it, sets their own password, and can then sign in with email + password.",
-    p2: "Signing in is protected by Yandex SmartCaptcha when configured — the login button unlocks only after the check passes. Device registration is org-scoped too: it is authorized by a dashboard session or by an organization API key (Authorization: Bearer cbk_…), and the new device is attached to that organization.",
+    p1: "The dashboard is multi-tenant. Every device, task, log, telemetry reading and API key belongs to an organization, and each request is scoped to the caller's organization — one organization never sees another's data. Users do not self-register: you receive an invite link, set your own password, and then sign in with email + password.",
+    p2: "Device registration is org-scoped too: it is authorized by a dashboard session or by an organization API key (Authorization: Bearer cbk_…), and the new device is attached to that organization.",
   },
   auth: {
     title: "Authentication",
@@ -148,24 +148,21 @@ const EN: Docs = {
     p1: "Every decision is stored with its full context for learning: the input state, the decision (universal + translated device actions), and the linked execution results. This history powers short-term context and adaptation over time.",
   },
   router: {
-    title: "Model Router",
-    p1: "The Decision Engine is provider-agnostic — it doesn't depend on any single vendor. Switch engines via the LLM_PROVIDER setting without changing the API:",
+    title: "Model choice",
+    p1: "The Decision Engine is provider-agnostic — it doesn't depend on any single vendor. The contract (task + device capabilities in, strict JSON actions out) is the same for any model:",
     items: [
-      "claude — Anthropic (or a tunnel via ANTHROPIC_BASE_URL)",
-      "openai — OpenAI API",
-      "yandexgpt — YandexGPT (via an OpenAI-compatible gateway)",
-      "gigachat — GigaChat (via an OpenAI-compatible gateway)",
-      "local — any OpenAI-compatible endpoint (Ollama, vLLM, LM Studio) via OPENAI_BASE_URL",
-      "auto — pick from configured credentials; falls back to a deterministic mock",
+      "YandexGPT and GigaChat — Russian models",
+      "Claude and OpenAI — when needed",
+      "Local models (Ollama, vLLM, LM Studio) — for a closed contour where data must not leave your infrastructure",
     ],
-    ruTitle: "Russian models & local / on-prem deploy",
-    ruBody: "Mevratek is engine-neutral. YandexGPT and GigaChat are supported through an OpenAI-compatible gateway (set LLM_PROVIDER=yandexgpt or gigachat + OPENAI_BASE_URL / OPENAI_API_KEY). For fully local / air-gapped deployment, run any OpenAI-compatible server (Ollama, vLLM, LM Studio) and point OPENAI_BASE_URL at it with LLM_PROVIDER=local — no data leaves your infrastructure, and the entire platform self-hosts (single backend service + PostgreSQL).",
+    ruTitle: "Russian models & local / on-prem",
+    ruBody: "Mevratek is engine-neutral. The same platform works with YandexGPT, GigaChat, Claude, OpenAI or a fully local model — switching engines does not change your integration code, so the device's business logic stays the same.",
   },
   endpoints: {
     title: "API Endpoints",
     colM: "Method", colP: "Path", colA: "Auth", colD: "Description",
     rows: [
-      { m: "POST", p: "/auth/login", a: "—", d: "Sign in (email + password + captcha)" },
+      { m: "POST", p: "/auth/login", a: "—", d: "Sign in (email + password)" },
       { m: "GET", p: "/auth/me", a: "session", d: "Current user + organization" },
       { m: "POST", p: "/robots/register", a: "session / key", d: "Register a device" },
       { m: "POST", p: "/robots/heartbeat", a: "token", d: "Report liveness" },
@@ -210,7 +207,7 @@ const EN: Docs = {
   },
   deployment: {
     title: "Deployment",
-    p1: "Deploys from GitHub as a single backend service + PostgreSQL (Redis not required; object storage optional). Set SECRET_KEY, DATABASE_URL (postgresql+asyncpg://…) and an AI engine (ANTHROPIC_API_KEY / OPENAI_* / LLM_PROVIDER). The dashboard is an optional second service with NEXT_PUBLIC_API_BASE_URL. Optional: ADMIN_PANEL_PASSWORD for the hidden admin panel, and YANDEX_CAPTCHA_SERVER_KEY + YANDEX_CAPTCHA_SITE_KEY to enable the login captcha (both set on the backend; the dashboard reads the sitekey at runtime).",
+    p1: "The platform runs as a single backend service + PostgreSQL (Redis not required; object storage optional). The dashboard is an optional second service. It can be fully self-hosted, including a completely local / air-gapped (on-premise) deployment where no data leaves your infrastructure.",
   },
   faq: {
     title: "FAQ",
@@ -232,7 +229,7 @@ const RU: Docs = {
     auth: "Аутентификация", apikeys: "API-ключи",
     dal: "Обзор DAL", "universal-actions": "Универсальные действия", translator: "Транслятор действий",
     "device-profile": "Профиль устройства", "execution-feedback": "Обратная связь",
-    "memory-learning": "Память и обучение", "model-router": "Маршрутизатор моделей",
+    "memory-learning": "Память и обучение", "model-router": "Выбор модели",
     endpoints: "Эндпоинты API", "decision-format": "Формат решения", sdk: "SDK",
     dashboard: "Дашборд", deployment: "Развёртывание", faq: "Частые вопросы",
   },
@@ -286,8 +283,8 @@ const RU: Docs = {
   },
   accounts: {
     title: "Аккаунты и организации",
-    p1: "Дашборд мультитенантный. Каждое устройство, задача, лог, показание телеметрии и API-ключ принадлежат организации, и каждый запрос ограничен организацией вызывающего — одна организация никогда не видит данные другой. Пользователи не регистрируются сами: администратор заводит аккаунты в скрытой админ-панели и выдаёт ссылку-приглашение; приглашённый открывает её, задаёт свой пароль и затем входит по email + паролю.",
-    p2: "Вход защищён Яндекс SmartCaptcha (когда ключи заданы) — кнопка входа разблокируется только после успешной проверки. Регистрация устройства тоже привязана к организации: она авторизуется сессией дашборда или API-ключом организации (Authorization: Bearer cbk_…), и новое устройство привязывается к этой организации.",
+    p1: "Дашборд мультитенантный. Каждое устройство, задача, лог, показание телеметрии и API-ключ принадлежат организации, и каждый запрос ограничен организацией вызывающего — одна организация никогда не видит данные другой. Пользователи не регистрируются сами: вы получаете ссылку-приглашение, задаёте свой пароль и затем входите по email и паролю.",
+    p2: "Регистрация устройства тоже привязана к организации: она авторизуется сессией дашборда или API-ключом организации (Authorization: Bearer cbk_…), и новое устройство привязывается к этой организации.",
   },
   auth: {
     title: "Аутентификация",
@@ -326,24 +323,21 @@ const RU: Docs = {
     p1: "Каждое решение сохраняется со всем контекстом для обучения: входное состояние, решение (универсальные + транслированные команды устройства) и связанные результаты выполнения. Эта история питает краткосрочный контекст и адаптацию со временем.",
   },
   router: {
-    title: "Маршрутизатор моделей",
-    p1: "Движок решений не зависит от конкретного вендора. Переключайте движок настройкой LLM_PROVIDER без изменения API:",
+    title: "Выбор модели",
+    p1: "Движок решений не зависит от конкретного вендора. Контракт «на входе — задача и возможности устройства, на выходе — строгий JSON с действиями» одинаков для любой модели:",
     items: [
-      "claude — Anthropic (или туннель через ANTHROPIC_BASE_URL)",
-      "openai — OpenAI API",
-      "yandexgpt — YandexGPT (через OpenAI-совместимый шлюз)",
-      "gigachat — GigaChat (через OpenAI-совместимый шлюз)",
-      "local — любой OpenAI-совместимый endpoint (Ollama, vLLM, LM Studio) через OPENAI_BASE_URL",
-      "auto — выбор по заданным ключам; иначе детерминированный mock",
+      "YandexGPT и GigaChat — российские модели",
+      "Claude и OpenAI — при необходимости",
+      "Локальные модели (Ollama, vLLM, LM Studio) — для закрытого контура, когда данные не должны покидать инфраструктуру",
     ],
-    ruTitle: "Российские модели и локальный / on-prem деплой",
-    ruBody: "Mevratek нейтрален к движку. YandexGPT и GigaChat поддерживаются через OpenAI-совместимый шлюз (задайте LLM_PROVIDER=yandexgpt или gigachat + OPENAI_BASE_URL / OPENAI_API_KEY). Для полностью локального / изолированного развёртывания запустите любой OpenAI-совместимый сервер (Ollama, vLLM, LM Studio) и укажите OPENAI_BASE_URL с LLM_PROVIDER=local — данные не покидают вашу инфраструктуру, а вся платформа разворачивается у вас (один backend-сервис + PostgreSQL).",
+    ruTitle: "Российские модели и локальный / on-prem",
+    ruBody: "Mevratek нейтрален к движку. Одна и та же платформа работает с YandexGPT, GigaChat, Claude, OpenAI или полностью локальной моделью — смена движка не меняет код интеграции, поэтому бизнес-логика устройства остаётся прежней.",
   },
   endpoints: {
     title: "Эндпоинты API",
     colM: "Метод", colP: "Путь", colA: "Авториз.", colD: "Описание",
     rows: [
-      { m: "POST", p: "/auth/login", a: "—", d: "Вход (email + пароль + капча)" },
+      { m: "POST", p: "/auth/login", a: "—", d: "Вход (email + пароль)" },
       { m: "GET", p: "/auth/me", a: "сессия", d: "Текущий пользователь + организация" },
       { m: "POST", p: "/robots/register", a: "сессия / ключ", d: "Регистрация устройства" },
       { m: "POST", p: "/robots/heartbeat", a: "токен", d: "Сигнал «жив»" },
@@ -388,7 +382,7 @@ const RU: Docs = {
   },
   deployment: {
     title: "Развёртывание",
-    p1: "Деплой из GitHub как один backend-сервис + PostgreSQL (Redis не нужен; объектное хранилище опционально). Задайте SECRET_KEY, DATABASE_URL (postgresql+asyncpg://…) и AI-движок (ANTHROPIC_API_KEY / OPENAI_* / LLM_PROVIDER). Дашборд — необязательный второй сервис с NEXT_PUBLIC_API_BASE_URL. Опционально: ADMIN_PANEL_PASSWORD для скрытой админ-панели и YANDEX_CAPTCHA_SERVER_KEY + YANDEX_CAPTCHA_SITE_KEY для капчи на входе (оба задаются на бэкенде; дашборд читает клиентский ключ в рантайме).",
+    p1: "Платформа работает как один backend-сервис + PostgreSQL (Redis не нужен; объектное хранилище опционально). Дашборд — необязательный второй сервис. Возможно полностью локальное / изолированное (on-premise) развёртывание, при котором данные не покидают вашу инфраструктуру.",
   },
   faq: {
     title: "Частые вопросы",

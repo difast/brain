@@ -4,9 +4,9 @@ import { Container } from "@/components/ui";
 import { TechArticleJsonLd } from "@/components/schema";
 
 export const metadata: Metadata = {
-  title: "Документация платформы",
+  title: "Документация",
   description:
-    "Техническая документация Mevratek: архитектура, Device Abstraction Layer, движок решений, задачи, телеметрия, аутентификация и изоляция данных, эндпоинты API, форматы, SDK и развёртывание.",
+    "Техническая документация Mevratek: архитектура, Device Abstraction Layer, движок решений, задачи, телеметрия, аутентификация и изоляция данных, эндпоинты API, форматы и SDK.",
   alternates: { canonical: "/documentation" },
 };
 
@@ -118,7 +118,7 @@ curl -X POST https://api.mevratek.ru/api/v1/brain/decision \\
     group: "Концепции",
     blocks: [
       { t: "p", text: "Дашборд мультитенантный. Каждое устройство, задача, лог, показание телеметрии и API-ключ принадлежат организации, и каждый запрос ограничен организацией вызывающего — одна организация никогда не видит данные другой." },
-      { t: "p", text: "Пользователи не регистрируются сами: администратор заводит аккаунты и выдаёт ссылку-приглашение; приглашённый открывает её, задаёт свой пароль и затем входит по email + паролю. Вход защищён Яндекс SmartCaptcha, когда ключи заданы." },
+      { t: "p", text: "Пользователи не регистрируются сами: вы получаете ссылку-приглашение, задаёте свой пароль и затем входите по email и паролю." },
     ],
   },
   {
@@ -157,22 +157,19 @@ curl -X POST https://api.mevratek.ru/api/v1/brain/decision \\
   },
   {
     id: "model-router",
-    title: "Маршрутизатор моделей",
+    title: "Выбор модели",
     group: "Слой абстракции",
     blocks: [
-      { t: "p", text: "Движок решений не зависит от конкретного вендора. Переключайте движок настройкой LLM_PROVIDER без изменения API:" },
+      { t: "p", text: "Движок решений не зависит от конкретного вендора: контракт «на входе — задача и возможности устройства, на выходе — строгий JSON с действиями» одинаков для любой модели." },
       {
         t: "ul",
         items: [
-          "claude — Anthropic (или туннель через ANTHROPIC_BASE_URL)",
-          "openai — OpenAI API",
-          "yandexgpt — YandexGPT через OpenAI-совместимый шлюз",
-          "gigachat — GigaChat через OpenAI-совместимый шлюз",
-          "local — любой OpenAI-совместимый endpoint (Ollama, vLLM, LM Studio)",
-          "auto — выбор по заданным ключам; иначе детерминированный mock",
+          "YandexGPT и GigaChat — российские модели.",
+          "Claude и OpenAI — при необходимости.",
+          "Локальные модели (Ollama, vLLM, LM Studio) — для закрытого контура, когда данные не должны покидать инфраструктуру.",
         ],
       },
-      { t: "p", text: "Для полностью локального / изолированного развёртывания запустите любой OpenAI-совместимый сервер и укажите его адрес — данные не покидают вашу инфраструктуру, а вся платформа разворачивается у вас (один backend-сервис + PostgreSQL)." },
+      { t: "p", text: "Модель можно сменить, не меняя код интеграции: бизнес-логика устройства остаётся прежней." },
     ],
   },
   {
@@ -184,7 +181,7 @@ curl -X POST https://api.mevratek.ru/api/v1/brain/decision \\
         t: "table",
         head: ["Метод", "Путь", "Авториз.", "Описание"],
         rows: [
-          ["POST", "/auth/login", "—", "Вход (email + пароль + капча)"],
+          ["POST", "/auth/login", "—", "Вход (email + пароль)"],
           ["GET", "/auth/me", "сессия", "Текущий пользователь + организация"],
           ["POST", "/robots/register", "сессия / ключ", "Регистрация устройства"],
           ["POST", "/robots/heartbeat", "токен", "Сигнал «жив»"],
@@ -232,14 +229,6 @@ curl -X POST https://api.mevratek.ru/api/v1/brain/decision \\
     group: "Справочник",
     blocks: [
       { t: "p", text: "Официальный SDK оборачивает все эндпоинты; примеры доступны для Python, C++, C, Go и JavaScript. Подходит и любой язык с HTTP-клиентом." },
-    ],
-  },
-  {
-    id: "deployment",
-    title: "Развёртывание",
-    group: "Справочник",
-    blocks: [
-      { t: "p", text: "Деплой как один backend-сервис + PostgreSQL (Redis не нужен; объектное хранилище опционально). Задайте SECRET_KEY, DATABASE_URL и AI-движок. Дашборд — необязательный второй сервис. Опционально: ADMIN_PANEL_PASSWORD для админ-панели и ключи Яндекс SmartCaptcha для капчи на входе." },
     ],
   },
 ];
@@ -320,7 +309,7 @@ export default function DocumentationPage() {
   return (
     <>
       <TechArticleJsonLd
-        title="Документация платформы Mevratek"
+        title="Документация"
         description={metadata.description as string}
         path="/documentation"
       />
@@ -331,12 +320,11 @@ export default function DocumentationPage() {
             Документация
           </div>
           <h1 className="max-w-3xl text-3xl font-semibold leading-[1.1] sm:text-4xl">
-            Документация платформы Mevratek
+            Документация
           </h1>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">
-            Полное техническое описание платформы: архитектура, протокол
-            управления, эндпоинты API, форматы и развёртывание. Та же
-            документация доступна внутри дашборда.
+            Как устроена платформа: архитектура, протокол управления, эндпоинты
+            API и форматы. Та же документация доступна внутри дашборда.
           </p>
         </Container>
       </div>
