@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ArrowIcon } from "./ui";
 
 const CONTACT_EMAIL = "info@mevratek.ru";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.mevratek.ru/api/v1";
 
 const TOPICS = [
   { value: "pilot", label: "Пилотный проект" },
@@ -18,34 +20,70 @@ const inputCls =
 export function ContactForm() {
   const [sent, setSent] = useState(false);
   const [topic, setTopic] = useState("pilot");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const data = new FormData(form);
-    const name = String(data.get("name") ?? "").trim();
-    const email = String(data.get("email") ?? "").trim();
-    const org = String(data.get("org") ?? "").trim();
-    const message = String(data.get("message") ?? "").trim();
+  function mailtoFallback(fields: {
+    name: string;
+    email: string;
+    org: string;
+    message: string;
+  }) {
     const topicLabel =
       TOPICS.find((t) => t.value === topic)?.label ?? "Обращение";
-
-    const subject = `Mevratek — ${topicLabel}${org ? ` · ${org}` : ""}`;
+    const subject = `Mevratek — ${topicLabel}${fields.org ? ` · ${fields.org}` : ""}`;
     const body = [
-      `Имя: ${name}`,
-      `Email: ${email}`,
-      org ? `Организация: ${org}` : "",
+      `Имя: ${fields.name}`,
+      `Email: ${fields.email}`,
+      fields.org ? `Организация: ${fields.org}` : "",
       `Тема: ${topicLabel}`,
       "",
-      message,
+      fields.message,
     ]
       .filter(Boolean)
       .join("\n");
-
     window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(body)}`;
-    setSent(true);
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    const fields = {
+      name: String(data.get("name") ?? "").trim(),
+      email: String(data.get("email") ?? "").trim(),
+      org: String(data.get("org") ?? "").trim(),
+      message: String(data.get("message") ?? "").trim(),
+    };
+    const honeypot = String(data.get("website") ?? "");
+
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/leads`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fields.name,
+          email: fields.email,
+          organization: fields.org || null,
+          topic,
+          message: fields.message,
+          website: honeypot,
+        }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setSent(true);
+    } catch {
+      // Backend unreachable — don't lose the lead: fall back to the mail client.
+      mailtoFallback(fields);
+      setError(
+        "Не удалось отправить через сайт — мы открыли ваш почтовый клиент. Если он не открылся, напишите на info@mevratek.ru.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (sent) {
@@ -62,12 +100,10 @@ export function ContactForm() {
             />
           </svg>
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-ink">
-          Почти готово — подтвердите отправку
-        </h3>
+        <h3 className="mt-4 text-lg font-semibold text-ink">Заявка отправлена</h3>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
-          Мы открыли ваш почтовый клиент с заполненным письмом. Если он не
-          открылся, напишите нам напрямую:
+          Спасибо! Мы получили ваше обращение и свяжемся с вами по указанному
+          email. При срочном вопросе пишите напрямую:
         </p>
         <a
           href={`mailto:${CONTACT_EMAIL}`}
@@ -84,6 +120,17 @@ export function ContactForm() {
       onSubmit={handleSubmit}
       className="rounded-2xl border border-line bg-white p-6 sm:p-8"
     >
+      {/* Honeypot — hidden from users, catches naive bots. */}
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden
+        className="hidden"
+        style={{ display: "none" }}
+      />
+
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium text-ink">Имя *</span>
@@ -170,11 +217,16 @@ export function ContactForm() {
         </span>
       </label>
 
+      {error && (
+        <p className="mt-4 text-sm leading-relaxed text-muted">{error}</p>
+      )}
+
       <button
         type="submit"
-        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent-strong px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink sm:w-auto"
+        disabled={busy}
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent-strong px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink disabled:opacity-60 sm:w-auto"
       >
-        Отправить обращение <ArrowIcon />
+        {busy ? "Отправляем…" : "Отправить обращение"} <ArrowIcon />
       </button>
     </form>
   );

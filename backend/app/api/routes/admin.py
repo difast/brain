@@ -6,7 +6,7 @@ unlock endpoint requires the admin-panel token.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Response, status
 
 from app.api.deps import AdminGuard, SessionDep
 from app.schemas.admin import (
@@ -18,7 +18,9 @@ from app.schemas.admin import (
     OrgCreateRequest,
     OrgSummary,
 )
+from app.schemas.lead import LeadResponse
 from app.services.admin_service import AdminService
+from app.services.lead_service import LeadService
 
 router = APIRouter(tags=["admin"])
 
@@ -111,3 +113,27 @@ async def create_invite(
         payload.email, payload.organization_id, payload.role
     )
     return _invite_response(invite, org)
+
+
+@router.get(
+    "/admin/leads",
+    response_model=list[LeadResponse],
+    summary="List contact requests from the public website",
+)
+async def list_leads(
+    _admin: AdminGuard, session: SessionDep
+) -> list[LeadResponse]:
+    leads = await LeadService(session).list()
+    return [LeadResponse.model_validate(x) for x in leads]
+
+
+@router.delete(
+    "/admin/leads/{lead_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a contact request",
+)
+async def delete_lead(
+    lead_id: str, _admin: AdminGuard, session: SessionDep
+) -> Response:
+    await LeadService(session).delete(lead_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

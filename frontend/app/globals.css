@@ -1131,3 +1131,18 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+
+/* Admin: requests (leads) count badge */
+.lead-count {
+  display: inline-block;
+  margin-left: 8px;
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle;
+}

@@ -7,6 +7,7 @@ import {
   setAdminToken,
   UnauthorizedError,
   type AdminInvite,
+  type AdminLead,
   type AdminOrg,
   type AuthUser,
   type UserRole,
@@ -98,6 +99,7 @@ function AdminPanel({ onLock }: { onLock: () => void }) {
   const [orgs, setOrgs] = useState<AdminOrg[]>([]);
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [invites, setInvites] = useState<AdminInvite[]>([]);
+  const [leads, setLeads] = useState<AdminLead[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const lock = useCallback(() => {
@@ -107,14 +109,16 @@ function AdminPanel({ onLock }: { onLock: () => void }) {
 
   const reload = useCallback(async () => {
     try {
-      const [o, u, i] = await Promise.all([
+      const [o, u, i, l] = await Promise.all([
         adminApi.listOrgs(),
         adminApi.listUsers(),
         adminApi.listInvites(),
+        adminApi.listLeads(),
       ]);
       setOrgs(o);
       setUsers(u);
       setInvites(i);
+      setLeads(l);
       setLoadError(null);
     } catch (e) {
       if (e instanceof UnauthorizedError) {
@@ -145,10 +149,112 @@ function AdminPanel({ onLock }: { onLock: () => void }) {
 
       {loadError && <div className="error-box">{loadError}</div>}
 
+      <LeadSection leads={leads} onChanged={reload} />
       <OrgSection orgs={orgs} onCreated={reload} />
       <InviteSection orgs={orgs} invites={invites} onCreated={reload} />
       <UserSection users={users} orgs={orgs} />
     </main>
+  );
+}
+
+const TOPIC_LABELS: Record<string, string> = {
+  pilot: "Пилотный проект",
+  partnership: "Партнёрство",
+  press: "Пресса",
+  other: "Другое",
+};
+
+function LeadSection({
+  leads,
+  onChanged,
+}: {
+  leads: AdminLead[];
+  onChanged: () => void;
+}) {
+  const { t } = useT();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function remove(lead: AdminLead) {
+    if (!window.confirm(t("admin.leadDeleteConfirm"))) return;
+    setBusyId(lead.id);
+    try {
+      await adminApi.deleteLead(lead.id);
+      onChanged();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div className="panel" style={{ marginTop: 16 }}>
+      <h2>
+        {t("admin.leads")}
+        {leads.length > 0 && (
+          <span className="lead-count">{leads.length}</span>
+        )}
+      </h2>
+      {leads.length === 0 ? (
+        <div className="empty">{t("admin.noLeads")}</div>
+      ) : (
+        <div className="table-scroll">
+          <table className="cards-table">
+            <thead>
+              <tr>
+                <th>{t("admin.leadWhen")}</th>
+                <th>{t("admin.leadContact")}</th>
+                <th>{t("admin.leadTopic")}</th>
+                <th>{t("admin.leadMessage")}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {leads.map((l) => (
+                <tr key={l.id}>
+                  <td data-label={t("admin.leadWhen")} className="muted" style={{ whiteSpace: "nowrap" }}>
+                    {new Date(l.created_at).toLocaleString()}
+                  </td>
+                  <td data-label={t("admin.leadContact")}>
+                    <div style={{ fontWeight: 600 }}>{l.name}</div>
+                    <div>
+                      <a href={`mailto:${l.email}`} className="mono">
+                        {l.email}
+                      </a>
+                    </div>
+                    {l.organization && (
+                      <div className="muted" style={{ fontSize: 12 }}>
+                        {l.organization}
+                      </div>
+                    )}
+                  </td>
+                  <td data-label={t("admin.leadTopic")}>
+                    <span className="chip">
+                      {TOPIC_LABELS[l.topic] ?? l.topic}
+                    </span>
+                  </td>
+                  <td data-label={t("admin.leadMessage")} style={{ maxWidth: 420, whiteSpace: "pre-wrap" }}>
+                    {l.message}
+                  </td>
+                  <td data-label="">
+                    <button
+                      onClick={() => remove(l)}
+                      disabled={busyId === l.id}
+                      style={{
+                        background: "transparent",
+                        color: "var(--error)",
+                        border: "1px solid var(--border)",
+                        padding: "4px 10px",
+                      }}
+                    >
+                      {t("admin.leadDelete")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -272,6 +272,16 @@ export interface InvitePublic {
   valid: boolean;
 }
 
+export interface AdminLead {
+  id: string;
+  name: string;
+  email: string;
+  organization: string | null;
+  topic: string;
+  message: string;
+  created_at: string;
+}
+
 async function adminGet<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     cache: "no-store",
@@ -294,6 +304,14 @@ async function adminPost<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function adminDelete(path: string): Promise<void> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "DELETE",
+    headers: authHeaders(getAdminToken() ?? undefined),
+  });
+  if (!res.ok && res.status !== 204) raiseForStatus(res.status, await res.text());
+}
+
 export const adminApi = {
   login: (password: string) =>
     post<{ token: string }>("/admin/login", { password }),
@@ -304,6 +322,8 @@ export const adminApi = {
   listInvites: () => adminGet<AdminInvite[]>("/admin/invites"),
   createInvite: (email: string, organization_id: string, role: UserRole) =>
     adminPost<AdminInvite>("/admin/invites", { email, organization_id, role }),
+  listLeads: () => adminGet<AdminLead[]>("/admin/leads"),
+  deleteLead: (id: string) => adminDelete(`/admin/leads/${id}`),
 };
 
 export const inviteApi = {
