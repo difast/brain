@@ -8,7 +8,6 @@ user authenticates with email + password and receives a signed session token
 from __future__ import annotations
 
 import enum
-
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text

@@ -37,7 +37,8 @@ style="max-width:520px;background:{_PANEL};border:1px solid {_BORDER};\
 border-radius:14px;overflow:hidden;">
       <tr><td style="padding:22px 28px;border-bottom:1px solid {_BORDER};">
         <span style="font:700 16px/1 -apple-system,Segoe UI,Roboto,Arial,sans-serif;\
-color:{_TEXT};letter-spacing:-0.01em;">&#9678; Mevra<span style="color:{_MUTED};">tek</span></span>
+color:{_TEXT};letter-spacing:-0.01em;">&#9678; Mevra\
+<span style="color:{_MUTED};">tek</span></span>
       </td></tr>
       <tr><td style="padding:28px;">
         <h1 style="margin:0 0 14px;font:600 20px/1.3 -apple-system,Segoe UI,Roboto,\
@@ -48,7 +49,8 @@ Arial,sans-serif;color:{_TEXT};">{heading}</h1>
 font:400 12px/1.6 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:{_MUTED};">
         {BRAND} — облачная платформа управления автономными устройствами<br>
         <a href="{SITE_URL}" style="color:{_MUTED};">mevratek.ru</a> &middot;
-        <a href="mailto:{settings.mail_from}" style="color:{_MUTED};">{settings.mail_from}</a>
+        <a href="mailto:{settings.mail_from}" style="color:{_MUTED};">\
+{settings.mail_from}</a>
       </td></tr>
     </table>
   </td></tr>
@@ -110,7 +112,9 @@ _PURPOSE_RU: dict[str, tuple[str, str, str]] = {
 }
 
 
-def verification_code(purpose: str, code: str, ttl_minutes: int) -> tuple[str, str, str]:
+def verification_code(
+    purpose: str, code: str, ttl_minutes: int
+) -> tuple[str, str, str]:
     subject, heading, intro = _PURPOSE_RU.get(purpose, _PURPOSE_RU["login"])
     html = _layout(
         heading,

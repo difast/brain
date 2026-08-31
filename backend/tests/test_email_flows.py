@@ -244,7 +244,9 @@ async def test_email_change_requires_code(client, auth, mailbox):
 
 
 @pytest.mark.asyncio
-async def test_codes_are_scoped_to_their_purpose(client, auth, mailbox, session_factory):
+async def test_codes_are_scoped_to_their_purpose(
+    client, auth, mailbox, session_factory
+):
     await client.post(
         f"{API}/auth/password/request",
         json={"current_password": SEED_ADMIN_PASSWORD},
