@@ -26,7 +26,7 @@ USER appuser
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://localhost:8000/api/v1/health || exit 1
+    CMD curl -fsS "http://localhost:${PORT:-8000}/api/v1/health" || exit 1
 
 # entry.py applies migrations (RUN_MIGRATIONS defaults to 1) then launches
 # uvicorn on $PORT (default 8000). Pure Python — no shell needed, so it behaves

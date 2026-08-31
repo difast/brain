@@ -50,6 +50,20 @@ class ConflictError(BrainError):
     code = "conflict"
 
 
+class TooManyRequestsError(BrainError):
+    """Rate limit hit — too many attempts, or asked again too soon."""
+
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    code = "too_many_requests"
+
+
+class ServiceUnavailableError(BrainError):
+    """A dependency the request needs (e.g. the mail server) is unreachable."""
+
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    code = "service_unavailable"
+
+
 class BrainDecisionError(BrainError):
     """The brain failed to produce a valid decision."""
 

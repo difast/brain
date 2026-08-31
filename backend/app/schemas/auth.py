@@ -52,12 +52,61 @@ class LoginResponse(BaseModel):
     organization: OrganizationResponse
 
 
+class LoginStartResponse(BaseModel):
+    """Result of the password step.
+
+    With email configured the login is not finished yet: a code has been sent
+    and ``challenge`` must come back with it. Without email configured the
+    session is issued straight away and the token/user/organization are set.
+    """
+
+    code_required: bool
+    challenge: str | None = None
+    code_expires_in_seconds: int | None = None
+    masked_email: str | None = None
+    token: str | None = None
+    user: UserResponse | None = None
+    organization: OrganizationResponse | None = None
+
+
+class LoginVerifyRequest(BaseModel):
+    challenge: str = Field(min_length=1)
+    code: str = Field(min_length=1, max_length=16)
+
+
+class CodeSentResponse(BaseModel):
+    sent: bool
+    expires_in_seconds: int
+    masked_email: str | None = None
+
+
 class ChangePasswordRequest(BaseModel):
     current_password: str = Field(min_length=1)
     new_password: str = Field(min_length=6, max_length=255)
+    # Required when email confirmation is configured.
+    code: str | None = Field(default=None, max_length=16)
+
+
+class PasswordCodeRequest(BaseModel):
+    current_password: str = Field(min_length=1)
 
 
 class ChangeEmailRequest(BaseModel):
+    current_password: str = Field(min_length=1)
+    new_email: str = Field(min_length=3, max_length=320)
+    # Required when email confirmation is configured.
+    code: str | None = Field(default=None, max_length=16)
+
+    @field_validator("new_email")
+    @classmethod
+    def _normalize_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if "@" not in v:
+            raise ValueError("Invalid email address.")
+        return v
+
+
+class EmailCodeRequest(BaseModel):
     current_password: str = Field(min_length=1)
     new_email: str = Field(min_length=3, max_length=320)
 

@@ -14,6 +14,7 @@ import {
   getToken,
   setToken,
   type AuthUser,
+  type LoginStartResponse,
   type Organization,
 } from "@/lib/api";
 
@@ -23,11 +24,14 @@ interface AuthState {
   status: Status;
   user: AuthUser | null;
   organization: Organization | null;
+  /** Password step. Returns the challenge when a mailed code is required. */
   login: (
     email: string,
     password: string,
     captchaToken?: string | null,
-  ) => Promise<void>;
+  ) => Promise<LoginStartResponse>;
+  /** Code step: finishes a login that returned `code_required`. */
+  completeLogin: (challenge: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -68,13 +72,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (email: string, password: string, captchaToken?: string | null) => {
       const res = await api.login(email, password, captchaToken);
-      setToken(res.token);
-      setUser(res.user);
-      setOrganization(res.organization);
-      setStatus("authed");
+      // With email confirmation on, the session only starts after the code
+      // step — here we just hand the challenge back to the login page.
+      if (!res.code_required && res.token && res.user && res.organization) {
+        setToken(res.token);
+        setUser(res.user);
+        setOrganization(res.organization);
+        setStatus("authed");
+      }
+      return res;
     },
     [],
   );
+
+  const completeLogin = useCallback(async (challenge: string, code: string) => {
+    const res = await api.loginVerify(challenge, code);
+    setToken(res.token);
+    setUser(res.user);
+    setOrganization(res.organization);
+    setStatus("authed");
+  }, []);
 
   const logout = useCallback(async () => {
     try {
@@ -98,8 +115,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ status, user, organization, login, logout, refreshUser }),
-    [status, user, organization, login, logout, refreshUser],
+    () => ({
+      status,
+      user,
+      organization,
+      login,
+      completeLogin,
+      logout,
+      refreshUser,
+    }),
+    [status, user, organization, login, completeLogin, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

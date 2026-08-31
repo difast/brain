@@ -6,7 +6,7 @@ unlock endpoint requires the admin-panel token.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, BackgroundTasks, Response, status
 
 from app.api.deps import AdminGuard, SessionDep
 from app.schemas.admin import (
@@ -19,8 +19,11 @@ from app.schemas.admin import (
     OrgSummary,
 )
 from app.schemas.lead import LeadResponse
+from app.schemas.newsletter import NewsletterCreateRequest, NewsletterResponse
+from app.services import newsletter_service
 from app.services.admin_service import AdminService
 from app.services.lead_service import LeadService
+from app.services.newsletter_service import NewsletterService
 
 router = APIRouter(tags=["admin"])
 
@@ -173,3 +176,35 @@ async def delete_lead(
 ) -> Response:
     await LeadService(session).delete(lead_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/admin/newsletters",
+    response_model=list[NewsletterResponse],
+    summary="List newsletters sent to dashboard users",
+)
+async def list_newsletters(
+    _admin: AdminGuard, session: SessionDep
+) -> list[NewsletterResponse]:
+    items = await NewsletterService(session).list()
+    return [NewsletterResponse.model_validate(x) for x in items]
+
+
+@router.post(
+    "/admin/newsletters",
+    response_model=NewsletterResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Send a newsletter to every dashboard user",
+)
+async def create_newsletter(
+    payload: NewsletterCreateRequest,
+    _admin: AdminGuard,
+    session: SessionDep,
+    background: BackgroundTasks,
+) -> NewsletterResponse:
+    newsletter = await NewsletterService(session).create(
+        payload.subject, payload.body
+    )
+    # Delivery runs after the response, on its own session.
+    background.add_task(newsletter_service.deliver, newsletter.id)
+    return NewsletterResponse.model_validate(newsletter)

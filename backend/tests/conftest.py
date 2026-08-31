@@ -169,3 +169,47 @@ def rover_payload() -> dict:
 
 
 API = "/api/v1"
+
+
+@pytest.fixture
+def mailbox(monkeypatch) -> list[dict]:
+    """Turn email on and capture every message instead of sending it.
+
+    Returns the list messages land in: {to, subject, html, text}.
+    """
+    from app.core.config import settings
+    from app.services import mailer
+
+    monkeypatch.setattr(settings, "smtp_host", "smtp.test")
+    monkeypatch.setattr(settings, "smtp_user", "info@mevratek.ru")
+    monkeypatch.setattr(settings, "smtp_password", "secret")
+
+    sent: list[dict] = []
+
+    async def _capture(to: str, subject: str, html: str, text: str) -> None:
+        sent.append({"to": to, "subject": subject, "html": html, "text": text})
+
+    monkeypatch.setattr(mailer, "send_email", _capture)
+
+    async def _capture_quietly(to: str, subject: str, html: str, text: str) -> bool:
+        await _capture(to, subject, html, text)
+        return True
+
+    monkeypatch.setattr(mailer, "send_email_quietly", _capture_quietly)
+    return sent
+
+
+@pytest.fixture
+def broken_mailbox(monkeypatch) -> None:
+    """Email configured, but the SMTP server refuses every message."""
+    from app.core.config import settings
+    from app.services import mailer
+
+    monkeypatch.setattr(settings, "smtp_host", "smtp.test")
+    monkeypatch.setattr(settings, "smtp_user", "info@mevratek.ru")
+    monkeypatch.setattr(settings, "smtp_password", "secret")
+
+    async def _fail(to: str, subject: str, html: str, text: str) -> None:
+        raise mailer.EmailDeliveryError("connection refused")
+
+    monkeypatch.setattr(mailer, "send_email", _fail)

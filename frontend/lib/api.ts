@@ -217,9 +217,46 @@ export interface AuthResponse {
   organization: Organization;
 }
 
+/** Result of the password step: either a session, or "we emailed you a code". */
+export interface LoginStartResponse {
+  code_required: boolean;
+  challenge: string | null;
+  code_expires_in_seconds: number | null;
+  masked_email: string | null;
+  token: string | null;
+  user: AuthUser | null;
+  organization: Organization | null;
+}
+
+export interface CodeSentResponse {
+  sent: boolean;
+  expires_in_seconds: number;
+  masked_email: string | null;
+}
+
 function raiseForStatus(status: number, text: string): never {
   if (status === 401) throw new UnauthorizedError(text || "Unauthorized");
   throw new Error(text ? `${status}: ${text}` : `${status}`);
+}
+
+/**
+ * The human-readable message inside an API error. Error bodies are JSON
+ * ({code, message, request_id}); show the message, not the envelope.
+ */
+export function errorMessage(e: unknown, fallback: string): string {
+  const raw = e instanceof Error ? e.message : String(e);
+  const start = raw.indexOf("{");
+  if (start >= 0) {
+    try {
+      const parsed = JSON.parse(raw.slice(start));
+      if (parsed && typeof parsed.message === "string" && parsed.message) {
+        return parsed.message;
+      }
+    } catch {
+      /* not JSON after all — fall through to the raw text */
+    }
+  }
+  return raw || fallback;
 }
 
 async function get<T>(path: string): Promise<T> {
@@ -298,6 +335,19 @@ export interface AdminLead {
   created_at: string;
 }
 
+export type NewsletterStatus = "sending" | "sent" | "failed";
+
+export interface AdminNewsletter {
+  id: string;
+  subject: string;
+  body: string;
+  status: NewsletterStatus;
+  recipients: number;
+  sent: number;
+  failed: number;
+  created_at: string;
+}
+
 async function adminGet<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     cache: "no-store",
@@ -343,6 +393,9 @@ export const adminApi = {
   deleteInvite: (id: string) => adminDelete(`/admin/invites/${id}`),
   listLeads: () => adminGet<AdminLead[]>("/admin/leads"),
   deleteLead: (id: string) => adminDelete(`/admin/leads/${id}`),
+  listNewsletters: () => adminGet<AdminNewsletter[]>("/admin/newsletters"),
+  createNewsletter: (subject: string, body: string) =>
+    adminPost<AdminNewsletter>("/admin/newsletters", { subject, body }),
 };
 
 export const inviteApi = {
@@ -354,17 +407,38 @@ export const inviteApi = {
 export const api = {
   // Auth
   login: (email: string, password: string, captchaToken?: string | null) =>
-    post<AuthResponse>("/auth/login", {
+    post<LoginStartResponse>("/auth/login", {
       email,
       password,
       captcha_token: captchaToken ?? undefined,
     }),
+  loginVerify: (challenge: string, code: string) =>
+    post<AuthResponse>("/auth/login/verify", { challenge, code }),
+  config: () =>
+    get<{ captcha_site_key: string; email_confirmation: boolean }>(
+      "/auth/config",
+    ),
   logout: () => post<{ ok: boolean }>("/auth/logout", {}),
   me: () => get<AuthResponse>("/auth/me"),
-  changePassword: (current_password: string, new_password: string) =>
-    patch<{ ok: boolean }>("/auth/password", { current_password, new_password }),
-  changeEmail: (current_password: string, new_email: string) =>
-    patch<AuthUser>("/auth/email", { current_password, new_email }),
+  requestPasswordCode: (current_password: string) =>
+    post<CodeSentResponse>("/auth/password/request", { current_password }),
+  changePassword: (
+    current_password: string,
+    new_password: string,
+    code?: string,
+  ) =>
+    patch<{ ok: boolean }>("/auth/password", {
+      current_password,
+      new_password,
+      code,
+    }),
+  requestEmailCode: (current_password: string, new_email: string) =>
+    post<CodeSentResponse>("/auth/email/request", {
+      current_password,
+      new_email,
+    }),
+  changeEmail: (current_password: string, new_email: string, code?: string) =>
+    patch<AuthUser>("/auth/email", { current_password, new_email, code }),
   updateAvatar: (avatar: string | null) =>
     patch<AuthUser>("/auth/avatar", { avatar }),
   listActivity: (params: { limit: number; offset: number }) =>

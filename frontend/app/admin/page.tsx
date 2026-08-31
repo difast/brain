@@ -8,12 +8,14 @@ import {
   UnauthorizedError,
   type AdminInvite,
   type AdminLead,
+  type AdminNewsletter,
   type AdminOrg,
   type AuthUser,
   type UserRole,
 } from "@/lib/api";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Spinner, timeAgo } from "@/components/ui";
+import { useFeedback } from "@/components/feedback";
 import { useT } from "@/lib/i18n";
 
 function inviteLink(token: string): string {
@@ -100,6 +102,7 @@ function AdminPanel({ onLock }: { onLock: () => void }) {
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [invites, setInvites] = useState<AdminInvite[]>([]);
   const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [newsletters, setNewsletters] = useState<AdminNewsletter[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const lock = useCallback(() => {
@@ -109,16 +112,18 @@ function AdminPanel({ onLock }: { onLock: () => void }) {
 
   const reload = useCallback(async () => {
     try {
-      const [o, u, i, l] = await Promise.all([
+      const [o, u, i, l, n] = await Promise.all([
         adminApi.listOrgs(),
         adminApi.listUsers(),
         adminApi.listInvites(),
         adminApi.listLeads(),
+        adminApi.listNewsletters(),
       ]);
       setOrgs(o);
       setUsers(u);
       setInvites(i);
       setLeads(l);
+      setNewsletters(n);
       setLoadError(null);
     } catch (e) {
       if (e instanceof UnauthorizedError) {
@@ -150,6 +155,11 @@ function AdminPanel({ onLock }: { onLock: () => void }) {
       {loadError && <div className="error-box">{loadError}</div>}
 
       <LeadSection leads={leads} onChanged={reload} />
+      <NewsletterSection
+        newsletters={newsletters}
+        userCount={users.length}
+        onSent={reload}
+      />
       <OrgSection orgs={orgs} onCreated={reload} />
       <InviteSection orgs={orgs} invites={invites} onCreated={reload} />
       <UserSection users={users} orgs={orgs} onChanged={reload} />
@@ -254,6 +264,120 @@ function LeadSection({
                     >
                       {t("admin.leadDelete")}
                     </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const NEWSLETTER_STATUS_KEYS: Record<string, string> = {
+  sending: "admin.nlSending",
+  sent: "admin.nlSent",
+  failed: "admin.nlFailed",
+};
+
+function NewsletterSection({
+  newsletters,
+  userCount,
+  onSent,
+}: {
+  newsletters: AdminNewsletter[];
+  userCount: number;
+  onSent: () => void;
+}) {
+  const { t } = useT();
+  const { confirm, toast } = useFeedback();
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function send() {
+    if (!subject.trim() || !body.trim()) return;
+    const ok = await confirm({
+      title: t("admin.nlConfirmTitle"),
+      body: t("admin.nlConfirmBody").replace("{count}", String(userCount)),
+      confirmLabel: t("admin.nlSend"),
+    });
+    if (!ok) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await adminApi.createNewsletter(subject.trim(), body.trim());
+      setSubject("");
+      setBody("");
+      toast(t("admin.nlQueued"), "success");
+      onSent();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="panel" style={{ marginTop: 16 }}>
+      <h2>{t("admin.newsletter")}</h2>
+      <p className="muted" style={{ marginTop: -6 }}>
+        {t("admin.nlHint").replace("{count}", String(userCount))}
+      </p>
+
+      {error && <div className="error-box">{error}</div>}
+
+      <label>{t("admin.nlSubject")}</label>
+      <input
+        value={subject}
+        onChange={(e) => setSubject(e.target.value)}
+        placeholder={t("admin.nlSubjectPlaceholder")}
+        style={{ width: "100%", maxWidth: 520 }}
+      />
+
+      <label>{t("admin.nlBody")}</label>
+      <textarea
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        rows={6}
+        placeholder={t("admin.nlBodyPlaceholder")}
+        style={{ width: "100%", maxWidth: 520, resize: "vertical" }}
+      />
+
+      <div style={{ marginTop: 12 }}>
+        <button onClick={send} disabled={busy || !subject.trim() || !body.trim()}>
+          {busy ? <Spinner /> : t("admin.nlSend")}
+        </button>
+      </div>
+
+      {newsletters.length > 0 && (
+        <div className="table-scroll" style={{ marginTop: 16 }}>
+          <table className="cards-table">
+            <thead>
+              <tr>
+                <th>{t("admin.colCreated")}</th>
+                <th>{t("admin.nlSubject")}</th>
+                <th>{t("admin.colStatus")}</th>
+                <th>{t("admin.nlDelivered")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {newsletters.map((n) => (
+                <tr key={n.id}>
+                  <td data-label={t("admin.colCreated")} className="muted" style={{ whiteSpace: "nowrap" }}>
+                    {timeAgo(n.created_at)}
+                  </td>
+                  <td data-label={t("admin.nlSubject")}>{n.subject}</td>
+                  <td data-label={t("admin.colStatus")}>
+                    <span className="chip">
+                      {t(NEWSLETTER_STATUS_KEYS[n.status] ?? n.status)}
+                    </span>
+                  </td>
+                  <td data-label={t("admin.nlDelivered")} className="mono muted">
+                    {n.sent}/{n.recipients}
+                    {n.failed > 0 ? ` · ${t("admin.nlFailedCount")}: ${n.failed}` : ""}
                   </td>
                 </tr>
               ))}

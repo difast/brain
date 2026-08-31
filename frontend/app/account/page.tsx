@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { useFeedback } from "@/components/feedback";
-import { api } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Spinner } from "@/components/ui";
 import { AvatarCropper } from "@/components/AvatarCropper";
@@ -49,16 +49,29 @@ export default function AccountPage() {
   const { user, organization, refreshUser } = useAuth();
   const { toast } = useFeedback();
 
+  // Whether changes have to be confirmed by a code from an email.
+  const [codeRequired, setCodeRequired] = useState(false);
+  useEffect(() => {
+    api
+      .config()
+      .then((c) => setCodeRequired(c.email_confirmation))
+      .catch(() => setCodeRequired(false));
+  }, []);
+
   // Password change
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [pwCode, setPwCode] = useState("");
+  const [pwCodeSent, setPwCodeSent] = useState(false);
   const [pwBusy, setPwBusy] = useState(false);
   const [pwError, setPwError] = useState<string | null>(null);
 
   // Email change
   const [emailPassword, setEmailPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [emailCode, setEmailCode] = useState("");
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
 
@@ -88,13 +101,22 @@ export default function AccountPage() {
     }
     setPwBusy(true);
     try {
-      await api.changePassword(current, next);
+      // With email confirmation on, the first submit only asks for a code.
+      if (codeRequired && !pwCodeSent) {
+        await api.requestPasswordCode(current);
+        setPwCodeSent(true);
+        toast(t("account.codeSent"), "success");
+        return;
+      }
+      await api.changePassword(current, next, pwCode || undefined);
       toast(t("account.changed"), "success");
       setCurrent("");
       setNext("");
       setConfirm("");
+      setPwCode("");
+      setPwCodeSent(false);
     } catch (e) {
-      setPwError(e instanceof Error ? e.message : String(e));
+      setPwError(errorMessage(e, t("account.changeFailed")));
     } finally {
       setPwBusy(false);
     }
@@ -105,13 +127,21 @@ export default function AccountPage() {
     setEmailError(null);
     setEmailBusy(true);
     try {
-      await api.changeEmail(emailPassword, newEmail);
+      if (codeRequired && !emailCodeSent) {
+        await api.requestEmailCode(emailPassword, newEmail);
+        setEmailCodeSent(true);
+        toast(t("account.codeSentToNew"), "success");
+        return;
+      }
+      await api.changeEmail(emailPassword, newEmail, emailCode || undefined);
       await refreshUser();
       toast(t("account.emailChanged"), "success");
       setEmailPassword("");
       setNewEmail("");
+      setEmailCode("");
+      setEmailCodeSent(false);
     } catch (e) {
-      setEmailError(e instanceof Error ? e.message : String(e));
+      setEmailError(errorMessage(e, t("account.changeFailed")));
     } finally {
       setEmailBusy(false);
     }
@@ -253,12 +283,39 @@ export default function AccountPage() {
             autoComplete="current-password"
           />
 
+          {emailCodeSent && (
+            <>
+              <label htmlFor="acc-email-code">{t("account.code")}</label>
+              <input
+                id="acc-email-code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={8}
+                value={emailCode}
+                onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="12345"
+                style={{ width: "100%", fontFamily: "var(--mono)", letterSpacing: 4 }}
+              />
+            </>
+          )}
+
           <button
             type="submit"
-            disabled={emailBusy || !newEmail || !emailPassword}
+            disabled={
+              emailBusy ||
+              !newEmail ||
+              !emailPassword ||
+              (emailCodeSent && !emailCode)
+            }
             style={{ marginTop: 16 }}
           >
-            {emailBusy ? <Spinner /> : t("account.save")}
+            {emailBusy ? (
+              <Spinner />
+            ) : codeRequired && !emailCodeSent ? (
+              t("account.sendCode")
+            ) : (
+              t("account.save")
+            )}
           </button>
         </form>
       </div>
@@ -296,12 +353,36 @@ export default function AccountPage() {
             autoComplete="new-password"
           />
 
+          {pwCodeSent && (
+            <>
+              <label htmlFor="acc-pw-code">{t("account.code")}</label>
+              <input
+                id="acc-pw-code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={8}
+                value={pwCode}
+                onChange={(e) => setPwCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="12345"
+                style={{ width: "100%", fontFamily: "var(--mono)", letterSpacing: 4 }}
+              />
+            </>
+          )}
+
           <button
             type="submit"
-            disabled={pwBusy || !current || !next || !confirm}
+            disabled={
+              pwBusy || !current || !next || !confirm || (pwCodeSent && !pwCode)
+            }
             style={{ marginTop: 16 }}
           >
-            {pwBusy ? <Spinner /> : t("account.save")}
+            {pwBusy ? (
+              <Spinner />
+            ) : codeRequired && !pwCodeSent ? (
+              t("account.sendCode")
+            ) : (
+              t("account.save")
+            )}
           </button>
         </form>
       </div>

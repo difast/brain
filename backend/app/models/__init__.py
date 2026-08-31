@@ -7,21 +7,26 @@ from app.models.decision import Decision
 from app.models.execution import ActionExecution, ExecutionStatus
 from app.models.invite import Invite
 from app.models.lead import ContactLead
+from app.models.newsletter import Newsletter, NewsletterStatus
 from app.models.organization import Organization
 from app.models.robot import Robot, RobotStatus
 from app.models.task import Task, TaskSource, TaskStatus
 from app.models.telemetry import Telemetry
 from app.models.user import User, UserRole
+from app.models.verification_code import CodePurpose, VerificationCode
 
 __all__ = [
     "ActionExecution",
     "ApiKey",
     "AuditAction",
     "AuditLog",
+    "CodePurpose",
     "ContactLead",
     "Decision",
     "ExecutionStatus",
     "Invite",
+    "Newsletter",
+    "NewsletterStatus",
     "Organization",
     "Robot",
     "RobotStatus",
@@ -33,4 +38,5 @@ __all__ = [
     "User",
     "UserRole",
     "UUIDMixin",
+    "VerificationCode",
 ]

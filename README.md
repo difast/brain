@@ -276,10 +276,25 @@ Create an **App** from this GitHub repo (branch = `main`, auto-deploy on):
   - `CORS_ORIGINS=https://<frontend-domain>` (the admin dashboard origin; `*`
     to allow all — the marketing site's origin is always allowed in addition
     to this, since the public contact form needs it), `DEMO_MODE=false`
+  - **Email (SMTP)** — set all four and email features switch on:
+    `SMTP_HOST=smtp.timeweb.ru`, `SMTP_PORT=465`, `SMTP_ENCRYPTION=SSL`,
+    `SMTP_USER=info@mevratek.ru`, `SMTP_PASSWORD=<mailbox password>`.
+    Port `465` is implicit TLS (SMTPS) and pairs with `SMTP_ENCRYPTION=SSL`;
+    use `587` + `STARTTLS` instead if the provider asks for it. Leave these
+    empty and the app runs without email: logins need no code, and welcome /
+    receipt / newsletter mail is logged instead of sent.
   - *(optional)* `S3_*` for frame storage on any S3-compatible bucket.
+  - *(optional)* `PORT` — the app binds to it (default `8000`); set the same
+    value as the app's internal port in the platform.
 
 > **Note:** in production the app refuses to start with the default placeholder
 > `SECRET_KEY` — set a real random value.
+
+> **Email:** with SMTP configured, every login is confirmed by a 5-digit code
+> emailed to the account address (10 minutes, 3 attempts, then a 60-minute
+> lockout), and password/email changes need a code too — the email-change code
+> goes to the *new* address, so it also proves ownership. Add SPF, DKIM and
+> DMARC records for the sending domain or the mail will land in spam.
 
 ### 3. Frontend app (optional dashboard)
 

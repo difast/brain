@@ -96,6 +96,34 @@ def decode_user_token(token: str) -> dict[str, Any]:
     )
 
 
+# --- Login challenge (password step passed, code step pending) -------------
+
+
+def create_login_challenge_token(user_id: str, ttl_minutes: int) -> str:
+    """Issue a short-lived token proving the password step was completed.
+
+    Presented back with the emailed code to finish logging in — so the code
+    alone (or the email address alone) is never enough to obtain a session.
+    """
+    now = datetime.now(UTC)
+    payload: dict[str, Any] = {
+        "sub": user_id,
+        "type": "login_challenge",
+        "iat": now,
+        "exp": now + timedelta(minutes=ttl_minutes),
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+
+
+def decode_login_challenge_token(token: str) -> dict[str, Any]:
+    """Decode a login-challenge JWT. Raises ``jwt.PyJWTError`` on failure."""
+    return jwt.decode(
+        token,
+        settings.secret_key,
+        algorithms=[settings.jwt_algorithm],
+    )
+
+
 # --- Admin panel tokens ----------------------------------------------------
 
 # The hidden admin panel unlocks with a single shared password (no email).

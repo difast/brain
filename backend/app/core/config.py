@@ -57,6 +57,36 @@ class Settings(BaseSettings):
         "https://smartcaptcha.yandexcloud.net/validate"
     )
 
+    # --- Email (SMTP) ---
+    # When host/user/password are all set, email is "enabled": login requires a
+    # emailed code, account changes are confirmed by code, and welcome/lead/
+    # newsletter mail is sent. Leave them empty (dev / tests) and the app runs
+    # exactly as before — codes are skipped and mail is logged, not sent.
+    smtp_host: str = ""
+    # 465 = implicit TLS (SMTPS, encryption=ssl); 587 = STARTTLS.
+    smtp_port: int = 465
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_encryption: Literal["ssl", "starttls", "none"] = "ssl"
+    # Envelope sender. Defaults to smtp_user when unset.
+    smtp_from: str = ""
+    smtp_from_name: str = "Mevratek"
+    smtp_timeout_seconds: float = 20.0
+
+    # Emailed confirmation codes (login, password change, email change).
+    code_length: int = 5
+    code_ttl_minutes: int = 10
+    code_max_attempts: int = 3
+    code_lockout_minutes: int = 60
+    # Don't issue a fresh code more often than this for the same purpose.
+    code_resend_cooldown_seconds: int = 60
+
+    @field_validator("smtp_encryption", mode="before")
+    @classmethod
+    def _lower_encryption(cls, v: object) -> object:
+        # The platform's env var is written as SSL / STARTTLS.
+        return v.lower() if isinstance(v, str) else v
+
     # --- Database ---
     database_url: str = (
         "postgresql+asyncpg://brain:brain@postgres:5432/brain"
@@ -158,6 +188,15 @@ class Settings(BaseSettings):
     def captcha_enabled(self) -> bool:
         """Captcha is enforced only when a server key is configured."""
         return bool(self.yandex_captcha_server_key)
+
+    @property
+    def email_enabled(self) -> bool:
+        """Email is on only when a full SMTP credential set is configured."""
+        return bool(self.smtp_host and self.smtp_user and self.smtp_password)
+
+    @property
+    def mail_from(self) -> str:
+        return self.smtp_from or self.smtp_user
 
     @property
     def storage_enabled(self) -> bool:
