@@ -273,8 +273,9 @@ Create an **App** from this GitHub repo (branch = `main`, auto-deploy on):
   - `DATABASE_URL=postgresql+asyncpg://<user>:<password>@<host>:<port>/<db>`
   - `ANTHROPIC_API_KEY=<your key>` *(or `ANTHROPIC_BASE_URL=<tunnel>`; leave
     both empty for mock mode)*
-  - `CORS_ORIGINS=https://<frontend-domain>` (the dashboard origin; `*` to allow
-    all), `DEMO_MODE=false`
+  - `CORS_ORIGINS=https://<frontend-domain>` (the admin dashboard origin; `*`
+    to allow all — the marketing site's origin is always allowed in addition
+    to this, since the public contact form needs it), `DEMO_MODE=false`
   - *(optional)* `S3_*` for frame storage on any S3-compatible bucket.
 
 > **Note:** in production the app refuses to start with the default placeholder

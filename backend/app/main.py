@@ -108,9 +108,20 @@ def create_app() -> FastAPI:
     # are not needed. Disabling them lets a wildcard origin work cleanly —
     # "*" + allow_credentials is rejected by browsers and breaks fetch().
     allow_all = "*" in settings.cors_origins
+    # The public contact form on the marketing site posts to /leads from a
+    # different origin than the admin dashboard. Operators following the
+    # deployment docs set CORS_ORIGINS to just the dashboard's origin, which
+    # would silently block the form — so the marketing site is always allowed
+    # here regardless of that setting.
+    public_site_origins = ["https://mevratek.ru", "https://www.mevratek.ru"]
+    origins = (
+        settings.cors_origins
+        if allow_all
+        else list(dict.fromkeys([*settings.cors_origins, *public_site_origins]))
+    )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=origins,
         allow_credentials=not allow_all,
         allow_methods=["*"],
         allow_headers=["*"],
