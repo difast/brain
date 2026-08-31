@@ -13,6 +13,7 @@ def _payload(**over):
     base = {
         "name": "Иван Петров",
         "email": "ivan@acme.example",
+        "phone": "+7 999 123-45-67",
         "organization": "ООО Акме",
         "topic": "pilot",
         "message": "Хотим подключить складскую тележку.",
@@ -30,6 +31,7 @@ async def test_public_can_submit_lead(client, admin_auth):
     leads = (await client.get(f"{API}/admin/leads", headers=admin_auth)).json()
     assert len(leads) == 1
     assert leads[0]["email"] == "ivan@acme.example"
+    assert leads[0]["phone"] == "+7 999 123-45-67"
     assert leads[0]["organization"] == "ООО Акме"
 
 

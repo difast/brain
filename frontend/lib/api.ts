@@ -276,6 +276,7 @@ export interface AdminLead {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   organization: string | null;
   topic: string;
   message: string;

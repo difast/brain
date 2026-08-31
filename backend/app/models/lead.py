@@ -18,6 +18,7 @@ class ContactLead(UUIDMixin, TimestampMixin, Base):
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
     organization: Mapped[str | None] = mapped_column(String(255), nullable=True)
     topic: Mapped[str] = mapped_column(String(64), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)

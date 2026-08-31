@@ -220,6 +220,13 @@ function LeadSection({
                         {l.email}
                       </a>
                     </div>
+                    {l.phone && (
+                      <div>
+                        <a href={`tel:${l.phone}`} className="mono">
+                          {l.phone}
+                        </a>
+                      </div>
+                    )}
                     {l.organization && (
                       <div className="muted" style={{ fontSize: 12 }}>
                         {l.organization}

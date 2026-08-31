@@ -26,6 +26,7 @@ export function ContactForm() {
   function mailtoFallback(fields: {
     name: string;
     email: string;
+    phone: string;
     org: string;
     message: string;
   }) {
@@ -35,6 +36,7 @@ export function ContactForm() {
     const body = [
       `Имя: ${fields.name}`,
       `Email: ${fields.email}`,
+      fields.phone ? `Телефон: ${fields.phone}` : "",
       fields.org ? `Организация: ${fields.org}` : "",
       `Тема: ${topicLabel}`,
       "",
@@ -53,6 +55,7 @@ export function ContactForm() {
     const fields = {
       name: String(data.get("name") ?? "").trim(),
       email: String(data.get("email") ?? "").trim(),
+      phone: String(data.get("phone") ?? "").trim(),
       org: String(data.get("org") ?? "").trim(),
       message: String(data.get("message") ?? "").trim(),
     };
@@ -67,6 +70,7 @@ export function ContactForm() {
         body: JSON.stringify({
           name: fields.name,
           email: fields.email,
+          phone: fields.phone || null,
           organization: fields.org || null,
           topic,
           message: fields.message,
@@ -148,12 +152,25 @@ export function ContactForm() {
         </label>
       </div>
 
-      <label className="mt-5 block">
-        <span className="mb-1.5 block text-sm font-medium text-ink">
-          Организация
-        </span>
-        <input name="org" className={inputCls} placeholder="Название компании" />
-      </label>
+      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-ink">
+            Телефон
+          </span>
+          <input
+            name="phone"
+            type="tel"
+            className={inputCls}
+            placeholder="+7 900 000-00-00"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-ink">
+            Организация
+          </span>
+          <input name="org" className={inputCls} placeholder="Название компании" />
+        </label>
+      </div>
 
       <div className="mt-5">
         <span className="mb-2 block text-sm font-medium text-ink">Тема</span>

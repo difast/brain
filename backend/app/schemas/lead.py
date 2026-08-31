@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class LeadCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     email: str = Field(min_length=3, max_length=320)
+    phone: str | None = Field(default=None, max_length=32)
     organization: str | None = Field(default=None, max_length=255)
     topic: str = Field(min_length=1, max_length=64)
     message: str = Field(min_length=1, max_length=5000)
@@ -31,6 +32,7 @@ class LeadResponse(BaseModel):
     id: str
     name: str
     email: str
+    phone: str | None
     organization: str | None
     topic: str
     message: str

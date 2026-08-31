@@ -27,6 +27,7 @@ class LeadService:
         lead = ContactLead(
             name=payload.name.strip(),
             email=payload.email.strip(),
+            phone=(payload.phone or "").strip() or None,
             organization=(payload.organization or "").strip() or None,
             topic=payload.topic.strip(),
             message=payload.message.strip(),
