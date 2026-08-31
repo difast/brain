@@ -6,6 +6,7 @@ import { api, type Robot } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import { DemoBadge, StatusBadge, timeAgo } from "@/components/ui";
 import { EmptyState, SkeletonRows, useFeedback } from "@/components/feedback";
+import { Onboarding } from "@/components/Onboarding";
 import { useT } from "@/lib/i18n";
 
 type Sort = "recent" | "name" | "status";
@@ -77,6 +78,18 @@ export default function RobotsPage() {
     { value: "offline", label: t("common.offline") },
     { value: "error", label: t("common.error") },
   ];
+
+  // First run: no devices yet. Show how to connect one instead of an empty
+  // table with zeroes above it.
+  if (!loading && robots.length === 0) {
+    return (
+      <main className="container">
+        <h1>{t("robots.title")}</h1>
+        <p className="sub">{t("robots.sub")}</p>
+        <Onboarding />
+      </main>
+    );
+  }
 
   return (
     <main className="container">
@@ -195,16 +208,6 @@ export default function RobotsPage() {
             ))}
           </tbody>
         </table>
-        {!loading && robots.length === 0 && (
-          <EmptyState
-            title={t("robots.empty")}
-            action={
-              <Link href="/connect" className="filter-chip" style={{ padding: "8px 14px" }}>
-                {t("nav.connect")}
-              </Link>
-            }
-          />
-        )}
         {!loading && robots.length > 0 && shown.length === 0 && (
           <EmptyState title={t("robots.nothing")} />
         )}

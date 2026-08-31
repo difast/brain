@@ -57,6 +57,10 @@ class Robot(UUIDMixin, TimestampMixin, Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # The presence state the owners were last told about, so the alert watcher
+    # emails on a change rather than on every pass. Null until first observed.
+    alerted_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
+
     # The command vocabulary this robot understands. List of:
     #   {"type": "move_forward", "description": "...",
     #    "value": {"type": "number", "min": 0, "max": 1, "unit": "m"}}

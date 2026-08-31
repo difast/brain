@@ -184,6 +184,12 @@ class AuthService:
         await self.session.flush()
         logger.info("newsletter_opt_in_changed", user_id=user.id, value=opted_in)
 
+    async def set_alerts_opt_in(self, user: User, opted_in: bool) -> None:
+        """Turn device alerts on or off for this user."""
+        user.alerts_opt_in = opted_in
+        await self.session.flush()
+        logger.info("alerts_opt_in_changed", user_id=user.id, value=opted_in)
+
     async def update_avatar(
         self, user: User, avatar: str | None, ip: str | None = None
     ) -> None:

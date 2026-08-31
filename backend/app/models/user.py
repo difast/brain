@@ -53,6 +53,11 @@ class User(UUIDMixin, TimestampMixin, Base):
     newsletter_opt_in: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default=sa_true(), nullable=False
     )
+    # Operational alerts: a device going offline, failing, or recovering.
+    # Separate from newsletters — this is about the fleet, not marketing.
+    alerts_opt_in: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=sa_true(), nullable=False
+    )
     # When the welcome email went out — set on the user's first successful
     # login, so it is sent exactly once.
     welcomed_at: Mapped[datetime | None] = mapped_column(

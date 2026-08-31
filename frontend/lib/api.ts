@@ -190,6 +190,7 @@ export interface AuthUser {
   organization_id: string;
   avatar: string | null;
   newsletter_opt_in: boolean;
+  alerts_opt_in: boolean;
   created_at: string;
 }
 
@@ -298,6 +299,29 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
   });
   if (!res.ok) raiseForStatus(res.status, await res.text());
   return res.json() as Promise<T>;
+}
+
+/**
+ * Download an authenticated endpoint as a file. A plain link can't carry the
+ * bearer token, so fetch it and hand the browser a blob.
+ */
+async function download(path: string, fallbackName: string): Promise<void> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    cache: "no-store",
+    headers: authHeaders(),
+  });
+  if (!res.ok) raiseForStatus(res.status, await res.text());
+
+  const disposition = res.headers.get("content-disposition") ?? "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = match ? match[1] : fallbackName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 async function del<T>(path: string): Promise<T> {
@@ -455,6 +479,18 @@ export const api = {
     patch<AuthUser>("/auth/avatar", { avatar }),
   setNewsletterOptIn: (newsletter_opt_in: boolean) =>
     patch<AuthUser>("/auth/newsletter", { newsletter_opt_in }),
+  setAlertsOptIn: (alerts_opt_in: boolean) =>
+    patch<AuthUser>("/auth/alerts", { alerts_opt_in }),
+  exportLogs: (robotId?: string) =>
+    download(
+      `/logs/export.csv${robotId ? `?robot_id=${robotId}` : ""}`,
+      "mevratek-decisions.csv",
+    ),
+  exportTelemetry: (robotId?: string) =>
+    download(
+      `/telemetry/export.csv${robotId ? `?robot_id=${robotId}` : ""}`,
+      "mevratek-telemetry.csv",
+    ),
   listSessions: () => get<UserSession[]>("/auth/sessions"),
   revokeSession: (id: string) => del<{ ok: boolean }>(`/auth/sessions/${id}`),
   revokeOtherSessions: () =>

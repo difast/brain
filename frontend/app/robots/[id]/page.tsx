@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { api } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
 import {
   Actions,
@@ -9,6 +9,7 @@ import {
   DemoBadge,
   Pager,
   Sparkline,
+  Spinner,
   StatusBadge,
   timeAgo,
 } from "@/components/ui";
@@ -31,6 +32,7 @@ export default function RobotDetail({
   const [renaming, setRenaming] = useState(false);
   const [nameOverride, setNameOverride] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
+  const [exporting, setExporting] = useState<"" | "logs" | "telemetry">("");
   const robot = usePoll(() => api.getRobot(id), 5000);
   const profile = usePoll(() => api.getProfile(id), 8000);
   const logs = usePoll(
@@ -41,6 +43,18 @@ export default function RobotDetail({
   const tasks = usePoll(() => api.listTasks(id), 4000);
   const telemetry = usePoll(() => api.listTelemetry(id), 4000);
   const executions = usePoll(() => api.listExecutions(id), 4000);
+
+  async function exportCsv(kind: "logs" | "telemetry") {
+    setExporting(kind);
+    try {
+      if (kind === "logs") await api.exportLogs(id);
+      else await api.exportTelemetry(id);
+    } catch (e) {
+      toast(errorMessage(e, t("common.exportFailed")), "error");
+    } finally {
+      setExporting("");
+    }
+  }
 
   const r = robot.data;
   const prof = profile.data;
@@ -185,6 +199,35 @@ export default function RobotDetail({
             </button>
           </div>
           <p className="sub mono">{r.id}</p>
+
+          <div className="row" style={{ gap: 8, marginBottom: 16 }}>
+            <button
+              type="button"
+              onClick={() => exportCsv("logs")}
+              disabled={exporting !== ""}
+              style={{
+                background: "transparent",
+                color: "var(--text)",
+                border: "1px solid var(--border)",
+                padding: "6px 14px",
+              }}
+            >
+              {exporting === "logs" ? <Spinner /> : t("rd.exportDecisions")}
+            </button>
+            <button
+              type="button"
+              onClick={() => exportCsv("telemetry")}
+              disabled={exporting !== ""}
+              style={{
+                background: "transparent",
+                color: "var(--text)",
+                border: "1px solid var(--border)",
+                padding: "6px 14px",
+              }}
+            >
+              {exporting === "telemetry" ? <Spinner /> : t("rd.exportTelemetry")}
+            </button>
+          </div>
 
           <div className="grid cards">
             <div className="panel">

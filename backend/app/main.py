@@ -35,7 +35,7 @@ from app.core.database import Base, engine
 from app.core.exceptions import BrainError
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestContextMiddleware
-from app.services import demo_service
+from app.services import alert_service, demo_service
 from app.services.decision_engine import DecisionEngine
 from app.services.seed_service import seed_identity
 from app.services.storage import FrameStorage
@@ -77,11 +77,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         except Exception as exc:  # noqa: BLE001
             logger.warning("demo_setup_failed", error=str(exc))
 
+    # Fleet watcher: emails an organization when one of its devices drops,
+    # fails or recovers. Needs a mail server to be of any use.
+    alert_stop = asyncio.Event()
+    alert_task: asyncio.Task | None = None
+    if settings.alerts_enabled and settings.email_enabled:
+        alert_task = asyncio.create_task(alert_service.run_alert_loop(alert_stop))
+
     yield
 
-    if demo_task is not None:
-        demo_stop.set()
-        demo_task.cancel()
+    for task, stop in ((demo_task, demo_stop), (alert_task, alert_stop)):
+        if task is not None:
+            stop.set()
+            task.cancel()
     await engine.dispose()
     logger.info("shutdown")
 
@@ -125,6 +133,9 @@ def create_app() -> FastAPI:
         allow_credentials=not allow_all,
         allow_methods=["*"],
         allow_headers=["*"],
+        # The CSV exports name the file in Content-Disposition; without this
+        # the browser can't read that header cross-origin (app.* → api.*).
+        expose_headers=["Content-Disposition"],
     )
 
     @app.exception_handler(BrainError)

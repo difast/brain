@@ -134,6 +134,9 @@ const EN: Dict = {
   "account.mailConsent": "Send me product news and platform updates",
   "account.mailOptedIn": "You'll receive our newsletters.",
   "account.mailOptedOut": "You've been unsubscribed from newsletters.",
+  "account.alertsConsent": "Notify me when a device goes offline or reports an error",
+  "account.alertsOptedIn": "Device alerts are on.",
+  "account.alertsOptedOut": "Device alerts are off.",
   // admin panel
   "admin.title": "Admin panel",
   "admin.locked": "Enter the admin password to continue",
@@ -257,6 +260,8 @@ const EN: Dict = {
   "common.search": "Search",
   "common.all": "All",
   "common.sort": "Sort",
+  "common.exportCsv": "Export CSV",
+  "common.exportFailed": "Could not export the file.",
   "sort.recent": "Newest",
   "sort.name": "By name",
   "sort.status": "By status",
@@ -334,6 +339,8 @@ const EN: Dict = {
   "rd.tasks": "Tasks",
   "rd.tasksEmpty": "No tasks yet for this device.",
   "rd.decisions": "Decision Logs",
+  "rd.exportDecisions": "Export decisions",
+  "rd.exportTelemetry": "Export telemetry",
   "rd.goal": "Goal",
   "rd.frame": "Frame",
   "rd.decisionsEmpty": "No decisions yet for this device.",
@@ -398,6 +405,26 @@ const EN: Dict = {
   "sdk.ref.a": "Full endpoint reference: the",
   "sdk.ref.b": "and the interactive",
   "sdk.ref.c": "page.",
+  // first-run onboarding
+  "onboarding.title": "Connect your first device",
+  "onboarding.sub":
+    "The dashboard fills up as soon as a device registers. Three steps, about five minutes.",
+  "onboarding.step1": "Install the SDK and register the device",
+  "onboarding.step1Body":
+    "Registration returns a device token. Store it on the device — it is how the device signs in afterwards.",
+  "onboarding.step1Link": "Connection guide",
+  "onboarding.step2": "Send heartbeats and telemetry",
+  "onboarding.step2Body":
+    "A heartbeat keeps the device online; telemetry gives you battery, speed and position on this page.",
+  "onboarding.step3": "Ask the brain for a decision",
+  "onboarding.step3Body":
+    "Every request is written to the decision log with the model, confidence and latency:",
+  "onboarding.copy": "Copy",
+  "onboarding.copied": "Copied",
+  "onboarding.noDevice": "No hardware at hand?",
+  "onboarding.noDeviceBody":
+    "Start a simulated device — it registers, sends telemetry and asks for decisions exactly like a real one.",
+  "onboarding.openSimulator": "Open the simulator",
 };
 
 const RU: Dict = {
@@ -519,6 +546,9 @@ const RU: Dict = {
   "account.mailConsent": "Получать новости продукта и обновления платформы",
   "account.mailOptedIn": "Вы подписаны на рассылку.",
   "account.mailOptedOut": "Вы отписались от рассылки.",
+  "account.alertsConsent": "Сообщать, когда устройство пропадает со связи или сообщает об ошибке",
+  "account.alertsOptedIn": "Уведомления об устройствах включены.",
+  "account.alertsOptedOut": "Уведомления об устройствах отключены.",
   // admin panel
   "admin.title": "Админ-панель",
   "admin.locked": "Введите пароль администратора для входа",
@@ -641,6 +671,8 @@ const RU: Dict = {
   "common.search": "Поиск",
   "common.all": "Все",
   "common.sort": "Сортировка",
+  "common.exportCsv": "Экспорт CSV",
+  "common.exportFailed": "Не удалось выгрузить файл.",
   "sort.recent": "Сначала новые",
   "sort.name": "По имени",
   "sort.status": "По статусу",
@@ -714,6 +746,8 @@ const RU: Dict = {
   "rd.tasks": "Задачи",
   "rd.tasksEmpty": "У этого устройства пока нет задач.",
   "rd.decisions": "Логи решений",
+  "rd.exportDecisions": "Выгрузить решения",
+  "rd.exportTelemetry": "Выгрузить телеметрию",
   "rd.goal": "Цель",
   "rd.frame": "Кадр",
   "rd.decisionsEmpty": "У этого устройства пока нет решений.",
@@ -775,6 +809,26 @@ const RU: Dict = {
   "sdk.ref.a": "Полный справочник эндпоинтов:",
   "sdk.ref.b": "и интерактивная страница",
   "sdk.ref.c": ".",
+  // онбординг при первом входе
+  "onboarding.title": "Подключите первое устройство",
+  "onboarding.sub":
+    "Дашборд наполнится, как только устройство зарегистрируется. Три шага, около пяти минут.",
+  "onboarding.step1": "Установите SDK и зарегистрируйте устройство",
+  "onboarding.step1Body":
+    "Регистрация возвращает токен устройства. Сохраните его на устройстве — по нему оно входит дальше.",
+  "onboarding.step1Link": "Инструкция по подключению",
+  "onboarding.step2": "Отправляйте heartbeat и телеметрию",
+  "onboarding.step2Body":
+    "Heartbeat держит устройство в статусе «онлайн», телеметрия показывает заряд, скорость и координаты на этой странице.",
+  "onboarding.step3": "Запросите решение у мозга",
+  "onboarding.step3Body":
+    "Каждый запрос попадает в лог решений — с моделью, уверенностью и задержкой:",
+  "onboarding.copy": "Копировать",
+  "onboarding.copied": "Скопировано",
+  "onboarding.noDevice": "Нет устройства под рукой?",
+  "onboarding.noDeviceBody":
+    "Запустите симулятор — он регистрируется, шлёт телеметрию и запрашивает решения так же, как настоящее устройство.",
+  "onboarding.openSimulator": "Открыть симулятор",
 };
 
 const DICTS: Record<Lang, Dict> = { ru: RU, en: EN };

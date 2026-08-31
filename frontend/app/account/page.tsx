@@ -122,8 +122,13 @@ export default function AccountPage() {
   // immediately instead of waiting for the round-trip; reverted if it fails.
   const [mailBusy, setMailBusy] = useState(false);
   const [optIn, setOptIn] = useState<boolean | null>(null);
+  const [alertsBusy, setAlertsBusy] = useState(false);
+  const [alertsOptIn, setAlertsOptIn] = useState<boolean | null>(null);
   useEffect(() => {
-    if (user) setOptIn(user.newsletter_opt_in);
+    if (user) {
+      setOptIn(user.newsletter_opt_in);
+      setAlertsOptIn(user.alerts_opt_in);
+    }
   }, [user]);
 
   if (!user || !organization) return null;
@@ -262,6 +267,24 @@ export default function AccountPage() {
       toast(errorMessage(e, t("account.changeFailed")), "error");
     } finally {
       setMailBusy(false);
+    }
+  }
+
+  async function toggleAlerts(optedIn: boolean) {
+    setAlertsBusy(true);
+    setAlertsOptIn(optedIn);
+    try {
+      await api.setAlertsOptIn(optedIn);
+      await refreshUser();
+      toast(
+        optedIn ? t("account.alertsOptedIn") : t("account.alertsOptedOut"),
+        "success",
+      );
+    } catch (e) {
+      setAlertsOptIn(!optedIn);
+      toast(errorMessage(e, t("account.changeFailed")), "error");
+    } finally {
+      setAlertsBusy(false);
     }
   }
 
@@ -586,6 +609,26 @@ export default function AccountPage() {
             style={{ width: 16, height: 16, marginTop: 1, padding: 0 }}
           />
           <span>{t("account.mailConsent")}</span>
+        </label>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            margin: "12px 0 0",
+            color: "var(--text)",
+            fontSize: 13,
+            cursor: alertsBusy ? "default" : "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={alertsOptIn ?? user.alerts_opt_in}
+            disabled={alertsBusy}
+            onChange={(e) => toggleAlerts(e.target.checked)}
+            style={{ width: 16, height: 16, marginTop: 1, padding: 0 }}
+          />
+          <span>{t("account.alertsConsent")}</span>
         </label>
       </div>
 

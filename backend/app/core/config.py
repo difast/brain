@@ -81,6 +81,13 @@ class Settings(BaseSettings):
     # Don't issue a fresh code more often than this for the same purpose.
     code_resend_cooldown_seconds: int = 60
 
+    # --- Device alerts ---
+    # A background watcher emails an organization's users when one of their
+    # devices goes offline, reports an error, or comes back. Needs SMTP; each
+    # user can turn their own alerts off on the account page.
+    alerts_enabled: bool = True
+    alerts_interval_seconds: int = 60
+
     # --- Login throttling (brute-force protection) ---
     # Counted per account and, separately, per source IP: the first stops a
     # single password being guessed, the second stops one guess being sprayed

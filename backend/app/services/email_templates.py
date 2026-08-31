@@ -166,6 +166,49 @@ def welcome(email: str, organization: str) -> tuple[str, str, str]:
     return subject, html, text
 
 
+# --- Device alerts ---------------------------------------------------------
+
+_ALERT_RU: dict[str, tuple[str, str, str]] = {
+    # kind: (subject prefix, heading, what happened)
+    "offline": (
+        "перестало отвечать",
+        "Устройство не отвечает",
+        "перестало отправлять heartbeat и помечено как офлайн.",
+    ),
+    "error": (
+        "сообщает об ошибке",
+        "Устройство в состоянии ошибки",
+        "сообщило об ошибке и не принимает новые решения.",
+    ),
+    "online": (
+        "снова на связи",
+        "Устройство восстановилось",
+        "снова отправляет heartbeat и работает штатно.",
+    ),
+}
+
+
+def device_alert(robot_name: str, kind: str) -> tuple[str, str, str]:
+    prefix, heading, what = _ALERT_RU.get(kind, _ALERT_RU["offline"])
+    subject = f"{BRAND}: «{robot_name}» {prefix}"
+    html = _layout(
+        heading,
+        _p(f"Устройство <b>{robot_name}</b> {what}")
+        + _button("Открыть кабинет", DASHBOARD_URL)
+        + _muted(
+            "Отключить эти уведомления можно в личном кабинете, на странице "
+            "«Аккаунт»."
+        ),
+    )
+    text = (
+        f"{heading}\n\nУстройство «{robot_name}» {what}\n\n"
+        f"Кабинет: {DASHBOARD_URL}\n"
+        f"Отключить уведомления: {DASHBOARD_URL}/account\n\n"
+        f"{BRAND} · {SITE_URL}"
+    )
+    return subject, html, text
+
+
 # --- Contact-form receipt --------------------------------------------------
 
 

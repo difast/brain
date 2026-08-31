@@ -37,6 +37,7 @@ class UserResponse(BaseModel):
     organization_id: str
     avatar: str | None
     newsletter_opt_in: bool
+    alerts_opt_in: bool
     created_at: datetime
 
 
@@ -143,6 +144,12 @@ class NewsletterOptInRequest(BaseModel):
     """Newsletter consent. Transactional mail is never affected by this."""
 
     newsletter_opt_in: bool
+
+
+class AlertsOptInRequest(BaseModel):
+    """Whether this user gets emailed when one of the fleet's devices fails."""
+
+    alerts_opt_in: bool
 
 
 class EmailCodeRequest(BaseModel):

@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentRobotId, CurrentUser
 from app.core.database import get_session
 from app.schemas.common import Page
 from app.schemas.telemetry import TelemetryIngest, TelemetryResponse
+from app.services import csv_export
 from app.services.telemetry_service import TelemetryService
 
 router = APIRouter(tags=["telemetry"])
@@ -58,4 +61,27 @@ async def list_telemetry(
         total=total,
         limit=limit,
         offset=offset,
+    )
+
+
+@router.get(
+    "/telemetry/export.csv",
+    summary="Download telemetry as CSV",
+)
+async def export_telemetry(
+    current_user: CurrentUser,
+    session: SessionDep,
+    robot_id: str | None = None,
+) -> StreamingResponse:
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M")
+    return StreamingResponse(
+        csv_export.telemetry_csv(
+            session, current_user.organization_id, robot_id
+        ),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="mevratek-telemetry-{stamp}.csv"'
+            )
+        },
     )

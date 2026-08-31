@@ -2,18 +2,39 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
-import { Actions, Confidence, Pager, Sparkline, timeAgo } from "@/components/ui";
-import { EmptyState, SkeletonRows } from "@/components/feedback";
+import {
+  Actions,
+  Confidence,
+  Pager,
+  Sparkline,
+  Spinner,
+  timeAgo,
+} from "@/components/ui";
+import { EmptyState, SkeletonRows, useFeedback } from "@/components/feedback";
 import { useT } from "@/lib/i18n";
 
 const PAGE = 25;
 
 export default function LogsPage() {
   const { t } = useT();
+  const { toast } = useFeedback();
   const [offset, setOffset] = useState(0);
   const [deviceId, setDeviceId] = useState("");
+  const [exporting, setExporting] = useState(false);
+
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      // Exports exactly what the current filter shows.
+      await api.exportLogs(deviceId || undefined);
+    } catch (e) {
+      toast(errorMessage(e, t("common.exportFailed")), "error");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const { data, loading } = usePoll(
     () => api.listLogs(deviceId || undefined, { limit: PAGE, offset }),
@@ -57,6 +78,19 @@ export default function LogsPage() {
             ))}
           </select>
         </label>
+
+        <button
+          type="button"
+          onClick={exportCsv}
+          disabled={exporting}
+          style={{
+            background: "transparent",
+            color: "var(--text)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {exporting ? <Spinner /> : t("common.exportCsv")}
+        </button>
 
         <div className="spark-cards">
           <div className="spark-card">

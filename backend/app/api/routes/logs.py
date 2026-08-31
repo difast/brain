@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Query
+from fastapi.responses import StreamingResponse
 
 from app.api.deps import CurrentUser, SessionDep
 from app.schemas.common import Page
 from app.schemas.decision import DecisionResponse
+from app.services import csv_export
 from app.services.memory_service import MemoryService
 
 router = APIRouter(tags=["logs"])
@@ -36,4 +40,27 @@ async def list_logs(
         total=total,
         limit=limit,
         offset=offset,
+    )
+
+
+@router.get(
+    "/logs/export.csv",
+    summary="Download the decision log as CSV",
+)
+async def export_logs(
+    current_user: CurrentUser,
+    session: SessionDep,
+    robot_id: str | None = None,
+) -> StreamingResponse:
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M")
+    return StreamingResponse(
+        csv_export.decisions_csv(
+            session, current_user.organization_id, robot_id
+        ),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="mevratek-decisions-{stamp}.csv"'
+            )
+        },
     )

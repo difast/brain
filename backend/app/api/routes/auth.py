@@ -26,6 +26,7 @@ from app.models.user import User
 from app.models.verification_code import CodePurpose
 from app.schemas.audit import AuditLogResponse
 from app.schemas.auth import (
+    AlertsOptInRequest,
     AvatarUpdateRequest,
     ChangeEmailRequest,
     ChangePasswordRequest,
@@ -353,6 +354,22 @@ async def set_newsletter_opt_in(
 ) -> UserResponse:
     await AuthService(session).set_newsletter_opt_in(
         current_user, payload.newsletter_opt_in
+    )
+    return UserResponse.model_validate(current_user)
+
+
+@router.patch(
+    "/auth/alerts",
+    response_model=UserResponse,
+    summary="Turn device alerts on or off for the current user",
+)
+async def set_alerts_opt_in(
+    payload: AlertsOptInRequest,
+    current_user: CurrentUser,
+    session: SessionDep,
+) -> UserResponse:
+    await AuthService(session).set_alerts_opt_in(
+        current_user, payload.alerts_opt_in
     )
     return UserResponse.model_validate(current_user)
 
