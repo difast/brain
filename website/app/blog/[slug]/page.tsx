@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowIcon, Button, Container, Section } from "@/components/ui";
-import { ArticleJsonLd } from "@/components/schema";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/schema";
 import { POST_SLUGS, getPost, formatDate } from "@/components/blog";
 
 export function generateStaticParams() {
@@ -45,6 +45,13 @@ export default function BlogPostPage({
         description={post.description}
         slug={post.slug}
         datePublished={post.date}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Главная", url: "/" },
+          { name: "Блог", url: "/blog" },
+          { name: post.title, url: `/blog/${post.slug}` },
+        ]}
       />
       <Container>
         <article className="mx-auto max-w-3xl">

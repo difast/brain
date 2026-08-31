@@ -6,6 +6,7 @@ import {
   SectionHeading,
   ArrowIcon,
 } from "@/components/ui";
+import { BreadcrumbJsonLd } from "@/components/schema";
 
 export const metadata: Metadata = {
   title: "Mevratek On-Premise — платформа в вашем контуре",
@@ -39,6 +40,12 @@ const COMPARE: { row: string; cloud: string; onprem: string }[] = [
 export default function OnPremisePage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Главная", url: "/" },
+          { name: "On-Premise", url: "/on-premise" },
+        ]}
+      />
       {/* Hero */}
       <Section className="pt-14 sm:pt-16">
         <Container>

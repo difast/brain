@@ -6,6 +6,7 @@ import {
   SectionHeading,
   ArrowIcon,
 } from "@/components/ui";
+import { BreadcrumbJsonLd } from "@/components/schema";
 
 export const metadata: Metadata = {
   title: "О проекте",
@@ -52,6 +53,12 @@ const ROADMAP = [
 export default function AboutPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Главная", url: "/" },
+          { name: "О проекте", url: "/about" },
+        ]}
+      />
       {/* Mission */}
       <Section className="pt-14 sm:pt-16">
         <Container>

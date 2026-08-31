@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Container, Section, SectionHeading } from "@/components/ui";
 import { ContactForm } from "@/components/contact-form";
+import { BreadcrumbJsonLd } from "@/components/schema";
 
 export const metadata: Metadata = {
   title: "Контакты",
@@ -36,6 +37,12 @@ const CHANNELS = [
 export default function ContactsPage() {
   return (
     <Section className="pt-14 sm:pt-16">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Главная", url: "/" },
+          { name: "Контакты", url: "/contacts" },
+        ]}
+      />
       <Container>
         <SectionHeading
           eyebrow="Контакты"

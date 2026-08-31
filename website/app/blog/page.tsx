@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowIcon, Card, Container, Section, SectionHeading } from "@/components/ui";
 import { POSTS, formatDate } from "@/components/blog";
+import { BreadcrumbJsonLd } from "@/components/schema";
 
 export const metadata: Metadata = {
   title: "Блог",
@@ -13,6 +14,12 @@ export const metadata: Metadata = {
 export default function BlogIndexPage() {
   return (
     <Section className="pt-14 sm:pt-20">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Главная", url: "/" },
+          { name: "Блог", url: "/blog" },
+        ]}
+      />
       <Container>
         <SectionHeading
           eyebrow="Блог"

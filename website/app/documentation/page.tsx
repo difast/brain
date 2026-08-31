@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui";
-import { TechArticleJsonLd } from "@/components/schema";
+import { BreadcrumbJsonLd, TechArticleJsonLd } from "@/components/schema";
 
 export const metadata: Metadata = {
   title: "Документация",
@@ -308,6 +308,12 @@ function Blocks({ blocks }: { blocks: Block[] }) {
 export default function DocumentationPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Главная", url: "/" },
+          { name: "Документация", url: "/documentation" },
+        ]}
+      />
       <TechArticleJsonLd
         title="Документация"
         description={metadata.description as string}

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui";
 import { ArchitectureDiagram } from "@/components/diagrams";
 import { PLATFORM_COMPONENTS } from "@/components/content";
+import { BreadcrumbJsonLd } from "@/components/schema";
 
 export const metadata: Metadata = {
   title: "Платформа",
@@ -45,6 +46,12 @@ const MODELS = [
 export default function PlatformPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Главная", url: "/" },
+          { name: "Платформа", url: "/platform" },
+        ]}
+      />
       <Section className="pt-14 sm:pt-16">
         <Container>
           <SectionHeading

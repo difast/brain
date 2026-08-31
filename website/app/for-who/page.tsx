@@ -7,6 +7,7 @@ import {
   ArrowIcon,
 } from "@/components/ui";
 import { SEGMENTS } from "@/components/content";
+import { BreadcrumbJsonLd } from "@/components/schema";
 
 export const metadata: Metadata = {
   title: "Для кого",
@@ -24,6 +25,12 @@ export const metadata: Metadata = {
 export default function ForWhoPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Главная", url: "/" },
+          { name: "Для кого", url: "/for-who" },
+        ]}
+      />
       <Section className="pt-14 sm:pt-16">
         <Container>
           <SectionHeading

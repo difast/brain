@@ -6,6 +6,7 @@ import {
   SectionHeading,
   ArrowIcon,
 } from "@/components/ui";
+import { BreadcrumbJsonLd } from "@/components/schema";
 
 export const metadata: Metadata = {
   title: "Mevratek Protocol — единый протокол управления устройствами",
@@ -32,6 +33,12 @@ const DEVICES = [
 export default function ProtocolPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Главная", url: "/" },
+          { name: "Protocol", url: "/protocol" },
+        ]}
+      />
       {/* Hero */}
       <Section className="pt-14 sm:pt-16">
         <Container>
