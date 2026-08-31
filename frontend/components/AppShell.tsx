@@ -18,6 +18,7 @@ const KNOWN_PREFIXES = [
   "/sdk",
   "/docs",
   "/robots",
+  "/account",
 ];
 
 function isKnownRoute(pathname: string): boolean {

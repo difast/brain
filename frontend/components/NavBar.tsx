@@ -84,9 +84,14 @@ export function NavBar() {
           </div>
           {user && (
             <div className="nav-user">
-              <span className="nav-user-email" title={user.email}>
+              <Link
+                href="/account"
+                className="nav-user-email"
+                title={t("nav.account")}
+                aria-current={pathname === "/account" ? "page" : undefined}
+              >
                 {user.email}
-              </span>
+              </Link>
               <button
                 type="button"
                 className="nav-logout"
@@ -135,6 +140,13 @@ export function NavBar() {
               <div className="nav-m-divider" />
               <div className="nav-m-group">
                 <span className="nav-m-email">{user.email}</span>
+                <Link
+                  href="/account"
+                  className={`nav-m-link${pathname === "/account" ? " active" : ""}`}
+                  aria-current={pathname === "/account" ? "page" : undefined}
+                >
+                  {t("nav.account")}
+                </Link>
                 <button
                   type="button"
                   className="nav-m-link nav-m-logout"

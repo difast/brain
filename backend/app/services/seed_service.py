@@ -16,6 +16,7 @@ from sqlalchemy import select, update
 
 from app.core.database import SessionLocal
 from app.core.logging import get_logger
+from app.core.security import hash_password
 from app.models.api_key import ApiKey
 from app.models.organization import Organization
 from app.models.robot import Robot
@@ -30,7 +31,8 @@ SEED_ADMIN_ID = "00000000000000000000000000000002"
 
 SEED_ORG_NAME = "Mevratek"
 SEED_ADMIN_EMAIL = "info@mevratek.ru"
-# Plain-text by explicit request for this iteration (see User model docstring).
+# The initial admin password — change it from the account page after first
+# login. Stored hashed, like every other user's.
 SEED_ADMIN_PASSWORD = "11111111"
 
 
@@ -51,7 +53,7 @@ async def seed_identity() -> None:
             admin = User(
                 id=SEED_ADMIN_ID,
                 email=SEED_ADMIN_EMAIL,
-                password=SEED_ADMIN_PASSWORD,
+                password=hash_password(SEED_ADMIN_PASSWORD),
                 organization_id=org.id,
                 role=UserRole.admin,
             )

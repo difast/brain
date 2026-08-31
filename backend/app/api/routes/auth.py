@@ -8,6 +8,7 @@ from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.core.exceptions import AuthError
 from app.schemas.auth import (
+    ChangePasswordRequest,
     LoginRequest,
     LoginResponse,
     OrganizationResponse,
@@ -76,3 +77,16 @@ async def me(current_user: CurrentUser, session: SessionDep) -> LoginResponse:
         user=UserResponse.model_validate(current_user),
         organization=OrganizationResponse.model_validate(org),
     )
+
+
+@router.patch(
+    "/auth/password",
+    summary="Change the current user's own password",
+)
+async def change_password(
+    payload: ChangePasswordRequest, current_user: CurrentUser, session: SessionDep
+) -> dict[str, bool]:
+    await AuthService(session).change_password(
+        current_user, payload.current_password, payload.new_password
+    )
+    return {"ok": True}

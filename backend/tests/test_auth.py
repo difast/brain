@@ -59,6 +59,60 @@ async def test_me_returns_current_user(client, auth):
 
 
 @pytest.mark.asyncio
+async def test_change_password_success_and_relogin(client, auth):
+    resp = await client.patch(
+        f"{API}/auth/password",
+        json={"current_password": SEED_ADMIN_PASSWORD, "new_password": "new-secret-1"},
+        headers=auth,
+    )
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+
+    # The old password no longer works...
+    old = await client.post(
+        f"{API}/auth/login",
+        json={"email": SEED_ADMIN_EMAIL, "password": SEED_ADMIN_PASSWORD},
+    )
+    assert old.status_code == 401
+
+    # ...and the new one does.
+    new = await client.post(
+        f"{API}/auth/login",
+        json={"email": SEED_ADMIN_EMAIL, "password": "new-secret-1"},
+    )
+    assert new.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_change_password_wrong_current_rejected(client, auth):
+    resp = await client.patch(
+        f"{API}/auth/password",
+        json={"current_password": "not-it", "new_password": "new-secret-1"},
+        headers=auth,
+    )
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_change_password_too_short_rejected(client, auth):
+    resp = await client.patch(
+        f"{API}/auth/password",
+        json={"current_password": SEED_ADMIN_PASSWORD, "new_password": "abc"},
+        headers=auth,
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_change_password_requires_auth(anon_client):
+    resp = await anon_client.patch(
+        f"{API}/auth/password",
+        json={"current_password": "x", "new_password": "new-secret-1"},
+    )
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_dashboard_requires_auth(anon_client):
     # No Authorization header → 401 on protected endpoints.
     assert (await anon_client.get(f"{API}/robots")).status_code == 401

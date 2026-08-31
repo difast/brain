@@ -31,7 +31,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.api.deps import get_brain, get_storage
 from app.core.database import Base, get_session
-from app.core.security import create_user_token
+from app.core.security import create_user_token, hash_password
 from app.main import create_app
 from app.models.organization import Organization
 from app.models.user import User, UserRole
@@ -102,7 +102,7 @@ async def app(engine, session_factory):
             User(
                 id=SEED_ADMIN_ID,
                 email=SEED_ADMIN_EMAIL,
-                password=SEED_ADMIN_PASSWORD,
+                password=hash_password(SEED_ADMIN_PASSWORD),
                 organization_id=SEED_ORG_ID,
                 role=UserRole.admin,
             )

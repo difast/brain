@@ -3,10 +3,6 @@
 Users never self-register: accounts are provisioned by an administrator. A
 user authenticates with email + password and receives a signed session token
 (JWT); every request it makes is scoped to ``organization_id``.
-
-NOTE: passwords are stored in plain text for now, by explicit request during
-this iteration. This MUST be replaced with a password hash (argon2/bcrypt)
-before any production use — see the migration notes / final report.
 """
 
 from __future__ import annotations
@@ -31,8 +27,7 @@ class User(UUIDMixin, TimestampMixin, Base):
     email: Mapped[str] = mapped_column(
         String(320), nullable=False, unique=True, index=True
     )
-    # Plain-text for now (see module docstring). Column is oversized on purpose
-    # so it can hold a password hash after the hashing migration.
+    # A pbkdf2_sha256 hash (see app.core.security), never the raw password.
     password: Mapped[str] = mapped_column(String(255), nullable=False)
 
     organization_id: Mapped[str] = mapped_column(

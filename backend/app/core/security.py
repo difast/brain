@@ -34,6 +34,14 @@ def verify_api_key(api_key: str, hashed: str) -> bool:
     return _pwd_context.verify(api_key, hashed)
 
 
+def hash_password(password: str) -> str:
+    return _pwd_context.hash(password)
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    return _pwd_context.verify(password, hashed)
+
+
 def create_robot_token(robot_id: str, extra: dict[str, Any] | None = None) -> str:
     """Issue a signed JWT bearer token for a robot."""
     now = datetime.now(UTC)

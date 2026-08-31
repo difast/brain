@@ -19,6 +19,7 @@ from app.core.security import (
     create_admin_token,
     create_user_token,
     generate_invite_token,
+    hash_password,
 )
 from app.models.invite import Invite
 from app.models.organization import Organization
@@ -200,7 +201,7 @@ class AdminService:
 
         user = User(
             email=invite.email,
-            password=password,
+            password=hash_password(password),
             organization_id=invite.organization_id,
             role=invite.role,
         )

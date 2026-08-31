@@ -346,6 +346,8 @@ export const api = {
     }),
   logout: () => post<{ ok: boolean }>("/auth/logout", {}),
   me: () => get<AuthResponse>("/auth/me"),
+  changePassword: (current_password: string, new_password: string) =>
+    patch<{ ok: boolean }>("/auth/password", { current_password, new_password }),
 
   listRobots: () => get<Page<Robot>>("/robots?limit=200"),
   getRobot: (id: string) => get<Robot>(`/robots/${id}`),
