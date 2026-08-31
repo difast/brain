@@ -157,7 +157,8 @@ function AdminPanel({ onLock }: { onLock: () => void }) {
       <LeadSection leads={leads} onChanged={reload} />
       <NewsletterSection
         newsletters={newsletters}
-        userCount={users.length}
+        // Only subscribers receive it — users can opt out on their account page.
+        userCount={users.filter((u) => u.newsletter_opt_in).length}
         onSent={reload}
       />
       <OrgSection orgs={orgs} onCreated={reload} />

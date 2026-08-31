@@ -11,7 +11,8 @@ import enum
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import true as sa_true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -47,6 +48,12 @@ class User(UUIDMixin, TimestampMixin, Base):
     # compresses the image client-side before upload, so it stays a few tens
     # of KB. Null means no avatar (the UI falls back to initials).
     avatar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Newsletters only. On from the moment the account is created; the user
+    # turns it off on their account page. Never gates transactional mail
+    # (login codes, confirmations, receipts) — that always goes out.
+    newsletter_opt_in: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=sa_true(), nullable=False
+    )
     # When the welcome email went out — set on the user's first successful
     # login, so it is sent exactly once.
     welcomed_at: Mapped[datetime | None] = mapped_column(

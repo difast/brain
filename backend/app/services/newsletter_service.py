@@ -61,8 +61,15 @@ async def deliver(
         newsletter = await session.get(Newsletter, newsletter_id)
         if newsletter is None:  # pragma: no cover - deleted meanwhile
             return
+        # Only users who still consent — the account page can turn this off.
         emails = list(
-            (await session.scalars(select(User.email).order_by(User.created_at))).all()
+            (
+                await session.scalars(
+                    select(User.email)
+                    .where(User.newsletter_opt_in.is_(True))
+                    .order_by(User.created_at)
+                )
+            ).all()
         )
         newsletter.recipients = len(emails)
         await session.commit()

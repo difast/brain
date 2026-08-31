@@ -331,3 +331,85 @@ async def test_newsletter_requires_admin(client, auth):
 async def test_auth_config_reports_email_confirmation(anon_client, mailbox):
     body = (await anon_client.get(f"{API}/auth/config")).json()
     assert body["email_confirmation"] is True
+
+
+@pytest.mark.asyncio
+async def test_newsletter_consent_is_on_by_default(client, auth):
+    me = (await client.get(f"{API}/auth/me", headers=auth)).json()
+    assert me["user"]["newsletter_opt_in"] is True
+
+
+@pytest.mark.asyncio
+async def test_newsletter_consent_can_be_turned_off_and_on(client, auth):
+    off = await client.patch(
+        f"{API}/auth/newsletter", json={"newsletter_opt_in": False}, headers=auth
+    )
+    assert off.status_code == 200
+    assert off.json()["newsletter_opt_in"] is False
+
+    me = (await client.get(f"{API}/auth/me", headers=auth)).json()
+    assert me["user"]["newsletter_opt_in"] is False
+
+    on = await client.patch(
+        f"{API}/auth/newsletter", json={"newsletter_opt_in": True}, headers=auth
+    )
+    assert on.json()["newsletter_opt_in"] is True
+
+
+@pytest.mark.asyncio
+async def test_newsletter_skips_users_who_opted_out(
+    client, auth, mailbox, session_factory
+):
+    from app.services import newsletter_service
+
+    await client.patch(
+        f"{API}/auth/newsletter", json={"newsletter_opt_in": False}, headers=auth
+    )
+
+    admin_auth = {"Authorization": f"Bearer {create_admin_token()}"}
+    created = await client.post(
+        f"{API}/admin/newsletters",
+        json={"subject": "Только подписчикам", "body": "Текст."},
+        headers=admin_auth,
+    )
+    await newsletter_service.deliver(
+        created.json()["id"], session_factory=session_factory, gap_seconds=0
+    )
+
+    assert not [m for m in mailbox if m["subject"] == "Только подписчикам"]
+    listed = (await client.get(f"{API}/admin/newsletters", headers=admin_auth)).json()
+    assert listed[0]["recipients"] == 0
+    assert listed[0]["sent"] == 0
+
+
+@pytest.mark.asyncio
+async def test_opting_out_does_not_stop_transactional_mail(client, auth, mailbox):
+    await client.patch(
+        f"{API}/auth/newsletter", json={"newsletter_opt_in": False}, headers=auth
+    )
+    mailbox.clear()
+    resp = await client.post(
+        f"{API}/auth/password/request",
+        json={"current_password": SEED_ADMIN_PASSWORD},
+        headers=auth,
+    )
+    assert resp.status_code == 200
+    assert len(mailbox) == 1
+
+
+@pytest.mark.asyncio
+async def test_newsletter_carries_an_unsubscribe_note(client, mailbox, session_factory):
+    from app.services import newsletter_service
+
+    admin_auth = {"Authorization": f"Bearer {create_admin_token()}"}
+    created = await client.post(
+        f"{API}/admin/newsletters",
+        json={"subject": "Новости", "body": "Текст."},
+        headers=admin_auth,
+    )
+    await newsletter_service.deliver(
+        created.json()["id"], session_factory=session_factory, gap_seconds=0
+    )
+    letter = [m for m in mailbox if m["subject"] == "Новости"][0]
+    assert "Отказаться от рассылки" in letter["text"]
+    assert "Отказаться от рассылки" in letter["html"]

@@ -36,6 +36,7 @@ class AdminUserResponse(BaseModel):
     email: str
     role: UserRole
     organization_id: str
+    newsletter_opt_in: bool
     created_at: datetime
 
 

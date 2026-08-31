@@ -36,6 +36,7 @@ class UserResponse(BaseModel):
     role: UserRole
     organization_id: str
     avatar: str | None
+    newsletter_opt_in: bool
     created_at: datetime
 
 
@@ -104,6 +105,12 @@ class ChangeEmailRequest(BaseModel):
         if "@" not in v:
             raise ValueError("Invalid email address.")
         return v
+
+
+class NewsletterOptInRequest(BaseModel):
+    """Newsletter consent. Transactional mail is never affected by this."""
+
+    newsletter_opt_in: bool
 
 
 class EmailCodeRequest(BaseModel):

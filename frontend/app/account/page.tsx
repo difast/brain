@@ -80,6 +80,14 @@ export default function AccountPage() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [avatarBusy, setAvatarBusy] = useState(false);
 
+  // Newsletter consent. Held locally so the checkbox responds to the click
+  // immediately instead of waiting for the round-trip; reverted if it fails.
+  const [mailBusy, setMailBusy] = useState(false);
+  const [optIn, setOptIn] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (user) setOptIn(user.newsletter_opt_in);
+  }, [user]);
+
   if (!user || !organization) return null;
 
   const roleLabel = user.role === "admin" ? t("admin.roleAdmin") : t("admin.roleMember");
@@ -164,6 +172,24 @@ export default function AccountPage() {
     } finally {
       setAvatarBusy(false);
       setPendingFile(null);
+    }
+  }
+
+  async function toggleNewsletter(optedIn: boolean) {
+    setMailBusy(true);
+    setOptIn(optedIn);
+    try {
+      await api.setNewsletterOptIn(optedIn);
+      await refreshUser();
+      toast(
+        optedIn ? t("account.mailOptedIn") : t("account.mailOptedOut"),
+        "success",
+      );
+    } catch (e) {
+      setOptIn(!optedIn);
+      toast(errorMessage(e, t("account.changeFailed")), "error");
+    } finally {
+      setMailBusy(false);
     }
   }
 
@@ -385,6 +411,33 @@ export default function AccountPage() {
             )}
           </button>
         </form>
+      </div>
+
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <h2>{t("account.mail")}</h2>
+        <p className="muted" style={{ marginTop: -6 }}>
+          {t("account.mailHint")}
+        </p>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            margin: "10px 0 0",
+            color: "var(--text)",
+            fontSize: 13,
+            cursor: mailBusy ? "default" : "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={optIn ?? user.newsletter_opt_in}
+            disabled={mailBusy}
+            onChange={(e) => toggleNewsletter(e.target.checked)}
+            style={{ width: 16, height: 16, marginTop: 1, padding: 0 }}
+          />
+          <span>{t("account.mailConsent")}</span>
+        </label>
       </div>
 
       <div className="panel">

@@ -189,6 +189,7 @@ export interface AuthUser {
   role: UserRole;
   organization_id: string;
   avatar: string | null;
+  newsletter_opt_in: boolean;
   created_at: string;
 }
 
@@ -441,6 +442,8 @@ export const api = {
     patch<AuthUser>("/auth/email", { current_password, new_email, code }),
   updateAvatar: (avatar: string | null) =>
     patch<AuthUser>("/auth/avatar", { avatar }),
+  setNewsletterOptIn: (newsletter_opt_in: boolean) =>
+    patch<AuthUser>("/auth/newsletter", { newsletter_opt_in }),
   listActivity: (params: { limit: number; offset: number }) =>
     get<Page<AuditLogEntry>>(
       `/auth/activity?limit=${params.limit}&offset=${params.offset}`,

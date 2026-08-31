@@ -29,6 +29,7 @@ from app.schemas.auth import (
     LoginResponse,
     LoginStartResponse,
     LoginVerifyRequest,
+    NewsletterOptInRequest,
     OrganizationResponse,
     PasswordCodeRequest,
     UserResponse,
@@ -281,6 +282,22 @@ async def change_email(
             )
     await service.set_email(
         current_user, payload.new_email, ip=_client_ip(request)
+    )
+    return UserResponse.model_validate(current_user)
+
+
+@router.patch(
+    "/auth/newsletter",
+    response_model=UserResponse,
+    summary="Turn newsletters on or off for the current user",
+)
+async def set_newsletter_opt_in(
+    payload: NewsletterOptInRequest,
+    current_user: CurrentUser,
+    session: SessionDep,
+) -> UserResponse:
+    await AuthService(session).set_newsletter_opt_in(
+        current_user, payload.newsletter_opt_in
     )
     return UserResponse.model_validate(current_user)
 

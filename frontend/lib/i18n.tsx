@@ -101,6 +101,12 @@ const EN: Dict = {
   "account.codeSent": "We emailed you a code.",
   "account.codeSentToNew": "We emailed a code to the new address.",
   "account.changeFailed": "The change could not be saved.",
+  "account.mail": "Email preferences",
+  "account.mailHint":
+    "Service email — sign-in codes, confirmations — is always sent, whatever you choose here.",
+  "account.mailConsent": "Send me product news and platform updates",
+  "account.mailOptedIn": "You'll receive our newsletters.",
+  "account.mailOptedOut": "You've been unsubscribed from newsletters.",
   // admin panel
   "admin.title": "Admin panel",
   "admin.locked": "Enter the admin password to continue",
@@ -454,6 +460,12 @@ const RU: Dict = {
   "account.codeSent": "Мы отправили код на вашу почту.",
   "account.codeSentToNew": "Мы отправили код на новый адрес.",
   "account.changeFailed": "Не удалось сохранить изменение.",
+  "account.mail": "Письма",
+  "account.mailHint":
+    "Служебные письма — коды для входа и подтверждения — приходят всегда, независимо от этой настройки.",
+  "account.mailConsent": "Получать новости продукта и обновления платформы",
+  "account.mailOptedIn": "Вы подписаны на рассылку.",
+  "account.mailOptedOut": "Вы отписались от рассылки.",
   // admin panel
   "admin.title": "Админ-панель",
   "admin.locked": "Введите пароль администратора для входа",

@@ -149,6 +149,13 @@ class AuthService:
         self.check_password(user, current_password)
         await self.set_email(user, new_email, ip)
 
+    async def set_newsletter_opt_in(self, user: User, opted_in: bool) -> None:
+        """Turn newsletters on or off for this user (transactional mail is
+        never affected)."""
+        user.newsletter_opt_in = opted_in
+        await self.session.flush()
+        logger.info("newsletter_opt_in_changed", user_id=user.id, value=opted_in)
+
     async def update_avatar(
         self, user: User, avatar: str | None, ip: str | None = None
     ) -> None:

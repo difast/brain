@@ -184,12 +184,27 @@ def lead_received(name: str) -> tuple[str, str, str]:
 # --- Newsletter ------------------------------------------------------------
 
 
+_UNSUBSCRIBE_RU = (
+    "Вы получаете это письмо как пользователь платформы. Отказаться от рассылки "
+    "можно в личном кабинете, на странице «Аккаунт»."
+)
+
+
 def newsletter(subject: str, body: str) -> tuple[str, str, str]:
-    """Wrap an admin-written plain-text body in the standard layout."""
+    """Wrap an admin-written plain-text body in the standard layout.
+
+    Unlike the transactional templates this one carries an unsubscribe note —
+    it is the only mail a user can opt out of.
+    """
     paragraphs = [p.strip() for p in body.split("\n\n") if p.strip()]
     html = _layout(
         subject,
-        "".join(_p(p.replace("\n", "<br>")) for p in paragraphs),
+        "".join(_p(p.replace("\n", "<br>")) for p in paragraphs)
+        + _muted(f'{_UNSUBSCRIBE_RU} <a href="{DASHBOARD_URL}/account" '
+                 f'style="color:{_MUTED};">Открыть настройки</a>.'),
     )
-    text = f"{subject}\n\n{body}\n\n{BRAND} · {SITE_URL}"
+    text = (
+        f"{subject}\n\n{body}\n\n{_UNSUBSCRIBE_RU}\n{DASHBOARD_URL}/account\n\n"
+        f"{BRAND} · {SITE_URL}"
+    )
     return subject, html, text
