@@ -76,6 +76,18 @@ async def create_organization(
     return OrgSummary.model_validate(org)
 
 
+@router.delete(
+    "/admin/organizations/{organization_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete an organization (must have no users or devices left)",
+)
+async def delete_organization(
+    organization_id: str, _admin: AdminGuard, session: SessionDep
+) -> Response:
+    await AdminService(session).delete_organization(organization_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get(
     "/admin/users",
     response_model=list[AdminUserResponse],
@@ -86,6 +98,18 @@ async def list_users(
 ) -> list[AdminUserResponse]:
     users = await AdminService(session).list_users()
     return [AdminUserResponse.model_validate(u) for u in users]
+
+
+@router.delete(
+    "/admin/users/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a user account",
+)
+async def delete_user(
+    user_id: str, _admin: AdminGuard, session: SessionDep
+) -> Response:
+    await AdminService(session).delete_user(user_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
@@ -113,6 +137,18 @@ async def create_invite(
         payload.email, payload.organization_id, payload.role
     )
     return _invite_response(invite, org)
+
+
+@router.delete(
+    "/admin/invites/{invite_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete an invite",
+)
+async def delete_invite(
+    invite_id: str, _admin: AdminGuard, session: SessionDep
+) -> Response:
+    await AdminService(session).delete_invite(invite_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(

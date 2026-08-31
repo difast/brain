@@ -152,7 +152,7 @@ function AdminPanel({ onLock }: { onLock: () => void }) {
       <LeadSection leads={leads} onChanged={reload} />
       <OrgSection orgs={orgs} onCreated={reload} />
       <InviteSection orgs={orgs} invites={invites} onCreated={reload} />
-      <UserSection users={users} orgs={orgs} />
+      <UserSection users={users} orgs={orgs} onChanged={reload} />
     </main>
   );
 }
@@ -275,6 +275,8 @@ function OrgSection({
   const { t } = useT();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function create() {
     if (!name.trim()) return;
@@ -285,6 +287,21 @@ function OrgSection({
       onCreated();
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function remove(org: AdminOrg) {
+    if (!window.confirm(t("admin.orgDeleteConfirm").replace("{name}", org.name)))
+      return;
+    setBusyId(org.id);
+    setError(null);
+    try {
+      await adminApi.deleteOrg(org.id);
+      onCreated();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -306,6 +323,7 @@ function OrgSection({
           {busy ? <Spinner /> : t("admin.createOrg")}
         </button>
       </div>
+      {error && <div className="error-box">{error}</div>}
       {orgs.length === 0 ? (
         <div className="empty">{t("admin.noOrgs")}</div>
       ) : (
@@ -314,6 +332,7 @@ function OrgSection({
             <tr>
               <th>{t("admin.colOrg")}</th>
               <th>{t("admin.colCreated")}</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -321,6 +340,20 @@ function OrgSection({
               <tr key={o.id}>
                 <td>{o.name}</td>
                 <td className="muted">{timeAgo(o.created_at)}</td>
+                <td>
+                  <button
+                    onClick={() => remove(o)}
+                    disabled={busyId === o.id}
+                    style={{
+                      background: "transparent",
+                      color: "var(--error)",
+                      border: "1px solid var(--border)",
+                      padding: "4px 10px",
+                    }}
+                  >
+                    {t("admin.orgDelete")}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -344,6 +377,7 @@ function InviteSection({
   const [orgId, setOrgId] = useState("");
   const [role, setRole] = useState<UserRole>("member");
   const [busy, setBusy] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastLink, setLastLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -366,6 +400,17 @@ function InviteSection({
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function remove(inv: AdminInvite) {
+    if (!window.confirm(t("admin.inviteDeleteConfirm"))) return;
+    setBusyId(inv.id);
+    try {
+      await adminApi.deleteInvite(inv.id);
+      onCreated();
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -458,6 +503,7 @@ function InviteSection({
               <th>{t("admin.colRole")}</th>
               <th>{t("admin.colStatus")}</th>
               <th>{t("admin.colExpires")}</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -472,6 +518,20 @@ function InviteSection({
                 <td className="muted">
                   {new Date(inv.expires_at).toLocaleString()}
                 </td>
+                <td>
+                  <button
+                    onClick={() => remove(inv)}
+                    disabled={busyId === inv.id}
+                    style={{
+                      background: "transparent",
+                      color: "var(--error)",
+                      border: "1px solid var(--border)",
+                      padding: "4px 10px",
+                    }}
+                  >
+                    {t("admin.inviteDelete")}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -484,12 +544,27 @@ function InviteSection({
 function UserSection({
   users,
   orgs,
+  onChanged,
 }: {
   users: AuthUser[];
   orgs: AdminOrg[];
+  onChanged: () => void;
 }) {
   const { t } = useT();
   const orgName = (id: string) => orgs.find((o) => o.id === id)?.name ?? id;
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function remove(u: AuthUser) {
+    if (!window.confirm(t("admin.userDeleteConfirm").replace("{email}", u.email)))
+      return;
+    setBusyId(u.id);
+    try {
+      await adminApi.deleteUser(u.id);
+      onChanged();
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   return (
     <div className="panel" style={{ marginTop: 16 }}>
@@ -504,6 +579,7 @@ function UserSection({
               <th>{t("admin.colOrg")}</th>
               <th>{t("admin.colRole")}</th>
               <th>{t("admin.colCreated")}</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -515,6 +591,20 @@ function UserSection({
                   <span className="chip">{u.role}</span>
                 </td>
                 <td className="muted">{timeAgo(u.created_at)}</td>
+                <td>
+                  <button
+                    onClick={() => remove(u)}
+                    disabled={busyId === u.id}
+                    style={{
+                      background: "transparent",
+                      color: "var(--error)",
+                      border: "1px solid var(--border)",
+                      padding: "4px 10px",
+                    }}
+                  >
+                    {t("admin.userDelete")}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

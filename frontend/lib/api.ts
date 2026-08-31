@@ -319,10 +319,13 @@ export const adminApi = {
   listOrgs: () => adminGet<AdminOrg[]>("/admin/organizations"),
   createOrg: (name: string) =>
     adminPost<AdminOrg>("/admin/organizations", { name }),
+  deleteOrg: (id: string) => adminDelete(`/admin/organizations/${id}`),
   listUsers: () => adminGet<AuthUser[]>("/admin/users"),
+  deleteUser: (id: string) => adminDelete(`/admin/users/${id}`),
   listInvites: () => adminGet<AdminInvite[]>("/admin/invites"),
   createInvite: (email: string, organization_id: string, role: UserRole) =>
     adminPost<AdminInvite>("/admin/invites", { email, organization_id, role }),
+  deleteInvite: (id: string) => adminDelete(`/admin/invites/${id}`),
   listLeads: () => adminGet<AdminLead[]>("/admin/leads"),
   deleteLead: (id: string) => adminDelete(`/admin/leads/${id}`),
 };

@@ -110,3 +110,72 @@ async def test_invite_rejects_existing_email(client, admin_auth):
 @pytest.mark.asyncio
 async def test_unknown_invite_token_404(client):
     assert (await client.get(f"{API}/invites/does-not-exist")).status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_empty_organization(client, admin_auth):
+    created = await client.post(
+        f"{API}/admin/organizations",
+        json={"name": "Temp Org"},
+        headers=admin_auth,
+    )
+    org_id = created.json()["id"]
+
+    resp = await client.delete(
+        f"{API}/admin/organizations/{org_id}", headers=admin_auth
+    )
+    assert resp.status_code == 204
+    orgs = (await client.get(f"{API}/admin/organizations", headers=admin_auth)).json()
+    assert org_id not in {o["id"] for o in orgs}
+
+
+@pytest.mark.asyncio
+async def test_cannot_delete_organization_with_users(client, admin_auth):
+    resp = await client.delete(
+        f"{API}/admin/organizations/{SEED_ORG_ID}", headers=admin_auth
+    )
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_delete_invite(client, admin_auth):
+    inv = await client.post(
+        f"{API}/admin/invites",
+        json={
+            "email": "toremove@acme.example",
+            "organization_id": SEED_ORG_ID,
+            "role": "member",
+        },
+        headers=admin_auth,
+    )
+    invite_id = inv.json()["id"]
+
+    resp = await client.delete(
+        f"{API}/admin/invites/{invite_id}", headers=admin_auth
+    )
+    assert resp.status_code == 204
+    invites = (await client.get(f"{API}/admin/invites", headers=admin_auth)).json()
+    assert invite_id not in {i["id"] for i in invites}
+
+
+@pytest.mark.asyncio
+async def test_delete_user(client, admin_auth):
+    inv = await client.post(
+        f"{API}/admin/invites",
+        json={
+            "email": "removable@acme.example",
+            "organization_id": SEED_ORG_ID,
+            "role": "member",
+        },
+        headers=admin_auth,
+    )
+    token = inv.json()["token"]
+    accepted = await client.post(
+        f"{API}/invites/{token}/accept", json={"password": "hunter2secret"}
+    )
+    user_id = accepted.json()["user"]["id"]
+
+    resp = await client.delete(f"{API}/admin/users/{user_id}", headers=admin_auth)
+    assert resp.status_code == 204
+    users = (await client.get(f"{API}/admin/users", headers=admin_auth)).json()
+    assert user_id not in {u["id"] for u in users}

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -22,6 +22,7 @@ from app.core.security import (
 )
 from app.models.invite import Invite
 from app.models.organization import Organization
+from app.models.robot import Robot
 from app.models.user import User, UserRole
 
 logger = get_logger("admin")
@@ -62,11 +63,55 @@ class AdminService:
             raise NotFoundError("Organization not found.")
         return org
 
+    async def delete_organization(self, organization_id: str) -> None:
+        """Delete an organization — only once it has no users or devices left.
+
+        A cascading delete of an entire tenant's fleet (robots, tasks,
+        telemetry, decision history) is too destructive for a single click in
+        the admin panel; require the operator to remove those first.
+        """
+        org = await self._org_or_404(organization_id)
+        user_count = await self.session.scalar(
+            select(func.count())
+            .select_from(User)
+            .where(User.organization_id == organization_id)
+        )
+        if user_count:
+            raise ConflictError(
+                "Cannot delete an organization that still has users. Remove "
+                "them first."
+            )
+        robot_count = await self.session.scalar(
+            select(func.count())
+            .select_from(Robot)
+            .where(Robot.organization_id == organization_id)
+        )
+        if robot_count:
+            raise ConflictError(
+                "Cannot delete an organization that still has devices. "
+                "Remove them first."
+            )
+        # No users/devices left — safe to drop any leftover unused invites too.
+        await self.session.execute(
+            delete(Invite).where(Invite.organization_id == organization_id)
+        )
+        await self.session.delete(org)
+        await self.session.flush()
+        logger.info("org_deleted", org_id=organization_id)
+
     # --- Users ---
 
     async def list_users(self) -> list[User]:
         stmt = select(User).order_by(User.created_at.asc())
         return list((await self.session.scalars(stmt)).all())
+
+    async def delete_user(self, user_id: str) -> None:
+        user = await self.session.get(User, user_id)
+        if user is None:
+            raise NotFoundError("User not found.")
+        await self.session.delete(user)
+        await self.session.flush()
+        logger.info("user_deleted", user_id=user_id)
 
     # --- Invites ---
 
@@ -101,6 +146,14 @@ class AdminService:
         )
         rows = await self.session.execute(stmt)
         return [(inv, org) for inv, org in rows.all()]
+
+    async def delete_invite(self, invite_id: str) -> None:
+        invite = await self.session.get(Invite, invite_id)
+        if invite is None:
+            raise NotFoundError("Invite not found.")
+        await self.session.delete(invite)
+        await self.session.flush()
+        logger.info("invite_deleted", invite_id=invite_id)
 
     async def _live_invite(self, token: str) -> tuple[Invite, Organization]:
         row = (
