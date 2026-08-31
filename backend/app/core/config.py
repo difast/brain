@@ -81,6 +81,17 @@ class Settings(BaseSettings):
     # Don't issue a fresh code more often than this for the same purpose.
     code_resend_cooldown_seconds: int = 60
 
+    # --- Login throttling (brute-force protection) ---
+    # Counted per account and, separately, per source IP: the first stops a
+    # single password being guessed, the second stops one guess being sprayed
+    # across many accounts. A successful login clears its own counters.
+    login_window_minutes: int = 15
+    login_max_attempts: int = 5
+    login_ip_max_attempts: int = 20
+    login_lockout_minutes: int = 15
+    # The admin panel is one shared password, so it gets its own IP budget.
+    admin_login_max_attempts: int = 5
+
     @field_validator("smtp_encryption", mode="before")
     @classmethod
     def _lower_encryption(cls, v: object) -> object:

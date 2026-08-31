@@ -107,6 +107,38 @@ class ChangeEmailRequest(BaseModel):
         return v
 
 
+class SessionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    ip: str | None
+    user_agent: str | None
+    last_seen_at: datetime
+    created_at: datetime
+    # True for the session making the request.
+    current: bool = False
+
+
+class PasswordResetRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+
+    @field_validator("email")
+    @classmethod
+    def _normalize_email(cls, v: str) -> str:
+        return v.strip().lower()
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    code: str = Field(min_length=1, max_length=16)
+    new_password: str = Field(min_length=6, max_length=255)
+
+    @field_validator("email")
+    @classmethod
+    def _normalize_email(cls, v: str) -> str:
+        return v.strip().lower()
+
+
 class NewsletterOptInRequest(BaseModel):
     """Newsletter consent. Transactional mail is never affected by this."""
 

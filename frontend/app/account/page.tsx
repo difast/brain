@@ -1,14 +1,36 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { useFeedback } from "@/components/feedback";
-import { api, errorMessage } from "@/lib/api";
+import { api, errorMessage, type UserSession } from "@/lib/api";
 import { PasswordInput } from "@/components/PasswordInput";
-import { Spinner } from "@/components/ui";
+import { Spinner, timeAgo } from "@/components/ui";
 import { AvatarCropper } from "@/components/AvatarCropper";
+
+/** A readable device name out of a User-Agent string. */
+function deviceLabel(ua: string | null): string {
+  if (!ua) return "—";
+  const browser =
+    /Edg\//.test(ua) ? "Edge"
+    : /OPR\/|Opera/.test(ua) ? "Opera"
+    : /Yandex/.test(ua) ? "Yandex"
+    : /Firefox\//.test(ua) ? "Firefox"
+    : /Chrome\//.test(ua) ? "Chrome"
+    : /Safari\//.test(ua) ? "Safari"
+    : null;
+  const os =
+    /Windows/.test(ua) ? "Windows"
+    : /Android/.test(ua) ? "Android"
+    : /iPhone|iPad|iOS/.test(ua) ? "iOS"
+    : /Mac OS X/.test(ua) ? "macOS"
+    : /Linux/.test(ua) ? "Linux"
+    : null;
+  if (!browser && !os) return ua.slice(0, 40);
+  return [browser, os].filter(Boolean).join(" · ");
+}
 
 function Avatar({ email, src, size = 64 }: { email: string; src: string | null; size?: number }) {
   if (src) {
@@ -80,6 +102,22 @@ export default function AccountPage() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [avatarBusy, setAvatarBusy] = useState(false);
 
+  // Active sessions
+  const [sessions, setSessions] = useState<UserSession[]>([]);
+  const [sessionBusy, setSessionBusy] = useState<string | null>(null);
+
+  const loadSessions = useCallback(async () => {
+    try {
+      setSessions(await api.listSessions());
+    } catch {
+      /* the panel simply stays empty if this fails */
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
+
   // Newsletter consent. Held locally so the checkbox responds to the click
   // immediately instead of waiting for the round-trip; reverted if it fails.
   const [mailBusy, setMailBusy] = useState(false);
@@ -117,6 +155,8 @@ export default function AccountPage() {
         return;
       }
       await api.changePassword(current, next, pwCode || undefined);
+      // The change signs other devices out — reflect that in the list.
+      await loadSessions();
       toast(t("account.changed"), "success");
       setCurrent("");
       setNext("");
@@ -172,6 +212,38 @@ export default function AccountPage() {
     } finally {
       setAvatarBusy(false);
       setPendingFile(null);
+    }
+  }
+
+  async function revokeSession(id: string) {
+    setSessionBusy(id);
+    try {
+      await api.revokeSession(id);
+      await loadSessions();
+      toast(t("account.sessionRevoked"), "success");
+    } catch (e) {
+      toast(errorMessage(e, t("account.changeFailed")), "error");
+    } finally {
+      setSessionBusy(null);
+    }
+  }
+
+  async function revokeOthers() {
+    setSessionBusy("others");
+    try {
+      const res = await api.revokeOtherSessions();
+      await loadSessions();
+      toast(
+        t("account.sessionsRevoked").replace(
+          "{count}",
+          String(res.sessions_closed),
+        ),
+        "success",
+      );
+    } catch (e) {
+      toast(errorMessage(e, t("account.changeFailed")), "error");
+    } finally {
+      setSessionBusy(null);
     }
   }
 
@@ -411,6 +483,83 @@ export default function AccountPage() {
             )}
           </button>
         </form>
+      </div>
+
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <h2>{t("account.sessions")}</h2>
+        <p className="muted" style={{ marginTop: -6 }}>
+          {t("account.sessionsHint")}
+        </p>
+
+        {sessions.length > 1 && (
+          <button
+            type="button"
+            onClick={revokeOthers}
+            disabled={sessionBusy !== null}
+            style={{
+              background: "transparent",
+              color: "var(--text)",
+              border: "1px solid var(--border)",
+              marginBottom: 12,
+            }}
+          >
+            {sessionBusy === "others" ? <Spinner /> : t("account.revokeOthers")}
+          </button>
+        )}
+
+        <div className="table-scroll">
+          <table className="cards-table">
+            <thead>
+              <tr>
+                <th>{t("account.sessionDevice")}</th>
+                <th>{t("account.sessionIp")}</th>
+                <th>{t("account.sessionLastSeen")}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((s) => (
+                <tr key={s.id}>
+                  <td data-label={t("account.sessionDevice")}>
+                    {deviceLabel(s.user_agent)}
+                    {s.current && (
+                      <span className="chip" style={{ marginLeft: 8 }}>
+                        {t("account.sessionCurrent")}
+                      </span>
+                    )}
+                  </td>
+                  <td data-label={t("account.sessionIp")} className="mono muted">
+                    {s.ip ?? "—"}
+                  </td>
+                  <td
+                    data-label={t("account.sessionLastSeen")}
+                    className="muted"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    {timeAgo(s.last_seen_at)}
+                  </td>
+                  <td data-label="">
+                    {!s.current && (
+                      <button
+                        type="button"
+                        onClick={() => revokeSession(s.id)}
+                        disabled={sessionBusy !== null}
+                        style={{
+                          background: "transparent",
+                          color: "var(--error)",
+                          border: "1px solid var(--border)",
+                          padding: "4px 10px",
+                        }}
+                      >
+                        {t("account.revokeSession")}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="panel" style={{ marginBottom: 16 }}>

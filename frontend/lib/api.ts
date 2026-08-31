@@ -197,8 +197,10 @@ export type AuditAction =
   | "login"
   | "login_failed"
   | "password_changed"
+  | "password_reset"
   | "email_changed"
-  | "avatar_changed";
+  | "avatar_changed"
+  | "session_revoked";
 
 export interface AuditLogEntry {
   id: string;
@@ -233,6 +235,15 @@ export interface CodeSentResponse {
   sent: boolean;
   expires_in_seconds: number;
   masked_email: string | null;
+}
+
+export interface UserSession {
+  id: string;
+  ip: string | null;
+  user_agent: string | null;
+  last_seen_at: string;
+  created_at: string;
+  current: boolean;
 }
 
 function raiseForStatus(status: number, text: string): never {
@@ -444,6 +455,21 @@ export const api = {
     patch<AuthUser>("/auth/avatar", { avatar }),
   setNewsletterOptIn: (newsletter_opt_in: boolean) =>
     patch<AuthUser>("/auth/newsletter", { newsletter_opt_in }),
+  listSessions: () => get<UserSession[]>("/auth/sessions"),
+  revokeSession: (id: string) => del<{ ok: boolean }>(`/auth/sessions/${id}`),
+  revokeOtherSessions: () =>
+    post<{ ok: boolean; sessions_closed: number }>(
+      "/auth/sessions/revoke-others",
+      {},
+    ),
+  requestPasswordReset: (email: string) =>
+    post<CodeSentResponse>("/auth/password/reset/request", { email }),
+  confirmPasswordReset: (email: string, code: string, new_password: string) =>
+    post<{ ok: boolean }>("/auth/password/reset/confirm", {
+      email,
+      code,
+      new_password,
+    }),
   listActivity: (params: { limit: number; offset: number }) =>
     get<Page<AuditLogEntry>>(
       `/auth/activity?limit=${params.limit}&offset=${params.offset}`,

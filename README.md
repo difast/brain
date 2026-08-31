@@ -293,8 +293,18 @@ Create an **App** from this GitHub repo (branch = `main`, auto-deploy on):
 > **Email:** with SMTP configured, every login is confirmed by a 5-digit code
 > emailed to the account address (10 minutes, 3 attempts, then a 60-minute
 > lockout), and password/email changes need a code too — the email-change code
-> goes to the *new* address, so it also proves ownership. Add SPF, DKIM and
+> goes to the *new* address, so it also proves ownership. A forgotten password
+> is recovered the same way, from the sign-in screen. Add SPF, DKIM and
 > DMARC records for the sending domain or the mail will land in spam.
+
+> **Sessions & brute force:** session tokens are backed by `user_sessions`
+> rows, so they can be revoked — the account page lists the signed-in devices
+> and signs them out, logging out revokes server-side, and changing or
+> resetting a password closes every other session. Failed logins are counted
+> per account (5 in 15 min) and per IP (20 in 15 min), locking the scope for
+> 15 minutes; the admin panel's shared password gets its own per-IP budget.
+> Tune with `LOGIN_MAX_ATTEMPTS`, `LOGIN_IP_MAX_ATTEMPTS`,
+> `LOGIN_WINDOW_MINUTES`, `LOGIN_LOCKOUT_MINUTES`, `ADMIN_LOGIN_MAX_ATTEMPTS`.
 
 ### 3. Frontend app (optional dashboard)
 

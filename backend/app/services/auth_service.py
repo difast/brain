@@ -26,6 +26,7 @@ from app.models.audit_log import AuditAction
 from app.models.organization import Organization
 from app.models.user import User
 from app.services.audit_service import AuditService
+from app.services.session_service import SessionService
 
 logger = get_logger("auth")
 
@@ -74,15 +75,22 @@ class AuthService:
         return user, org
 
     async def issue_session(
-        self, user: User, org: Organization, ip: str | None = None
+        self,
+        user: User,
+        org: Organization,
+        ip: str | None = None,
+        user_agent: str | None = None,
     ) -> tuple[str, bool]:
-        """Mint a session token. Returns (token, is_first_login)."""
-        token = create_user_token(user.id, user.organization_id, user.role.value)
+        """Open a session and mint its token. Returns (token, is_first_login)."""
+        row = await SessionService(self.session).create(user, ip, user_agent)
+        token = create_user_token(
+            user.id, user.organization_id, user.role.value, session_id=row.id
+        )
         first_login = user.welcomed_at is None
         if first_login:
             user.welcomed_at = datetime.now(UTC)
             await self.session.flush()
-        logger.info("login_ok", user_id=user.id, org_id=org.id)
+        logger.info("login_ok", user_id=user.id, org_id=org.id, session_id=row.id)
         await self.audit.record(user.id, AuditAction.login, ip)
         return token, first_login
 
@@ -110,13 +118,33 @@ class AuthService:
         if taken:
             raise ConflictError("A user with this email already exists.")
 
+    async def find_by_email(self, email: str) -> User | None:
+        return await self.session.scalar(
+            select(User).where(User.email == email.strip().lower())
+        )
+
     async def set_password(
-        self, user: User, new_password: str, ip: str | None = None
-    ) -> None:
+        self,
+        user: User,
+        new_password: str,
+        ip: str | None = None,
+        keep_session_id: str | None = None,
+        action: AuditAction = AuditAction.password_changed,
+    ) -> int:
+        """Set a new password and sign every other session out.
+
+        A changed password is how someone shuts an intruder out, so the old
+        sessions must not survive it. Returns how many were closed; the
+        caller's own session (``keep_session_id``) is kept.
+        """
         user.password = hash_password(new_password)
         await self.session.flush()
-        logger.info("password_changed", user_id=user.id)
-        await self.audit.record(user.id, AuditAction.password_changed, ip)
+        closed = await SessionService(self.session).revoke_others(
+            user.id, keep_session_id
+        )
+        logger.info("password_changed", user_id=user.id, sessions_closed=closed)
+        await self.audit.record(user.id, action, ip)
+        return closed
 
     async def set_email(
         self, user: User, new_email: str, ip: str | None = None

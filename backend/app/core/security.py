@@ -72,9 +72,14 @@ USER_TOKEN_TTL_HOURS = 24 * 7
 
 
 def create_user_token(
-    user_id: str, organization_id: str, role: str
+    user_id: str, organization_id: str, role: str, session_id: str | None = None
 ) -> str:
-    """Issue a signed JWT session token for a dashboard user."""
+    """Issue a signed JWT session token for a dashboard user.
+
+    ``session_id`` ties the token to a ``user_sessions`` row so it can be
+    revoked server-side; tokens minted without one stay valid until they
+    expire (used only where no session row exists).
+    """
     now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": user_id,
@@ -84,6 +89,8 @@ def create_user_token(
         "iat": now,
         "exp": now + timedelta(hours=USER_TOKEN_TTL_HOURS),
     }
+    if session_id:
+        payload["sid"] = session_id
     return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 

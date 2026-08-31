@@ -20,8 +20,10 @@ class AuditAction(str, enum.Enum):
     login = "login"
     login_failed = "login_failed"
     password_changed = "password_changed"
+    password_reset = "password_reset"
     email_changed = "email_changed"
     avatar_changed = "avatar_changed"
+    session_revoked = "session_revoked"
 
 
 class AuditLog(UUIDMixin, TimestampMixin, Base):

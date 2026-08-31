@@ -12,10 +12,16 @@ from __future__ import annotations
 
 from fastapi import APIRouter, BackgroundTasks, Query, Request
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentSessionId, CurrentUser, SessionDep
 from app.core.config import settings
-from app.core.exceptions import AuthError, ServiceUnavailableError
+from app.core.exceptions import (
+    AuthError,
+    NotFoundError,
+    ServiceUnavailableError,
+    TooManyRequestsError,
+)
 from app.core.security import create_login_challenge_token
+from app.models.audit_log import AuditAction
 from app.models.user import User
 from app.models.verification_code import CodePurpose
 from app.schemas.audit import AuditLogResponse
@@ -32,6 +38,9 @@ from app.schemas.auth import (
     NewsletterOptInRequest,
     OrganizationResponse,
     PasswordCodeRequest,
+    PasswordResetConfirmRequest,
+    PasswordResetRequest,
+    SessionResponse,
     UserResponse,
 )
 from app.schemas.common import Page
@@ -39,6 +48,12 @@ from app.services import email_templates, mailer
 from app.services.audit_service import AuditService
 from app.services.auth_service import AuthService
 from app.services.captcha_service import verify_captcha
+from app.services.session_service import SessionService
+from app.services.throttle_service import (
+    ThrottleService,
+    ip_scope,
+    user_scope,
+)
 from app.services.verification_service import VerificationService
 
 router = APIRouter(tags=["auth"])
@@ -98,12 +113,37 @@ async def login(
         raise AuthError("Captcha verification failed.")
 
     service = AuthService(session)
-    user, org = await service.verify_credentials(
-        payload.email, payload.password, ip=client_ip
-    )
+    throttle = ThrottleService(session)
+
+    # Both budgets are checked before the password is looked at, so a locked
+    # scope costs an attacker nothing to discover and everything to wait out.
+    target = await service.find_by_email(payload.email)
+    scopes = [ip_scope(client_ip)] if client_ip else []
+    if target is not None:
+        scopes.append(user_scope(target.id))
+    await throttle.check(scopes)
+
+    try:
+        user, org = await service.verify_credentials(
+            payload.email, payload.password, ip=client_ip
+        )
+    except AuthError:
+        if target is not None:
+            await throttle.register_failure(
+                user_scope(target.id), settings.login_max_attempts
+            )
+        if client_ip:
+            await throttle.register_failure(
+                ip_scope(client_ip), settings.login_ip_max_attempts
+            )
+        raise
+
+    await throttle.reset(scopes)
 
     if not settings.email_enabled:
-        token, _ = await service.issue_session(user, org, ip=client_ip)
+        token, _ = await service.issue_session(
+            user, org, ip=client_ip, user_agent=request.headers.get("user-agent")
+        )
         return LoginStartResponse(
             code_required=False,
             token=token,
@@ -139,7 +179,10 @@ async def login_verify(
     await VerificationService(session).verify(user, CodePurpose.login, payload.code)
 
     token, first_login = await service.issue_session(
-        user, org, ip=_client_ip(request)
+        user,
+        org,
+        ip=_client_ip(request),
+        user_agent=request.headers.get("user-agent"),
     )
     if first_login:
         subject, html, text = email_templates.welcome(user.email, org.name)
@@ -155,11 +198,17 @@ async def login_verify(
 
 @router.post(
     "/auth/logout",
-    summary="Log out (stateless: the client discards its token)",
+    summary="Log out — revokes this session server-side",
 )
-async def logout() -> dict[str, bool]:
-    # Tokens are stateless JWTs, so logout is a client-side token discard. The
-    # endpoint exists for symmetry and future server-side revocation.
+async def logout(
+    current_user: CurrentUser,
+    session: SessionDep,
+    session_id: CurrentSessionId,
+) -> dict[str, bool]:
+    # The client discards its token either way; revoking the row means the
+    # token is dead even if a copy of it was taken.
+    if session_id:
+        await SessionService(session).revoke(current_user.id, session_id)
     return {"ok": True}
 
 
@@ -215,7 +264,8 @@ async def change_password(
     current_user: CurrentUser,
     session: SessionDep,
     request: Request,
-) -> dict[str, bool]:
+    session_id: CurrentSessionId,
+) -> dict[str, bool | int]:
     service = AuthService(session)
     service.check_password(current_user, payload.current_password)
     if settings.email_enabled:
@@ -224,10 +274,15 @@ async def change_password(
         await VerificationService(session).verify(
             current_user, CodePurpose.password_change, payload.code
         )
-    await service.set_password(
-        current_user, payload.new_password, ip=_client_ip(request)
+    # Other devices are signed out — a password change is how you lock an
+    # intruder out, so their session must not survive it.
+    closed = await service.set_password(
+        current_user,
+        payload.new_password,
+        ip=_client_ip(request),
+        keep_session_id=session_id,
     )
-    return {"ok": True}
+    return {"ok": True, "sessions_closed": closed}
 
 
 @router.post(
@@ -339,3 +394,131 @@ async def list_activity(
         limit=limit,
         offset=offset,
     )
+
+
+@router.get(
+    "/auth/sessions",
+    response_model=list[SessionResponse],
+    summary="The current user's live sessions (devices signed in)",
+)
+async def list_sessions(
+    current_user: CurrentUser,
+    session: SessionDep,
+    session_id: CurrentSessionId,
+) -> list[SessionResponse]:
+    rows = await SessionService(session).list_for_user(current_user.id)
+    return [
+        SessionResponse(
+            id=row.id,
+            ip=row.ip,
+            user_agent=row.user_agent,
+            last_seen_at=row.last_seen_at,
+            created_at=row.created_at,
+            current=row.id == session_id,
+        )
+        for row in rows
+    ]
+
+
+@router.delete(
+    "/auth/sessions/{revoke_id}",
+    summary="Sign one of the current user's own sessions out",
+)
+async def revoke_session(
+    revoke_id: str,
+    current_user: CurrentUser,
+    session: SessionDep,
+    request: Request,
+) -> dict[str, bool]:
+    revoked = await SessionService(session).revoke(current_user.id, revoke_id)
+    if not revoked:
+        raise NotFoundError("Session not found.")
+    await AuditService(session).record(
+        current_user.id, AuditAction.session_revoked, _client_ip(request)
+    )
+    return {"ok": True}
+
+
+@router.post(
+    "/auth/sessions/revoke-others",
+    summary="Sign every other device out, keeping the current session",
+)
+async def revoke_other_sessions(
+    current_user: CurrentUser,
+    session: SessionDep,
+    request: Request,
+    session_id: CurrentSessionId,
+) -> dict[str, bool | int]:
+    closed = await SessionService(session).revoke_others(current_user.id, session_id)
+    if closed:
+        await AuditService(session).record(
+            current_user.id, AuditAction.session_revoked, _client_ip(request)
+        )
+    return {"ok": True, "sessions_closed": closed}
+
+
+@router.post(
+    "/auth/password/reset/request",
+    response_model=CodeSentResponse,
+    summary="Email a code for resetting a forgotten password",
+)
+async def request_password_reset(
+    payload: PasswordResetRequest, request: Request, session: SessionDep
+) -> CodeSentResponse:
+    """Always reports success — whether an account exists is not disclosed."""
+    generic = CodeSentResponse(
+        sent=True, expires_in_seconds=settings.code_ttl_minutes * 60
+    )
+    if not settings.email_enabled:
+        raise ServiceUnavailableError(
+            "Восстановление пароля недоступно: почта не настроена."
+        )
+
+    client_ip = _client_ip(request)
+    user = await AuthService(session).find_by_email(payload.email)
+    if user is None:
+        return generic
+    # The per-IP budget also covers this endpoint, so it can't be used to
+    # hammer the mail server or to probe which addresses exist.
+    throttle = ThrottleService(session)
+    if client_ip:
+        await throttle.check([ip_scope(client_ip)])
+    try:
+        code = await VerificationService(session).issue(
+            user, CodePurpose.password_reset
+        )
+    except TooManyRequestsError:
+        # Don't reveal that this address has a live code — behave as always.
+        return generic
+    await _send_code(user, CodePurpose.password_reset, user.email, code)
+    return CodeSentResponse(
+        sent=True,
+        expires_in_seconds=settings.code_ttl_minutes * 60,
+        masked_email=_mask_email(user.email),
+    )
+
+
+@router.post(
+    "/auth/password/reset/confirm",
+    summary="Set a new password with the emailed reset code",
+)
+async def confirm_password_reset(
+    payload: PasswordResetConfirmRequest, request: Request, session: SessionDep
+) -> dict[str, bool]:
+    service = AuthService(session)
+    user = await service.find_by_email(payload.email)
+    if user is None:
+        # Same error the wrong code gives — no account probing here either.
+        raise AuthError("Код не найден. Запросите новый.")
+    await VerificationService(session).verify(
+        user, CodePurpose.password_reset, payload.code
+    )
+    # Every session is closed: whoever knew the old password loses access.
+    await service.set_password(
+        user,
+        payload.new_password,
+        ip=_client_ip(request),
+        keep_session_id=None,
+        action=AuditAction.password_reset,
+    )
+    return {"ok": True}

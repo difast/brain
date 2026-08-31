@@ -19,6 +19,7 @@ from app.core.security import (
 from app.models.user import User
 from app.services.api_key_service import ApiKeyService
 from app.services.decision_engine import DecisionEngine
+from app.services.session_service import SessionService
 from app.services.storage import FrameStorage
 
 _bearer = HTTPBearer(auto_error=False)
@@ -64,12 +65,15 @@ CurrentRobotId = Annotated[str, Depends(get_current_robot_id)]
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
     session: SessionDep,
+    request: Request,
 ) -> User:
     """Authenticate a dashboard user from its session (JWT) bearer token.
 
     The user is re-loaded from the database on every request so a deleted or
-    moved account stops working immediately. Downstream handlers read
-    ``user.organization_id`` to scope all data to the caller's tenant.
+    moved account stops working immediately, and the session row the token
+    points at is checked so a revoked session stops working immediately too.
+    Downstream handlers read ``user.organization_id`` to scope all data to the
+    caller's tenant.
     """
     if credentials is None or not credentials.credentials:
         raise AuthError("Missing bearer token.")
@@ -87,10 +91,31 @@ async def get_current_user(
     user = await session.get(User, user_id)
     if user is None:
         raise AuthError("Account no longer exists.")
+
+    session_id = payload.get("sid")
+    if session_id:
+        service = SessionService(session)
+        row = await service.get_live(str(session_id))
+        if row is None or row.user_id != user.id:
+            raise AuthError("Session was signed out.")
+        await service.touch(row)
+        # Handlers that need to know which session is calling (the account
+        # page marks it "this device") read it from the request state.
+        request.state.session_id = row.id
+    else:
+        request.state.session_id = None
     return user
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def current_session_id(request: Request) -> str | None:
+    """The id of the session making this request, when the token carries one."""
+    return getattr(request.state, "session_id", None)
+
+
+CurrentSessionId = Annotated[str | None, Depends(current_session_id)]
 
 
 async def get_org_principal(

@@ -6,9 +6,11 @@ unlock endpoint requires the admin-panel token.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, BackgroundTasks, Response, status
+from fastapi import APIRouter, BackgroundTasks, Request, Response, status
 
 from app.api.deps import AdminGuard, SessionDep
+from app.core.config import settings
+from app.core.exceptions import AuthError
 from app.schemas.admin import (
     AdminLoginRequest,
     AdminTokenResponse,
@@ -24,6 +26,7 @@ from app.services import newsletter_service
 from app.services.admin_service import AdminService
 from app.services.lead_service import LeadService
 from app.services.newsletter_service import NewsletterService
+from app.services.throttle_service import ThrottleService, admin_ip_scope
 
 router = APIRouter(tags=["admin"])
 
@@ -48,9 +51,23 @@ def _invite_response(invite, org) -> InviteResponse:  # type: ignore[no-untyped-
     summary="Unlock the admin panel with the shared password",
 )
 async def admin_login(
-    payload: AdminLoginRequest, session: SessionDep
+    payload: AdminLoginRequest, request: Request, session: SessionDep
 ) -> AdminTokenResponse:
-    token = AdminService(session).authenticate(payload.password)
+    # One shared password guards this panel, so the only thing standing
+    # between it and a brute-force run is this per-IP budget.
+    client_ip = request.client.host if request.client else None
+    throttle = ThrottleService(session)
+    scopes = [admin_ip_scope(client_ip)] if client_ip else []
+    await throttle.check(scopes)
+    try:
+        token = AdminService(session).authenticate(payload.password)
+    except AuthError:
+        if client_ip:
+            await throttle.register_failure(
+                admin_ip_scope(client_ip), settings.admin_login_max_attempts
+            )
+        raise
+    await throttle.reset(scopes)
     return AdminTokenResponse(token=token)
 
 

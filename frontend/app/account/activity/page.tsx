@@ -16,6 +16,8 @@ const ACTION_KEYS: Record<AuditAction, string> = {
   password_changed: "account.actionPasswordChanged",
   email_changed: "account.actionEmailChanged",
   avatar_changed: "account.actionAvatarChanged",
+  password_reset: "account.actionPasswordReset",
+  session_revoked: "account.actionSessionRevoked",
 };
 
 export default function AccountActivityPage() {
