@@ -213,3 +213,143 @@ async def test_api_keys_are_isolated(client, session_factory, auth):
     b_keys = (await client.get(f"{API}/api-keys", headers=auth_b)).json()
     assert {k["name"] for k in a_keys} == {"a-key"}
     assert {k["name"] for k in b_keys} == {"b-key"}
+
+
+TINY_PNG = (
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0l"
+    "EQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+)
+
+
+@pytest.mark.asyncio
+async def test_change_email_success_and_relogin(client, auth):
+    resp = await client.patch(
+        f"{API}/auth/email",
+        json={"current_password": SEED_ADMIN_PASSWORD, "new_email": "new@acme.example"},
+        headers=auth,
+    )
+    assert resp.status_code == 200
+    assert resp.json()["email"] == "new@acme.example"
+
+    old = await client.post(
+        f"{API}/auth/login",
+        json={"email": SEED_ADMIN_EMAIL, "password": SEED_ADMIN_PASSWORD},
+    )
+    assert old.status_code == 401
+
+    new = await client.post(
+        f"{API}/auth/login",
+        json={"email": "new@acme.example", "password": SEED_ADMIN_PASSWORD},
+    )
+    assert new.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_change_email_wrong_password_rejected(client, auth):
+    resp = await client.patch(
+        f"{API}/auth/email",
+        json={"current_password": "not-it", "new_email": "new@acme.example"},
+        headers=auth,
+    )
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_change_email_duplicate_rejected(client, session_factory, auth):
+    await _make_second_org(session_factory)
+    resp = await client.patch(
+        f"{API}/auth/email",
+        json={"current_password": SEED_ADMIN_PASSWORD, "new_email": "ops@acme.example"},
+        headers=auth,
+    )
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_change_email_invalid_rejected(client, auth):
+    resp = await client.patch(
+        f"{API}/auth/email",
+        json={"current_password": SEED_ADMIN_PASSWORD, "new_email": "nope"},
+        headers=auth,
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_avatar_set_and_clear(client, auth):
+    set_resp = await client.patch(
+        f"{API}/auth/avatar", json={"avatar": TINY_PNG}, headers=auth
+    )
+    assert set_resp.status_code == 200
+    assert set_resp.json()["avatar"] == TINY_PNG
+
+    me = (await client.get(f"{API}/auth/me", headers=auth)).json()
+    assert me["user"]["avatar"] == TINY_PNG
+
+    clear_resp = await client.patch(
+        f"{API}/auth/avatar", json={"avatar": None}, headers=auth
+    )
+    assert clear_resp.status_code == 200
+    assert clear_resp.json()["avatar"] is None
+
+
+@pytest.mark.asyncio
+async def test_avatar_rejects_non_data_url(client, auth):
+    resp = await client.patch(
+        f"{API}/auth/avatar",
+        json={"avatar": "https://evil.example/x.png"},
+        headers=auth,
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_activity_log_records_events_and_paginates(client, auth):
+    # Beyond the seeded login used by the `client`/`auth` fixtures, generate a
+    # few more events: a failed login, a successful login, a password change.
+    await client.post(
+        f"{API}/auth/login",
+        json={"email": SEED_ADMIN_EMAIL, "password": "wrong"},
+    )
+    await client.post(
+        f"{API}/auth/login",
+        json={"email": SEED_ADMIN_EMAIL, "password": SEED_ADMIN_PASSWORD},
+    )
+    await client.patch(
+        f"{API}/auth/password",
+        json={"current_password": SEED_ADMIN_PASSWORD, "new_password": "new-secret-1"},
+        headers=auth,
+    )
+
+    page1 = (
+        await client.get(f"{API}/auth/activity?limit=2&offset=0", headers=auth)
+    ).json()
+    assert page1["limit"] == 2
+    assert page1["offset"] == 0
+    assert len(page1["items"]) == 2
+    assert page1["total"] >= 3
+    # Most recent first.
+    assert page1["items"][0]["action"] == "password_changed"
+
+    actions = {x["action"] for x in page1["items"]}
+    assert actions <= {
+        "login",
+        "login_failed",
+        "password_changed",
+        "email_changed",
+        "avatar_changed",
+    }
+
+    page2 = (
+        await client.get(f"{API}/auth/activity?limit=2&offset=2", headers=auth)
+    ).json()
+    assert len(page2["items"]) >= 1
+    assert {i["id"] for i in page1["items"]}.isdisjoint(
+        {i["id"] for i in page2["items"]}
+    )
+
+
+@pytest.mark.asyncio
+async def test_activity_requires_auth(anon_client):
+    resp = await anon_client.get(f"{API}/auth/activity")
+    assert resp.status_code == 401

@@ -188,6 +188,21 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   organization_id: string;
+  avatar: string | null;
+  created_at: string;
+}
+
+export type AuditAction =
+  | "login"
+  | "login_failed"
+  | "password_changed"
+  | "email_changed"
+  | "avatar_changed";
+
+export interface AuditLogEntry {
+  id: string;
+  action: AuditAction;
+  ip: string | null;
   created_at: string;
 }
 
@@ -348,6 +363,14 @@ export const api = {
   me: () => get<AuthResponse>("/auth/me"),
   changePassword: (current_password: string, new_password: string) =>
     patch<{ ok: boolean }>("/auth/password", { current_password, new_password }),
+  changeEmail: (current_password: string, new_email: string) =>
+    patch<AuthUser>("/auth/email", { current_password, new_email }),
+  updateAvatar: (avatar: string | null) =>
+    patch<AuthUser>("/auth/avatar", { avatar }),
+  listActivity: (params: { limit: number; offset: number }) =>
+    get<Page<AuditLogEntry>>(
+      `/auth/activity?limit=${params.limit}&offset=${params.offset}`,
+    ),
 
   listRobots: () => get<Page<Robot>>("/robots?limit=200"),
   getRobot: (id: string) => get<Robot>(`/robots/${id}`),

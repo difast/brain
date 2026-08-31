@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import enum
 
-from sqlalchemy import Enum, ForeignKey, String
+from sqlalchemy import Enum, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -40,3 +40,8 @@ class User(UUIDMixin, TimestampMixin, Base):
         default=UserRole.member,
         nullable=False,
     )
+    # A small cropped avatar image, stored as a data: URL (data:image/jpeg;
+    # base64,...). No object storage dependency — the frontend downsizes and
+    # compresses the image client-side before upload, so it stays a few tens
+    # of KB. Null means no avatar (the UI falls back to initials).
+    avatar: Mapped[str | None] = mapped_column(Text, nullable=True)

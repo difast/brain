@@ -29,6 +29,7 @@ interface AuthState {
     captchaToken?: string | null,
   ) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -87,9 +88,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("anon");
   }, []);
 
+  // Re-fetch the current user (e.g. after changing email or avatar) without a
+  // full page reload. The session token itself carries no email/avatar, so it
+  // stays valid across either change.
+  const refreshUser = useCallback(async () => {
+    const me = await api.me();
+    setUser(me.user);
+    setOrganization(me.organization);
+  }, []);
+
   const value = useMemo(
-    () => ({ status, user, organization, login, logout }),
-    [status, user, organization, login, logout],
+    () => ({ status, user, organization, login, logout, refreshUser }),
+    [status, user, organization, login, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
