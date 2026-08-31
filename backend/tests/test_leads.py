@@ -63,6 +63,12 @@ async def test_invalid_email_rejected(client):
 
 
 @pytest.mark.asyncio
+async def test_missing_phone_rejected(client):
+    resp = await client.post(f"{API}/leads", json=_payload(phone=""))
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_admin_can_delete_lead(client, admin_auth):
     await client.post(f"{API}/leads", json=_payload())
     lead_id = (await client.get(f"{API}/admin/leads", headers=admin_auth)).json()[0][

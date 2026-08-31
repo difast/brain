@@ -70,7 +70,7 @@ export function ContactForm() {
         body: JSON.stringify({
           name: fields.name,
           email: fields.email,
-          phone: fields.phone || null,
+          phone: fields.phone,
           organization: fields.org || null,
           topic,
           message: fields.message,
@@ -155,11 +155,12 @@ export function ContactForm() {
       <div className="mt-5 grid gap-5 sm:grid-cols-2">
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium text-ink">
-            Телефон
+            Телефон *
           </span>
           <input
             name="phone"
             type="tel"
+            required
             className={inputCls}
             placeholder="+7 900 000-00-00"
           />
