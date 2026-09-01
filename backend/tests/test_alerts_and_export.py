@@ -315,3 +315,82 @@ async def test_presence_helper_reads_paused_devices_as_they_are(session_factory)
             "offline",
             "error",
         }
+
+
+# --- Device profile access ------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_device_can_read_its_own_profile(client, auth, rover_payload):
+    """A device needs its own DAL contract, using the token it already has."""
+    reg = (
+        await client.post(
+            f"{API}/robots/register", json=rover_payload, headers=auth
+        )
+    ).json()
+    device = {"Authorization": f"Bearer {reg['token']}"}
+
+    resp = await client.get(
+        f"{API}/robots/{reg['robot']['id']}/profile", headers=device
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["robot_id"] == reg["robot"]["id"]
+
+
+@pytest.mark.asyncio
+async def test_device_cannot_read_another_devices_profile(
+    client, auth, rover_payload
+):
+    first = (
+        await client.post(
+            f"{API}/robots/register",
+            json={**rover_payload, "name": "one"},
+            headers=auth,
+        )
+    ).json()
+    second = (
+        await client.post(
+            f"{API}/robots/register",
+            json={**rover_payload, "name": "two"},
+            headers=auth,
+        )
+    ).json()
+
+    resp = await client.get(
+        f"{API}/robots/{second['robot']['id']}/profile",
+        headers={"Authorization": f"Bearer {first['token']}"},
+    )
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_user_still_reads_profiles_in_their_organization(
+    client, auth, rover_payload, session_factory
+):
+    from tests.test_auth import _make_second_org
+
+    reg = (
+        await client.post(
+            f"{API}/robots/register", json=rover_payload, headers=auth
+        )
+    ).json()
+    robot_id = reg["robot"]["id"]
+
+    mine = await client.get(f"{API}/robots/{robot_id}/profile", headers=auth)
+    assert mine.status_code == 200
+
+    # ...and only within it.
+    _org_b, auth_b = await _make_second_org(session_factory)
+    theirs = await client.get(f"{API}/robots/{robot_id}/profile", headers=auth_b)
+    assert theirs.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_profile_still_requires_a_token(anon_client, client, auth, rover_payload):
+    reg = (
+        await client.post(
+            f"{API}/robots/register", json=rover_payload, headers=auth
+        )
+    ).json()
+    resp = await anon_client.get(f"{API}/robots/{reg['robot']['id']}/profile")
+    assert resp.status_code == 401

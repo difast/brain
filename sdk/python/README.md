@@ -13,12 +13,18 @@ pip install "mevratek-sdk @ git+https://github.com/difast/brain#subdirectory=sdk
 
 ## Quick start
 
+Registration needs an **organization API key** (`cbk_...`), issued from the
+dashboard under *API keys*. It says which organization the new device belongs
+to; registration swaps it for a device token, so the key itself never has to
+live on the device.
+
 ```python
 from mevratek import BrainClient
 
 # 1. Register once — returns an authenticated client (save bot.token to reuse).
 bot = BrainClient.register(
     "https://your-api/api/v1",
+    api_key="cbk_...",          # organization key, from the dashboard
     name="rover-01",
     robot_type="rover",
     capabilities=[
@@ -62,12 +68,14 @@ if task:
 
 | Method | Description |
 |---|---|
-| `BrainClient.register(url, name, robot_type, capabilities, meta)` | Register and return a client |
+| `BrainClient.register(url, api_key, name, robot_type, capabilities, meta)` | Register and return a client |
 | `BrainClient(url, token=...)` | Construct from an existing token |
 | `.heartbeat(status="online")` | Report liveness |
 | `.decide(task, state, image_bytes/image_b64, frame_url, task_id)` | Get a decision |
 | `.send_telemetry(battery, speed, x, y, z, errors, extra)` | Send telemetry |
 | `.next_task()` | Pull next queued task (or `None`) |
 | `.report_task_result(task_id, status, result)` | Report task outcome |
+| `.profile(robot_id)` | Capabilities + universal actions |
+| `.report_execution(action_id, status, duration_ms, error)` | DAL feedback |
 
 Errors raise `mevratek.BrainError` with `.status_code`.

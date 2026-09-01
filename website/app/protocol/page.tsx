@@ -45,7 +45,7 @@ export default function ProtocolPage() {
           <SectionHeading
             eyebrow="Технология · ключевой актив"
             title="Mevratek Protocol — единый протокол управления устройствами"
-            intro="Единый протокол взаимодействия между облачной платформой и роботами. Он позволяет подключать устройства разных производителей через унифицированный API и общий набор команд — независимо от их аппаратной архитектуры. Это ключевое технологическое направление развития Mevratek."
+            intro="Единый протокол взаимодействия между сервером платформы и роботами. Он позволяет подключать устройства разных производителей через унифицированный API и общий набор команд — независимо от их аппаратной архитектуры. Протокол одинаков в пилотном стенде и в закрытом контуре предприятия. Это ключевое технологическое направление развития Mevratek."
           />
         </Container>
       </Section>
@@ -110,7 +110,7 @@ export default function ProtocolPage() {
               <div className="flex flex-col justify-center rounded-xl border border-line bg-surface px-4 py-5 text-center">
                 <div className="text-sm font-semibold">Один код управления</div>
                 <div className="mt-1 text-xs text-muted">
-                  облако + AI-движок
+                  сервер платформы + AI-движок
                 </div>
               </div>
             </div>
@@ -193,8 +193,8 @@ export default function ProtocolPage() {
             />
             <div className="rounded-2xl border border-line bg-white p-6">
               <pre className="overflow-x-auto rounded-lg bg-surface px-4 py-3 font-mono text-xs leading-relaxed text-ink-soft">
-{`bot = BrainClient.register(API, name="rover-01",
-        robot_type="rover", capabilities=[...])
+{`bot = BrainClient.register(API, api_key="cbk_...",
+        name="rover-01", robot_type="rover", capabilities=[...])
 while True:
     bot.heartbeat()
     d = bot.decide(task="...", state={...})

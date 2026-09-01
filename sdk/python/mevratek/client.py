@@ -45,14 +45,21 @@ class BrainClient:
         cls,
         base_url: str,
         *,
+        api_key: str,
         name: str,
         robot_type: str,
         capabilities: list[dict[str, Any]] | None = None,
         meta: dict[str, Any] | None = None,
         timeout: float = 30.0,
     ) -> BrainClient:
-        """Register a new robot and return an authenticated client."""
-        client = cls(base_url, timeout=timeout)
+        """Register a new robot and return an authenticated client.
+
+        ``api_key`` is an organization API key (``cbk_...``) issued from the
+        dashboard: it says which organization the new device belongs to.
+        Registration swaps it for a device token, which is what the returned
+        client uses from then on — so the key never has to live on the device.
+        """
+        client = cls(base_url, token=api_key, timeout=timeout)
         data = client._request(
             "POST",
             "/robots/register",

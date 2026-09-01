@@ -1,0 +1,32 @@
+{
+  "name": "@mevratek/sdk",
+  "version": "0.1.0",
+  "description": "Official JavaScript/TypeScript SDK for the Mevratek device-control API",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "5.4.5",
+    "@types/node": "20.11.30"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/difast/brain.git",
+    "directory": "sdk/javascript"
+  },
+  "keywords": ["mevratek", "robotics", "sdk", "telemetry"]
+}

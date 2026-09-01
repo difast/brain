@@ -96,10 +96,76 @@ jobs:
           NEXT_TELEMETRY_DISABLED: "1"
         run: npm run build
 
+  sdk-checks:
+    name: SDKs (python · js · go · c · c++)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+          # No third-party dependencies, so there is no go.sum to cache from.
+          cache: false
+
+      - name: Install libcurl (C / C++ SDKs)
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Python SDK — install and import
+        working-directory: sdk/python
+        run: |
+          pip install .
+          python -c "from mevratek import BrainClient, BrainError; print(BrainClient)"
+
+      - name: JavaScript SDK — build and test
+        working-directory: sdk/javascript
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+
+      - name: Go SDK — vet and test
+        working-directory: sdk/go
+        run: |
+          test -z "$(gofmt -l .)" || { gofmt -l .; echo "run gofmt -w ."; exit 1; }
+          go vet ./...
+          go test ./...
+
+      # Sanitizers on: these two manage their own memory, so a leak or an
+      # out-of-bounds read must fail the build, not ship.
+      - name: C SDK — build and test (asan · ubsan · lsan)
+        run: |
+          cmake -S sdk/c -B build-c -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_FLAGS="-fsanitize=address,undefined -g"
+          cmake --build build-c
+          ASAN_OPTIONS=detect_leaks=1 ctest --test-dir build-c --output-on-failure
+
+      - name: C++ SDK — build and test (asan · ubsan · lsan)
+        run: |
+          cmake -S sdk/cpp -B build-cpp -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_FLAGS="-fsanitize=address,undefined -g" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -g"
+          cmake --build build-cpp
+          ASAN_OPTIONS=detect_leaks=1 ctest --test-dir build-cpp --output-on-failure
+
+      - name: Examples still compile
+        run: |
+          cmake -S sdk/c -B build-c-ex -DMEVRATEK_BUILD_EXAMPLES=ON
+          cmake --build build-c-ex
+          cmake -S sdk/cpp -B build-cpp-ex -DMEVRATEK_CPP_BUILD_EXAMPLES=ON
+          cmake --build build-cpp-ex
+
   deploy:
     name: Deploy to Timeweb Cloud Apps
     runs-on: ubuntu-latest
-    needs: [backend-checks, frontend-checks, website-checks]
+    needs: [backend-checks, frontend-checks, website-checks, sdk-checks]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Trigger Timeweb redeploy

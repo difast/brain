@@ -6,6 +6,7 @@ Example
 
     bot = BrainClient.register(
         "https://your-api/api/v1",
+        api_key="cbk_...",   # organization key, from the dashboard
         name="rover-01",
         robot_type="rover",
         capabilities=[{"type": "move_forward"}, {"type": "stop"}],

@@ -7,7 +7,7 @@ import { BreadcrumbJsonLd } from "@/components/schema";
 export const metadata: Metadata = {
   title: "Блог",
   description:
-    "Статьи о платформе Mevratek: архитектура облачного управления роботами, российские LLM в робототехнике и on-premise развёртывание в закрытом контуре.",
+    "Статьи о платформе Mevratek: архитектура централизованного управления роботами, российские LLM в робототехнике и on-premise развёртывание в закрытом контуре.",
   alternates: { canonical: "/blog" },
 };
 

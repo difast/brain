@@ -7,8 +7,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentRobotId, CurrentUser, OrgPrincipal
+from app.api.deps import CurrentRobotId, CurrentUser, OrgPrincipal, ProfileReader
 from app.core.database import get_session
+from app.core.exceptions import AuthError
 from app.dal.translator import ActionTranslator
 from app.models.robot import RobotStatus
 from app.schemas.common import Page
@@ -164,11 +165,19 @@ async def resume_robot(
 )
 async def device_profile(
     robot_id: str,
-    current_user: CurrentUser,
+    reader: ProfileReader,
     session: SessionDep,
 ) -> DeviceProfile:
     service = RegistryService(session)
-    robot = await service.get(robot_id, organization_id=current_user.organization_id)
+
+    # A device may read only its own profile; a dashboard user may read any
+    # device inside their organization.
+    if reader.startswith("robot:"):
+        if reader.removeprefix("robot:") != robot_id:
+            raise AuthError("A device may only read its own profile.")
+        robot = await service.get(robot_id)
+    else:
+        robot = await service.get(robot_id, organization_id=reader)
     return DeviceProfile(
         robot_id=robot.id,
         robot_type=robot.robot_type,

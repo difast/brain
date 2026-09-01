@@ -70,7 +70,8 @@ export default function PlatformPage() {
               <h3 className="text-xl font-semibold">Архитектура</h3>
               <p className="mt-3 text-muted">
                 Устройства — тонкие клиенты. Они стримят кадры, телеметрию и
-                текущую задачу; облако возвращает структурированные команды.
+                текущую задачу; сервер платформы возвращает структурированные
+                команды.
                 Каждый слой изолирован и заменяем.
               </p>
               <ul className="mt-6 space-y-3 text-sm text-ink-soft">

@@ -62,6 +62,7 @@ async def get_current_robot_id(
 CurrentRobotId = Annotated[str, Depends(get_current_robot_id)]
 
 
+
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
     session: SessionDep,
@@ -108,6 +109,43 @@ async def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+async def get_profile_reader(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+    session: SessionDep,
+    request: Request,
+) -> str:
+    """Resolve who may read a device profile.
+
+    The profile is the device's own contract — which universal actions the brain
+    may send it — so a device has to be able to read it with the token it
+    already has. A device authenticates with its robot token and may read only
+    itself; a dashboard user may read any device in their organization.
+
+    Returns either ``robot:<id>`` (read only that device) or an
+    ``organization_id`` (read any device in it); the route enforces the match.
+    """
+    if credentials is None or not credentials.credentials:
+        raise AuthError("Missing bearer token.")
+
+    # A robot token: the device reading its own profile.
+    try:
+        payload = decode_robot_token(credentials.credentials)
+    except jwt.PyJWTError:
+        payload = None
+    if payload is not None and payload.get("type") == "robot":
+        robot_id = payload.get("sub")
+        if not robot_id:
+            raise AuthError("Token missing subject.")
+        return f"robot:{robot_id}"
+
+    # Otherwise it must be a dashboard user session.
+    user = await get_current_user(credentials, session, request)
+    return user.organization_id
+
+
+ProfileReader = Annotated[str, Depends(get_profile_reader)]
 
 
 def current_session_id(request: Request) -> str | None:

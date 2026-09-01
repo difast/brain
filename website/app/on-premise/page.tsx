@@ -28,13 +28,37 @@ const INSIDE = [
   { title: "Данные устройств", detail: "Профили, кадры камер, история задач и исполнения." },
 ];
 
-const COMPARE: { row: string; cloud: string; onprem: string }[] = [
-  { row: "Где работает", cloud: "Облако Mevratek", onprem: "Внутри инфраструктуры заказчика" },
-  { row: "Данные и телеметрия", cloud: "В облаке платформы", onprem: "Не покидают контур предприятия" },
-  { row: "AI-модели", cloud: "Облачные / российские LLM", onprem: "Локальные модели (Ollama, vLLM, LM Studio)" },
-  { row: "Внешние API-запросы", cloud: "Есть (к провайдеру модели)", onprem: "Отсутствуют — закрытый контур" },
-  { row: "API · SDK · протокол", cloud: "Единые", onprem: "Те же самые, без изменений" },
-  { row: "Кому подходит", cloud: "Большинству команд", onprem: "Требованиям к безопасности данных" },
+const COMPARE: { row: string; pilot: string; prod: string }[] = [
+  { row: "Где работает", pilot: "Тестовый сервер — ваш или наш", prod: "Внутри инфраструктуры заказчика" },
+  { row: "Данные и телеметрия", pilot: "Тестовые устройства и симулятор", prod: "Боевой парк, данные не покидают контур" },
+  { row: "AI-модели", pilot: "Российские LLM по API или локальные", prod: "Локальные модели (Ollama, vLLM, LM Studio)" },
+  { row: "Внешние запросы", pilot: "Допустимы к провайдеру модели", prod: "Отсутствуют — закрытый контур" },
+  { row: "API · SDK · протокол", pilot: "Единые", prod: "Те же самые, без изменений" },
+  { row: "Срок", pilot: "От одного дня до первого устройства", prod: "По графику внедрения" },
+];
+
+/** Как проходит работа с заказчиком — от заявки до промышленного внедрения. */
+const STEPS = [
+  {
+    title: "Заявка",
+    detail:
+      "Вы описываете парк устройств и требования к контуру. Отвечаем в течение рабочего дня.",
+  },
+  {
+    title: "Демонстрация и оценка контура",
+    detail:
+      "Показываем платформу в работе, разбираем вашу инфраструктуру и требования безопасности.",
+  },
+  {
+    title: "Пилот",
+    detail:
+      "Разворачиваем стенд и подключаем ограниченный парк. Проверяем сценарии на ваших задачах.",
+  },
+  {
+    title: "Внедрение",
+    detail:
+      "Развёртывание в промышленном контуре, лицензия и сопровождение по договору.",
+  },
 ];
 
 export default function OnPremisePage() {
@@ -52,7 +76,7 @@ export default function OnPremisePage() {
           <SectionHeading
             eyebrow="Развёртывание · Enterprise"
             title="Mevratek On-Premise — платформа в вашем контуре"
-            intro="Возможность развернуть платформу полностью внутри инфраструктуры заказчика. Данные, модели, телеметрия и управление роботами остаются в закрытом контуре предприятия — при том же API, SDK и протоколе, что и в облаке."
+            intro="Mevratek поставляется как решение для закрытого контура: платформа разворачивается полностью внутри инфраструктуры заказчика. Данные, модели, телеметрия и управление роботами не покидают периметр предприятия. Внешнего облачного сервиса, в который уходила бы телеметрия, у нас нет — это единственная модель поставки."
           />
         </Container>
       </Section>
@@ -134,16 +158,16 @@ export default function OnPremisePage() {
       <Section className="bg-surface">
         <Container>
           <SectionHeading
-            eyebrow="Сравнение"
-            title="Облако и On-Premise"
-            intro="Один и тот же продукт в двух вариантах поставки. Интерфейс, API, SDK и протокол идентичны — отличается только место развёртывания и контроль над данными."
+            eyebrow="Этапы"
+            title="Пилот и промышленный контур"
+            intro="Один и тот же продукт на двух этапах внедрения. Интерфейс, API, SDK и протокол идентичны — отличается масштаб парка и жёсткость требований к изоляции."
           />
           <div className="mt-10 overflow-x-auto">
             <div className="min-w-[640px] overflow-hidden rounded-2xl border border-line bg-white">
               <div className="grid grid-cols-3 border-b border-line bg-surface text-xs font-semibold uppercase tracking-[0.1em] text-muted">
                 <div className="p-4" />
-                <div className="p-4">Mevratek Cloud</div>
-                <div className="p-4">Mevratek On-Premise</div>
+                <div className="p-4">Пилот</div>
+                <div className="p-4">Промышленный контур</div>
               </div>
               {COMPARE.map((r) => (
                 <div
@@ -151,8 +175,8 @@ export default function OnPremisePage() {
                   className="grid grid-cols-3 border-b border-line text-sm last:border-0"
                 >
                   <div className="p-4 font-medium text-ink">{r.row}</div>
-                  <div className="p-4 text-muted">{r.cloud}</div>
-                  <div className="p-4 text-ink-soft">{r.onprem}</div>
+                  <div className="p-4 text-muted">{r.pilot}</div>
+                  <div className="p-4 text-ink-soft">{r.prod}</div>
                 </div>
               ))}
             </div>
@@ -173,7 +197,7 @@ export default function OnPremisePage() {
                 Базовое локальное развёртывание уже работает: платформа
                 разворачивается контейнерами, использует локальные модели через
                 OpenAI-совместимый шлюз и не требует обязательных внешних сервисов.
-                Тот же API, SDK и протокол, что и в облаке.
+                Тот же API, SDK и протокол, что и на пилотном стенде.
               </p>
             </div>
             <div className="rounded-2xl border border-line bg-white p-7">
@@ -188,6 +212,48 @@ export default function OnPremisePage() {
                 промышленных пилотов.
               </p>
             </div>
+          </div>
+        </Container>
+      </Section>
+
+      {/* How we work */}
+      <Section className="bg-surface">
+        <Container>
+          <SectionHeading
+            eyebrow="Как мы работаем"
+            title="От заявки до промышленного внедрения"
+            intro="Мы не продаём подписку на внешний сервис — поставка идёт по договору, под конкретный парк и контур. Поэтому путь начинается с разговора, а не с прайс-листа."
+          />
+          <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((step, i) => (
+              <li
+                key={step.title}
+                className="rounded-2xl border border-line bg-white p-6"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-strong text-sm font-semibold text-white">
+                  {i + 1}
+                </div>
+                <div className="mt-4 text-base font-semibold text-ink">
+                  {step.title}
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {step.detail}
+                </p>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-8 rounded-2xl border border-line bg-white p-7">
+            <div className="text-base font-semibold text-ink">
+              Условия поставки
+            </div>
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-ink-soft">
+              Поставка осуществляется по договору, оплата — по счёту для
+              юридических лиц. Стоимость зависит от размера парка устройств,
+              контура развёртывания и объёма сопровождения, поэтому определяется
+              индивидуально по итогам оценки. Публичного прайс-листа и
+              самостоятельной регистрации нет: доступ к платформе открывается
+              после заключения договора.
+            </p>
           </div>
         </Container>
       </Section>

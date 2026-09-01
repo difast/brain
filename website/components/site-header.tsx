@@ -8,8 +8,8 @@ import { Button } from "./ui";
 
 const NAV = [
   { href: "/platform", label: "Платформа" },
+  { href: "/on-premise", label: "Развёртывание" },
   { href: "/protocol", label: "Протокол" },
-  { href: "/on-premise", label: "On-Premise" },
   { href: "/for-who", label: "Для кого" },
   { href: "/about", label: "О проекте" },
   { href: "/contacts", label: "Контакты" },

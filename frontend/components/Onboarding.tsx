@@ -13,6 +13,7 @@ from mevratek import BrainClient
 
 bot = BrainClient.register(
     "${apiBase}",
+    api_key="cbk_...",              # ключ организации, со страницы «API»
     name="rover-01",
     robot_type="rover",
     capabilities=[

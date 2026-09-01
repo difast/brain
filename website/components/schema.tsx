@@ -27,7 +27,7 @@ export function OrganizationJsonLd() {
         email: COMPANY.email,
         logo: `${SITE_URL}/icon.svg`,
         description:
-          "Российская облачная платформа управления промышленными роботами и автономными устройствами через единый протокол и AI-движок.",
+          "Российская платформа управления промышленными роботами и автономными устройствами через единый протокол и AI-движок. Разворачивается в контуре заказчика (on-premise).",
         foundingDate: "2025",
         address: {
           "@type": "PostalAddress",
@@ -94,24 +94,25 @@ export function SoftwareApplicationJsonLd() {
         name: "Mevratek",
         applicationCategory: "BusinessApplication",
         applicationSubCategory: "Robotics Control Platform",
-        operatingSystem: "Web, Linux (on-premise)",
+        operatingSystem: "Linux (on-premise)",
         url: SITE_URL,
         inLanguage: "ru-RU",
         description:
-          "Облачная платформа-«мозг» для парка автономных устройств: единый SDK и API, телеметрия в реальном времени и структурированные команды от AI Decision Engine на базе YandexGPT, GigaChat, Claude и локальных моделей. Поддерживает локальное (on-premise) развёртывание.",
+          "Платформа-«мозг» для парка автономных устройств: единый SDK и API, телеметрия в реальном времени и структурированные команды AI Decision Engine на базе YandexGPT, GigaChat, Claude и локальных моделей. Разворачивается в закрытом контуре предприятия (on-premise).",
         featureList: [
           "Единый протокол управления любым устройством (Device Abstraction Layer)",
           "AI Decision Engine с выбором модели (YandexGPT, GigaChat, Claude, локальные)",
           "Телеметрия в реальном времени",
           "Движок задач и журнал решений",
-          "SDK для Python, C++, C, Go, JavaScript",
-          "On-premise / изолированное развёртывание",
+          "Официальные SDK для Python, JavaScript, Go, C++ и C",
+          "Развёртывание в изолированном контуре предприятия",
         ],
         offers: {
           "@type": "Offer",
-          price: "0",
           priceCurrency: "RUB",
-          description: "Пилотное подключение — обсуждается индивидуально.",
+          availability: "https://schema.org/InStock",
+          description:
+            "Поставка по договору, оплата по счёту для юридических лиц. Стоимость зависит от размера парка и контура развёртывания.",
         },
         publisher: { "@type": "Organization", name: COMPANY.brand },
       }}

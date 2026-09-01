@@ -23,6 +23,15 @@ npm-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# SDK build output
+sdk/*/build/
+sdk/*/build-*/
+build-c/
+build-cpp/
+build-c-ex/
+build-cpp-ex/
+sdk/javascript/dist/
+
 # Editors / OS
 .DS_Store
 .idea/
