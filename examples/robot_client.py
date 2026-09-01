@@ -8,7 +8,11 @@ Demonstrates the full lifecycle any robot follows:
 Run (with the stack up via docker compose):
 
     pip install httpx
-    python examples/robot_client.py
+    MEVRATEK_API_KEY=cbk_... python examples/robot_client.py
+
+The API key is an organization key issued from the dashboard ("API" page). It
+says which organization the new device belongs to; registration swaps it for a
+device token, so the key never has to live on the device afterwards.
 
 No external hardware required — frames and telemetry are synthetic.
 """
@@ -24,6 +28,7 @@ import httpx
 # Override with MEVRATEK_API to point at a deployed backend, e.g.
 #   MEVRATEK_API=https://<backend-app-domain>/api/v1 python examples/robot_client.py
 API = os.environ.get("MEVRATEK_API", "http://localhost:8000/api/v1")
+API_KEY = os.environ.get("MEVRATEK_API_KEY", "")
 
 # A minimal valid 1x1 JPEG (enough for the API; real robots send camera frames).
 TINY_JPEG = base64.b64encode(bytes.fromhex("ffd8ffd9")).decode()
@@ -44,10 +49,17 @@ CAPABILITIES = [
 
 
 def main() -> None:
+    if not API_KEY:
+        raise SystemExit(
+            "Set MEVRATEK_API_KEY to an organization key (cbk_...) from the "
+            'dashboard\'s "API" page — registration is scoped to an organization.'
+        )
+
     with httpx.Client(base_url=API, timeout=30) as client:
-        # 1. Register
+        # 1. Register, authenticated with the organization key.
         reg = client.post(
             "/robots/register",
+            headers={"Authorization": f"Bearer {API_KEY}"},
             json={
                 "name": "demo-rover",
                 "robot_type": "rover",
