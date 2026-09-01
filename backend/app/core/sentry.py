@@ -9,11 +9,17 @@ application log.
 
 from __future__ import annotations
 
-from typing import Any
+import logging
+from typing import TYPE_CHECKING, Any
 
 from app import __version__
 from app.core.config import settings
 from app.core.logging import get_logger
+
+if TYPE_CHECKING:
+    # Only for the annotations below — importing sentry_sdk at runtime
+    # would defeat the point of making it opt-in.
+    from sentry_sdk.types import Event, Hint
 
 logger = get_logger("sentry")
 
@@ -22,7 +28,7 @@ logger = get_logger("sentry")
 _IGNORED_TRANSACTIONS = frozenset({"/health", "/ready", "/metrics"})
 
 
-def _before_send(event: dict[str, Any], hint: dict[str, Any]) -> dict | None:
+def _before_send(event: Event, hint: Hint) -> Event | None:
     """Drop what should not leave the installation.
 
     Request bodies on this API carry camera frames and telemetry, and the
@@ -82,7 +88,7 @@ def configure_sentry() -> bool:
             AsyncioIntegration(),
             # Errors logged through stdlib logging (which structlog routes
             # into) become Sentry events; anything below is a breadcrumb.
-            LoggingIntegration(level=None, event_level="ERROR"),
+            LoggingIntegration(level=None, event_level=logging.ERROR),
         ],
     )
     logger.info(

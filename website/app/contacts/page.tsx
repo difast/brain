@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Container, Section, SectionHeading } from "@/components/ui";
 import { ContactForm } from "@/components/contact-form";
 import { BreadcrumbJsonLd } from "@/components/schema";
+import { HandoutQr } from "@/components/qr";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Контакты",
@@ -73,6 +75,37 @@ export default function ContactsPage() {
               >
                 info@mevratek.ru
               </a>
+            </div>
+
+            {/* Before writing, most people want to read. The code goes to the
+                same two-page PDF we hand out at events — scanning it off the
+                screen is faster than dictating an address across a table. */}
+            <div className="border-t border-line pt-5">
+              <h3 className="text-base font-semibold text-ink">
+                Обзор платформы в PDF
+              </h3>
+              {/* 132px is not a design choice: the code is 33 modules across
+                  including its quiet zone, and below ~4 device pixels per
+                  module a phone camera stops resolving it. A QR nobody can
+                  scan is decoration. */}
+              <div className="mt-4 flex items-start gap-4">
+                <div className="shrink-0 rounded-lg border border-line bg-white p-2">
+                  <HandoutQr className="block h-[132px] w-[132px]" />
+                </div>
+                <div>
+                  <p className="text-sm leading-relaxed text-muted">
+                    Две страницы: архитектура, компоненты и что даёт
+                    развёртывание в вашем контуре. Наведите камеру или откройте{" "}
+                    <Link
+                      href="/materials"
+                      className="font-semibold text-accent hover:text-ink"
+                    >
+                      страницу материалов
+                    </Link>
+                    .
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 

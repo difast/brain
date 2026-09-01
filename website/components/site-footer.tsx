@@ -19,6 +19,7 @@ const COLUMNS = [
       { href: "/about", label: "О проекте" },
       { href: "/for-who", label: "Для кого" },
       { href: "/blog", label: "Блог" },
+      { href: "/materials", label: "Материалы" },
       { href: "/contacts", label: "Контакты" },
     ],
   },

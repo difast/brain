@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>Mevratek — платформа управления роботами в вашем контуре</title>
+<!--FONT-FACE-->
+<style>
+  /* The palette is the site's Tailwind theme, copied here verbatim so print
+     and web stay the same product. */
+  :root {
+    --ink: #14171c;
+    --ink-soft: #2b303a;
+    --muted: #5b6470;
+    --line: #e5e8ec;
+    --surface: #f6f7f9;
+    --accent: #374151;
+    --accent-strong: #1f2937;
+    --signal: #1f7a52;
+  }
+
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { -webkit-font-smoothing: antialiased; }
+
+  body {
+    font-family: Inter, "Liberation Sans", "Helvetica Neue", Arial, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    color: var(--ink);
+    background: #fff;
+    font-size: 9.2pt;
+    line-height: 1.5;
+    letter-spacing: -0.003em;
+  }
+
+  .page {
+    width: 210mm;
+    height: 297mm;
+    padding: 14mm 15mm 12mm;
+    display: flex;
+    flex-direction: column;
+    /* Chromium keeps a stray blank page without this on the last sheet. */
+    page-break-after: always;
+    overflow: hidden;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  h1 {
+    font-size: 25pt;
+    line-height: 1.08;
+    font-weight: 600;
+    letter-spacing: -0.022em;
+  }
+  h2 {
+    font-size: 13.5pt;
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.016em;
+  }
+  h3 { font-size: 9.6pt; font-weight: 600; line-height: 1.25; }
+
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 7pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 22px;
+    height: 1px;
+    background: rgba(55, 65, 81, 0.5);
+  }
+
+  .muted { color: var(--muted); }
+  .soft { color: var(--ink-soft); }
+
+  /* --- Masthead --- */
+  .masthead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 9mm;
+  }
+  .wordmark { display: flex; align-items: center; gap: 8px; }
+  .wordmark span {
+    font-size: 13pt;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  .masthead .site { font-size: 8.6pt; font-weight: 500; color: var(--muted); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 999px;
+    padding: 4px 11px;
+    font-size: 7.8pt;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .dot {
+    width: 5px; height: 5px;
+    border-radius: 999px;
+    background: var(--signal);
+  }
+
+  .lead {
+    font-size: 10.4pt;
+    line-height: 1.62;
+    color: var(--muted);
+    max-width: 165mm;
+  }
+
+  /* --- Flow diagram (the site's FlowDiagram, laid out for paper) --- */
+  .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 9px;
+  }
+  .node {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    background: #fff;
+  }
+  .node.accent {
+    background: var(--accent-strong);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .node .n-label { font-size: 9.4pt; font-weight: 600; line-height: 1.2; }
+  .node .n-sub { margin-top: 3px; font-size: 7.4pt; line-height: 1.3; color: var(--muted); }
+  .node.accent .n-sub { color: rgba(255, 255, 255, 0.72); }
+  .arrow {
+    display: flex;
+    align-items: center;
+    color: var(--muted);
+    flex: 0 0 auto;
+  }
+
+  /* --- Stats --- */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 11px;
+    padding: 9px 11px;
+  }
+  .stat .v { font-size: 15pt; font-weight: 600; letter-spacing: -0.02em; }
+  .stat .l { margin-top: 2px; font-size: 7.8pt; line-height: 1.3; color: var(--muted); }
+
+  /* --- Dark strip --- */
+  .strip {
+    background: var(--accent-strong);
+    color: #fff;
+    border-radius: 18px;
+    padding: 11px 15px;
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 15px;
+    align-items: center;
+  }
+  .strip .cap {
+    font-size: 7pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .strip .headline { margin-top: 4px; font-size: 10pt; font-weight: 500; line-height: 1.42; }
+  .strip .sub { margin-top: 4px; font-size: 8pt; line-height: 1.4; color: rgba(255, 255, 255, 0.7); }
+  .strip blockquote { font-size: 9.2pt; line-height: 1.45; }
+  .strip figcaption { margin-top: 5px; font-size: 7.6pt; color: rgba(255, 255, 255, 0.6); }
+  .strip .quote { border-left: 1px solid rgba(255, 255, 255, 0.16); padding-left: 15px; }
+
+  /* --- Cards --- */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 9px 11px;
+    background: #fff;
+  }
+  .card.surface { background: var(--surface); }
+  .card .role {
+    font-size: 6.8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .card .name { margin-top: 1px; font-size: 9.2pt; font-weight: 600; }
+  .card p { margin-top: 4px; font-size: 7.9pt; line-height: 1.42; color: var(--muted); }
+
+  /* --- Segment rows --- */
+  .rows { border-top: 1px solid var(--line); }
+  .row {
+    border-bottom: 1px solid var(--line);
+    padding: 7px 0;
+    display: grid;
+    grid-template-columns: 52mm 1fr;
+    gap: 12px;
+    align-items: baseline;
+  }
+  .row h3 { font-size: 9pt; }
+  .row p { font-size: 8.2pt; line-height: 1.45; color: var(--muted); }
+
+  /* --- Footer / contact --- */
+  .contact {
+    margin-top: auto;
+    border-top: 1px solid var(--line);
+    padding-top: 9px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: end;
+  }
+  .contact .lines { font-size: 8.2pt; line-height: 1.55; color: var(--muted); }
+  .contact .email { font-size: 10pt; font-weight: 600; color: var(--ink); }
+  .legal { margin-top: 6px; font-size: 6.9pt; line-height: 1.4; color: var(--muted); }
+
+  .qr { text-align: center; }
+  .qr svg { width: 26mm; height: 26mm; display: block; }
+  .qr .cap { margin-top: 3px; font-size: 6.8pt; color: var(--muted); }
+
+  .foot-rule {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    font-size: 7.2pt;
+    color: var(--muted);
+  }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .step {
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 10px 12px;
+  }
+  .step .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px; height: 17px;
+    border-radius: 999px;
+    background: var(--accent-strong);
+    color: #fff;
+    font-size: 7.4pt;
+    font-weight: 600;
+  }
+  .step .t { margin-top: 6px; font-size: 9.2pt; font-weight: 600; line-height: 1.25; }
+  .step p { margin-top: 4px; font-size: 7.9pt; line-height: 1.42; color: var(--muted); }
+
+  .facts {
+    margin-top: 8px;
+    display: flex;
+    gap: 18px;
+    font-size: 8pt;
+    color: var(--muted);
+    margin-bottom: 4mm;
+  }
+  .facts b { color: var(--ink); font-weight: 600; }
+
+  .sp-3 { height: 3mm; }
+  .sp-4 { height: 4mm; }
+  .sp-5 { height: 5mm; }
+  .sp-6 { height: 6mm; }
+  .sp-7 { height: 7mm; }
+</style>
+</head>
+<body>
+
+<!-- ============================ PAGE 1 ============================ -->
+<section class="page">
+  <header class="masthead">
+    <div class="wordmark">
+      <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden>
+        <rect width="32" height="32" rx="7" fill="#374151" />
+        <circle cx="16" cy="16" r="8" fill="none" stroke="#fff" stroke-width="2.5" />
+        <circle cx="16" cy="16" r="3" fill="#fff" />
+      </svg>
+      <span>Mevratek</span>
+    </div>
+    <div class="site">mevratek.ru</div>
+  </header>
+
+  <div class="badge"><i class="dot"></i>Российская платформа · On-Premise · AI Decision Engine</div>
+
+  <div class="sp-5"></div>
+  <h1>Мозг для парка устройств —<br />внутри вашего контура</h1>
+
+  <div class="sp-4"></div>
+  <p class="lead">
+    Подключите промышленного робота, складскую тележку или симулятор через
+    единый SDK. Передавайте телеметрию в реальном времени и получайте
+    структурированные команды AI-движка на базе российских языковых моделей.
+    Платформа разворачивается в инфраструктуре предприятия — данные не покидают
+    периметр.
+  </p>
+
+  <div class="sp-6"></div>
+  <div class="flow">
+    <div class="node">
+      <div class="n-label">Устройство</div>
+      <div class="n-sub">робот · тележка · дрон</div>
+    </div>
+    <div class="arrow">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+        <path d="M3 12h16M15 7l5 5-5 5" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+    <div class="node">
+      <div class="n-label">SDK / API</div>
+      <div class="n-sub">телеметрия + состояние</div>
+    </div>
+    <div class="arrow">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+        <path d="M3 12h16M15 7l5 5-5 5" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+    <div class="node accent">
+      <div class="n-label">AI-движок</div>
+      <div class="n-sub">российские LLM</div>
+    </div>
+    <div class="arrow">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+        <path d="M3 12h16M15 7l5 5-5 5" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+    <div class="node">
+      <div class="n-label">Команды</div>
+      <div class="n-sub">структурированный JSON</div>
+    </div>
+  </div>
+
+  <div class="sp-7"></div>
+  <div class="eyebrow">Проблема</div>
+  <div class="sp-3"></div>
+  <h2>Западные платформы ушли — замены не появилось</h2>
+  <div class="sp-3"></div>
+  <p class="soft" style="font-size: 9.4pt; line-height: 1.58; max-width: 172mm">
+    Российские компании, работающие с роботами и автономными устройствами,
+    лишились доступа к западным облачным платформам управления после 2022 года.
+    Отечественных аналогов не существует: каждая команда строит инфраструктуру
+    управления заново, тратя месяцы на то, что должно быть готовой утилитой.
+  </p>
+
+  <div class="sp-4"></div>
+  <div class="stats">
+    <div class="stat"><div class="v">152</div><div class="l">компании-интегратора в России</div></div>
+    <div class="stat"><div class="v">21 000</div><div class="l">устройств в парке, +14% в год</div></div>
+    <div class="stat"><div class="v">0</div><div class="l">готовых отечественных платформ</div></div>
+  </div>
+  <div style="margin-top: 5px; font-size: 7.2pt" class="muted">
+    Источник: НАУРР, Минпромторг, 2026.
+  </div>
+
+  <div class="sp-6"></div>
+  <div class="strip">
+    <div>
+      <div class="cap">Признание экспертов</div>
+      <div class="headline">
+        Топ-36 среди 48&nbsp;478 идей форума «Сильные идеи для нового времени 2026».
+      </div>
+      <div class="sub">Оценка экспертов 3/3. Рекомендован к приоритетной поддержке.</div>
+    </div>
+    <figure class="quote">
+      <blockquote>
+        «Один из наиболее проработанных и рыночно-ориентированных проектов среди
+        рассмотренных».
+      </blockquote>
+      <figcaption>Заключение эксперта форума</figcaption>
+    </figure>
+  </div>
+
+  <div class="sp-7"></div>
+  <div class="eyebrow">Как начать</div>
+  <div class="sp-3"></div>
+  <h2>Первое устройство — за один день</h2>
+
+  <div class="sp-4"></div>
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <div class="t">Развёртывание</div>
+      <p>Платформа поднимается на вашем сервере: бэкенд, база и панель управления. Внешние сервисы не требуются.</p>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div class="t">Подключение</div>
+      <p>Устройство регистрируется через SDK и объявляет свои команды. Если железа ещё нет — начните с симулятора.</p>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <div class="t">Работа</div>
+      <p>Устройство шлёт телеметрию и получает команды. Каждое решение сохраняется с обоснованием и задержкой.</p>
+    </div>
+  </div>
+
+  <div class="facts">
+    <span><b>5</b> языков с официальным SDK: Python, JavaScript, Go, C++, C</span>
+    <span><b>0</b> внешних запросов в закрытом контуре</span>
+  </div>
+
+  <div class="foot-rule">
+    <span>Mevratek · Платформа управления парком автономных устройств</span>
+    <span>1 / 2</span>
+  </div>
+</section>
+
+<!-- ============================ PAGE 2 ============================ -->
+<section class="page">
+  <div class="eyebrow">Компоненты</div>
+  <div class="sp-3"></div>
+  <h2>Из чего состоит платформа</h2>
+  <div style="margin-top: 4px; font-size: 8.6pt" class="muted">
+    Слоистая архитектура: логические сервисы внутри единого разворачиваемого бэкенда.
+  </div>
+
+  <div class="sp-4"></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="role">Реестр устройств</div><div class="name">Robot Registry</div>
+      <p>Регистрация устройств, тип, доступные команды и статус подключения. Устройство описывается данными — новый тип не требует изменений ядра.</p>
+    </div>
+    <div class="card">
+      <div class="role">Движок задач</div><div class="name">Task Engine</div>
+      <p>Постановка задач с приоритетом, очередь и выборка следующей задачи устройством. Сценарии от оператора и от самого устройства.</p>
+    </div>
+    <div class="card">
+      <div class="role">Движок решений</div><div class="name">Decision Engine</div>
+      <p>Собирает промпт из возможностей устройства, вызывает языковую модель и возвращает строгий JSON. Ядро платформы.</p>
+    </div>
+    <div class="card">
+      <div class="role">Память и обучение</div><div class="name">Memory Layer</div>
+      <p>История действий, задач и результатов исполнения. Недавняя обратная связь подмешивается в следующее решение.</p>
+    </div>
+    <div class="card">
+      <div class="role">Телеметрия</div><div class="name">Telemetry</div>
+      <p>Заряд, скорость, координаты и ошибки в реальном времени. Присутствие устройства отслеживается в БД — без внешних кэшей.</p>
+    </div>
+    <div class="card">
+      <div class="role">Трансляция команд</div><div class="name">Action Translator</div>
+      <p>Универсальные действия модели отображаются в конкретные команды устройства. Неподдерживаемое отсекается, а не выполняется наугад.</p>
+    </div>
+    <div class="card">
+      <div class="role">Симулятор</div><div class="name">Simulator</div>
+      <p>Виртуальное устройство с живой телеметрией. Интеграция и сценарии проверяются до появления физического железа.</p>
+    </div>
+    <div class="card">
+      <div class="role">Интеграция</div><div class="name">SDK / API</div>
+      <p>SDK для Python, JavaScript, Go, C++ и C плюс REST API. Устройство действует «как оно само» — идентификатор берётся из токена.</p>
+    </div>
+  </div>
+
+  <div class="sp-6"></div>
+  <div class="eyebrow">Требования и данные</div>
+  <div class="sp-3"></div>
+  <h2>Что гарантирует развёртывание в вашем контуре</h2>
+
+  <div class="sp-4"></div>
+  <div class="grid-4">
+    <div class="card surface">
+      <div class="name">152-ФЗ</div>
+      <p>Персональные данные обрабатываются внутри вашего контура, на вашем оборудовании.</p>
+    </div>
+    <div class="card surface">
+      <div class="name">Данные не уходят</div>
+      <p>Телеметрия, кадры, маршруты и логи решений остаются на серверах предприятия.</p>
+    </div>
+    <div class="card surface">
+      <div class="name">Локальные модели</div>
+      <p>YandexGPT, GigaChat или модель внутри контура. В изолированном режиме — ноль внешних запросов.</p>
+    </div>
+    <div class="card surface">
+      <div class="name">Доступ и аудит</div>
+      <p>Роли, журнал действий, отзыв сессий и ключей API, подтверждение операций кодом из письма.</p>
+    </div>
+  </div>
+
+  <div class="sp-6"></div>
+  <div class="eyebrow">Для кого</div>
+  <div class="sp-3"></div>
+  <div class="rows">
+    <div class="row">
+      <h3>Интеграторы робототехники</h3>
+      <p>Один слой управления переиспользуется на всех проектах. Запуск пилота за дни, а не месяцы.</p>
+    </div>
+    <div class="row">
+      <h3>Промышленные предприятия</h3>
+      <p>Единое управление разнородным парком, контроль над данными и инфраструктурой, отсутствие зависимости от вендора.</p>
+    </div>
+    <div class="row">
+      <h3>Стартапы и R&amp;D-команды</h3>
+      <p>Оркестрацию берут на себя движок решений и память — команда занимается железом и сценариями.</p>
+    </div>
+    <div class="row">
+      <h3>Университеты и лаборатории</h3>
+      <p>Симулятор и SDK дают быстрый цикл экспериментов и лёгкий переход от симулятора к реальному устройству.</p>
+    </div>
+  </div>
+
+  <div class="contact">
+    <div>
+      <div class="eyebrow">Связаться</div>
+      <div style="margin-top: 5px" class="email">info@mevratek.ru</div>
+      <div class="lines">
+        mevratek.ru · Пилотные проекты, партнёрства, условия поставки.<br />
+        Платформа поставляется по договору, оплата по счёту для юридических лиц.
+      </div>
+      <div class="legal">
+        ООО «ИНТЕГРО» · ОГРН 1257700559269 · ИНН 9734021152 · 123592, г. Москва,
+        ул. Маршала Катукова, д. 22, к. 1
+      </div>
+    </div>
+    <div class="qr">
+      <!--QR-SITE-->
+      <div class="cap">mevratek.ru</div>
+    </div>
+  </div>
+
+  <div class="foot-rule">
+    <span>Mevratek · Платформа управления парком автономных устройств</span>
+    <span>2 / 2</span>
+  </div>
+</section>
+
+</body>
+</html>

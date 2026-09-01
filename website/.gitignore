@@ -9,3 +9,7 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+
+# Scratch files from the hand-out build (website/handout/build.py)
+handout/.rendered.html
+handout/.chrome-profile/

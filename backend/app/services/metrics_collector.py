@@ -129,9 +129,12 @@ async def _collect_decisions(session: AsyncSession) -> None:
         )
     ).all()
 
+    # The IS NOT NULL above filters the rows, but the column stays Optional in
+    # the model, so the None has to be dropped here too rather than assumed.
+    ordered = sorted(int(value) for value in latencies if value is not None)
+
     metrics.DECISION_LATENCY_MS.clear()
-    if latencies:
-        ordered = sorted(int(value) for value in latencies)
+    if ordered:
         for quantile, fraction in (("0.5", 0.5), ("0.95", 0.95), ("0.99", 0.99)):
             value = percentile(ordered, fraction)
             if value is not None:
