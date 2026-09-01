@@ -32,6 +32,12 @@ build-c-ex/
 build-cpp-ex/
 sdk/javascript/dist/
 
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/.playwright/
+
 # Editors / OS
 .DS_Store
 .idea/
