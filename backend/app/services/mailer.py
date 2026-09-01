@@ -18,6 +18,7 @@ from email.message import EmailMessage
 
 import aiosmtplib
 
+from app.core import metrics
 from app.core.config import settings
 from app.core.logging import get_logger
 
@@ -42,6 +43,7 @@ async def send_email(to: str, subject: str, html: str, text: str) -> None:
     """Deliver one message. Raises :class:`EmailDeliveryError` on failure."""
     if not settings.email_enabled:
         logger.info("email_skipped_not_configured", to=to, subject=subject)
+        metrics.EMAILS.inc(outcome="skipped")
         return
 
     message = _build(to, subject, html, text)
@@ -58,8 +60,10 @@ async def send_email(to: str, subject: str, html: str, text: str) -> None:
         )
     except Exception as exc:  # noqa: BLE001 - any SMTP/network failure
         logger.warning("email_send_failed", to=to, subject=subject, error=str(exc))
+        metrics.EMAILS.inc(outcome="failed")
         raise EmailDeliveryError(str(exc)) from exc
     logger.info("email_sent", to=to, subject=subject)
+    metrics.EMAILS.inc(outcome="sent")
 
 
 async def send_email_quietly(to: str, subject: str, html: str, text: str) -> bool:

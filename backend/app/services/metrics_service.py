@@ -39,7 +39,7 @@ def window_start(window: str) -> datetime:
     return datetime.now(UTC) - timedelta(hours=hours)
 
 
-def _percentile(sorted_values: list[int], fraction: float) -> int | None:
+def percentile(sorted_values: list[int], fraction: float) -> int | None:
     """Nearest-rank percentile. Returns None for an empty input."""
     if not sorted_values:
         return None
@@ -48,7 +48,7 @@ def _percentile(sorted_values: list[int], fraction: float) -> int | None:
     return sorted_values[index]
 
 
-def _is_fallback(provider: str | None) -> bool:
+def is_fallback(provider: str | None) -> bool:
     """Did this decision come from the model, or from the safe fallback?
 
     The engine answers with a deterministic decision when no provider is
@@ -169,12 +169,12 @@ class MetricsService:
                 latencies.append(int(latency))
             if confidence is not None:
                 confidences.append(float(confidence))
-            if _is_fallback(provider):
+            if is_fallback(provider):
                 result.fallback_decisions += 1
 
         latencies.sort()
-        result.latency_p50_ms = _percentile(latencies, 0.50)
-        result.latency_p95_ms = _percentile(latencies, 0.95)
+        result.latency_p50_ms = percentile(latencies, 0.50)
+        result.latency_p95_ms = percentile(latencies, 0.95)
         if confidences:
             result.avg_confidence = sum(confidences) / len(confidences)
 
@@ -378,7 +378,7 @@ class MetricsService:
                 "decisions": int(count or 0),
                 "avg_latency_ms": int(latency) if latency is not None else None,
                 "avg_confidence": float(confidence) if confidence is not None else None,
-                "fallback": _is_fallback(provider),
+                "fallback": is_fallback(provider),
             }
             for provider, model, count, latency, confidence in rows
         ], total

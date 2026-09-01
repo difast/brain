@@ -13,7 +13,7 @@ import pytest
 
 from app.models.decision import Decision
 from app.models.execution import ActionExecution, ExecutionStatus
-from app.services.metrics_service import MetricsService, _is_fallback
+from app.services.metrics_service import MetricsService, is_fallback
 from tests.conftest import API
 
 
@@ -74,14 +74,14 @@ async def _add_execution(
 
 def test_fallback_classification():
     # A real provider decided.
-    assert _is_fallback("yandexgpt") is False
-    assert _is_fallback("claude") is False
+    assert is_fallback("yandexgpt") is False
+    assert is_fallback("claude") is False
     # These did not.
-    assert _is_fallback("mock") is True
-    assert _is_fallback("yandexgpt:fallback") is True
-    assert _is_fallback("claude:fallback") is True
-    assert _is_fallback(None) is True
-    assert _is_fallback("") is True
+    assert is_fallback("mock") is True
+    assert is_fallback("yandexgpt:fallback") is True
+    assert is_fallback("claude:fallback") is True
+    assert is_fallback(None) is True
+    assert is_fallback("") is True
 
 
 # --- Summary ---------------------------------------------------------------

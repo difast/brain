@@ -253,6 +253,27 @@ migrations on an upgrade.
 Full procedure, retention, the cron line and the restore drill:
 **[`ops/README.md`](ops/README.md)**.
 
+### Monitoring
+
+`GET /metrics` serves the whole installation in Prometheus exposition format —
+request rate and latency, fleet and queue sizes, and the number that matters
+most: **what share of decisions came from the model rather than from the
+deterministic fallback**. When a provider goes down, devices keep moving on
+canned logic, and without this metric the first report comes from the customer.
+
+```bash
+METRICS_TOKEN=$(openssl rand -hex 32)   # scrapes send it as a bearer token
+curl -H "Authorization: Bearer $METRICS_TOKEN" http://localhost:8000/metrics
+```
+
+In `production` the token is mandatory: with none set the endpoint answers 404
+instead of serving fleet data unauthenticated. Errors go to Sentry when
+`SENTRY_DSN` is set — bodies, cookies and credentials are stripped first, and
+with no DSN the SDK is never initialised at all.
+
+Scrape config, the metric reference and ready-to-paste alerting rules:
+**[`ops/MONITORING.md`](ops/MONITORING.md)**.
+
 ---
 
 ## Deployment (Timeweb Cloud Apps)

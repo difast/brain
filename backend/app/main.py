@@ -27,6 +27,7 @@ from app.api.routes import (
     leads,
     logs,
     metrics,
+    observability,
     robots,
     tasks,
     team,
@@ -37,6 +38,7 @@ from app.core.database import Base, engine
 from app.core.exceptions import BrainError
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestContextMiddleware
+from app.core.sentry import configure_sentry
 from app.services import alert_service, demo_service
 from app.services.decision_engine import DecisionEngine
 from app.services.seed_service import seed_identity
@@ -48,7 +50,16 @@ logger = get_logger("app")
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     configure_logging()
+    configure_sentry()
     logger.info("startup", environment=settings.environment, version=__version__)
+
+    # Say it out loud at startup rather than leaving the operator to discover a
+    # 404 when they point Prometheus at it.
+    if settings.metrics_enabled and not settings.metrics_available:
+        logger.warning(
+            "metrics_endpoint_disabled",
+            reason="METRICS_TOKEN is required in production",
+        )
 
     # Initialize shared singletons (cheap to hold for the process lifetime).
     app.state.brain = DecisionEngine()
@@ -171,6 +182,9 @@ def create_app() -> FastAPI:
         metrics,
     ):
         app.include_router(module.router, prefix=api)
+
+    # Outside the API prefix on purpose: GET /metrics is where Prometheus looks.
+    app.include_router(observability.router)
 
     @app.get("/", include_in_schema=False)
     async def root() -> dict:

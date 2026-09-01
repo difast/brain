@@ -99,6 +99,29 @@ class Settings(BaseSettings):
     # The admin panel is one shared password, so it gets its own IP budget.
     admin_login_max_attempts: int = 5
 
+    # --- Observability ---
+    # A Prometheus scrape endpoint at GET /metrics (outside the API prefix, as
+    # the convention expects). It reports the whole installation, not one
+    # organization: request rate and latency, the share of decisions that fell
+    # back to the deterministic placeholder, fleet and queue sizes.
+    metrics_enabled: bool = True
+    # Scrapes must present `Authorization: Bearer <token>` — Prometheus has a
+    # bearer_token option for exactly this. Leaving it empty is only allowed
+    # outside production; in production an unset token disables the endpoint
+    # rather than exposing operational data to the internet.
+    metrics_token: str = ""
+
+    # Sentry. Unset DSN = no SDK initialised, no network calls, no overhead —
+    # the same opt-in shape as SMTP and object storage.
+    sentry_dsn: str = ""
+    # Share of requests traced for performance. 0 = errors only, which is what
+    # a robot control loop wants; raise it temporarily when investigating.
+    sentry_traces_sample_rate: float = 0.0
+    # Defaults to `environment` when left empty.
+    sentry_environment: str = ""
+    # Bodies can carry camera frames and telemetry, so they are never attached.
+    sentry_send_default_pii: bool = False
+
     @field_validator("smtp_encryption", mode="before")
     @classmethod
     def _lower_encryption(cls, v: object) -> object:
@@ -215,6 +238,28 @@ class Settings(BaseSettings):
     @property
     def mail_from(self) -> str:
         return self.smtp_from or self.smtp_user
+
+    @property
+    def metrics_token_required(self) -> bool:
+        """Whether a scrape has to authenticate.
+
+        Always, when a token is configured. In production it is mandatory, so
+        `metrics_available` refuses to serve without one.
+        """
+        return bool(self.metrics_token) or self.environment == "production"
+
+    @property
+    def metrics_available(self) -> bool:
+        """Whether GET /metrics serves anything at all."""
+        if not self.metrics_enabled:
+            return False
+        if self.environment == "production" and not self.metrics_token:
+            return False
+        return True
+
+    @property
+    def sentry_enabled(self) -> bool:
+        return bool(self.sentry_dsn)
 
     @property
     def storage_enabled(self) -> bool:

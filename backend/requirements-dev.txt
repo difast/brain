@@ -4,6 +4,9 @@ pytest==8.3.4
 pytest-asyncio==0.25.2
 pytest-cov==6.0.0
 aiosqlite==0.20.0
+# Test-only: parses the scrape output with the reference implementation, so a
+# hand-rolled renderer can't drift out of the exposition format.
+prometheus-client==0.21.1
 httpx==0.28.1
 ruff==0.9.1
 mypy==1.14.1

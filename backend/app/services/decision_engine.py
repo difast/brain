@@ -12,6 +12,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.core import metrics
 from app.core.exceptions import BrainDecisionError
 from app.core.logging import get_logger
 from app.dal.translator import ActionTranslator
@@ -98,12 +99,18 @@ class DecisionEngine:
                 model = provider = f"{self.provider_name}:fallback"
                 latency_ms = int((time.perf_counter() - start) * 1000)
 
+        # Publish what happened before translating, so the fallback share and
+        # the latency distribution are visible to Prometheus even when the
+        # translation step below is the thing that goes wrong.
+        self._record(provider, latency_ms, decision.confidence)
+
         # Translate universal actions -> concrete device commands.
         translation = ActionTranslator.translate(
             [a.model_dump() for a in decision.actions], capabilities
         )
         if translation.dropped:
             logger.warning("dropped_actions", dropped=translation.dropped)
+            metrics.DROPPED_ACTIONS.inc(len(translation.dropped))
 
         return DecisionResult(
             decision=decision,
@@ -113,6 +120,30 @@ class DecisionEngine:
             model=model,
             provider=provider,
             latency_ms=latency_ms,
+        )
+
+    @staticmethod
+    def _record(provider: str, latency_ms: int, confidence: float) -> None:
+        """Feed the scrape endpoint.
+
+        The provider label drops the ``:fallback`` suffix and the outcome
+        carries it instead, so one query answers "how is claude doing" and
+        another answers "how much of the fleet is running on canned logic".
+        A mock decision counts as a fallback: no provider was configured, and
+        the device is moving on a placeholder either way.
+        """
+        outcome = (
+            "fallback"
+            if provider == "mock" or provider.endswith(":fallback")
+            else "model"
+        )
+        name = provider.removesuffix(":fallback")
+        metrics.DECISIONS.inc(provider=name, outcome=outcome)
+        metrics.DECISION_DURATION.observe(
+            latency_ms / 1000, provider=name, outcome=outcome
+        )
+        metrics.DECISION_CONFIDENCE.observe(
+            confidence, provider=name, outcome=outcome
         )
 
     @staticmethod

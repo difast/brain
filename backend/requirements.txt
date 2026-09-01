@@ -31,3 +31,6 @@ structlog==24.4.0
 # --- Misc ---
 tenacity==9.0.0
 httpx==0.28.1
+
+# --- Observability ---
+sentry-sdk==2.19.2

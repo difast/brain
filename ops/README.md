@@ -144,3 +144,8 @@ cd backend && alembic upgrade head      # then
 
 Some migrations rewrite or drop columns and cannot be undone by re-running the
 previous code. The backup is the way back.
+
+---
+
+Мониторинг — Prometheus и Sentry — вынесен в
+**[`ops/MONITORING.md`](MONITORING.md)**.
