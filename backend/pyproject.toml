@@ -27,6 +27,13 @@ ignore = ["B008"]  # FastAPI uses function calls (Depends) in defaults
 # the revision template are held to the full standard.
 "alembic/versions/*.py" = ["E501"]
 
+[tool.coverage.run]
+# SQLAlchemy's async support runs the DB work inside greenlets. Without this,
+# coverage loses the trace the moment a coroutine awaits a query and reports
+# whole service functions as unexecuted while their assertions pass — the
+# numbers understated every async database path in the project.
+concurrency = ["greenlet", "thread"]
+
 [tool.mypy]
 python_version = "3.11"
 ignore_missing_imports = true
