@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<!--FONT-FACE-->
+<style>
+  /* 1200x630 is the size Telegram, VK, WhatsApp, X and Alice all read. The
+     card has to survive being shown at a fifth of that in a chat list, so
+     everything here is deliberately large: no body copy, no fine print. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* Printed, not screenshotted — the page box is the card. */
+  @page { size: 1200px 630px; margin: 0; }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    font-family: Inter, "Liberation Sans", Arial, sans-serif;
+    /* The plate's own colour, lifted a touch towards the corner so the card
+       has some depth rather than reading as a flat rectangle. */
+    background:
+      radial-gradient(120% 140% at 18% 8%, #2b3444 0%, #1e2532 45%, #141a24 100%);
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .card {
+    height: 100%;
+    padding: 74px 80px 68px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  /* A hairline frame, inset — the same restraint the site uses. */
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 26px;
+    pointer-events: none;
+  }
+
+  .top { display: flex; align-items: center; gap: 22px; }
+  .top img { width: 84px; height: 84px; border-radius: 19px; display: block; }
+  .wordmark { font-size: 40px; font-weight: 600; letter-spacing: -0.02em; }
+
+  h1 {
+    font-size: 66px;
+    line-height: 1.08;
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    max-width: 15.5em;
+  }
+
+  .foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+  }
+
+  .tags { display: flex; gap: 12px; }
+  .tag {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
+    padding: 11px 20px;
+    font-size: 22px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.82);
+    white-space: nowrap;
+  }
+  .tag .dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 999px;
+    background: #4ea87c;
+    margin-right: 10px;
+    vertical-align: 1px;
+  }
+
+  .site { font-size: 24px; font-weight: 500; color: rgba(255, 255, 255, 0.6); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="top">
+      <img src="<!--LOGO-->" alt="" />
+      <div class="wordmark">Mevratek</div>
+    </div>
+
+    <h1>Мозг для парка устройств&nbsp;— внутри вашего контура</h1>
+
+    <div class="foot">
+      <div class="tags">
+        <div class="tag"><span class="dot"></span>Российская платформа</div>
+        <div class="tag">On-Premise</div>
+        <div class="tag">AI Decision Engine</div>
+      </div>
+      <div class="site">mevratek.ru</div>
+    </div>
+  </div>
+</body>
+</html>

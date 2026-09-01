@@ -10,6 +10,7 @@ import {
 import { ArchitectureDiagram } from "@/components/diagrams";
 import { PLATFORM_COMPONENTS } from "@/components/content";
 import { BreadcrumbJsonLd } from "@/components/schema";
+import { OG_IMAGE } from "@/app/layout";
 
 export const metadata: Metadata = {
   title: "Платформа",
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
     description:
       "Слоистая архитектура управления устройствами и Model Router с поддержкой российских языковых моделей.",
     url: "/platform",
+    images: [OG_IMAGE],
   },
 };
 

@@ -4,6 +4,7 @@ import { ContactForm } from "@/components/contact-form";
 import { BreadcrumbJsonLd } from "@/components/schema";
 import { HandoutQr } from "@/components/qr";
 import Link from "next/link";
+import { OG_IMAGE } from "@/app/layout";
 
 export const metadata: Metadata = {
   title: "Контакты",
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
     description:
       "Партнёрства, пилотные проекты, пресса. Обсудим подключение вашего устройства.",
     url: "/contacts",
+    images: [OG_IMAGE],
   },
 };
 

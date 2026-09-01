@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowIcon, Button, Container, Section } from "@/components/ui";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/schema";
 import { POST_SLUGS, getPost, formatDate } from "@/components/blog";
+import { OG_IMAGE } from "@/app/layout";
 
 export function generateStaticParams() {
   return POST_SLUGS.map((slug) => ({ slug }));
@@ -26,6 +27,7 @@ export function generateMetadata({
       description: post.description,
       url: `/blog/${post.slug}`,
       publishedTime: post.date,
+      images: [OG_IMAGE],
     },
   };
 }

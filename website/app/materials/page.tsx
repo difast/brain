@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ArrowIcon, Button, Container, Section, SectionHeading } from "@/components/ui";
 import { BreadcrumbJsonLd } from "@/components/schema";
 import { HANDOUT_URL, HandoutQr } from "@/components/qr";
+import { OG_IMAGE } from "@/app/layout";
 
 export const metadata: Metadata = {
   title: "Материалы",
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
     description:
       "PDF о платформе на двух страницах: архитектура, компоненты и порядок подключения устройства.",
     url: "/materials",
+    images: [OG_IMAGE],
   },
 };
 

@@ -7,6 +7,7 @@ import {
   ArrowIcon,
 } from "@/components/ui";
 import { BreadcrumbJsonLd } from "@/components/schema";
+import { OG_IMAGE } from "@/app/layout";
 
 export const metadata: Metadata = {
   title: "Mevratek Protocol — единый протокол управления устройствами",
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
     description:
       "Абстракция над железом: один код управляет промышленными роботами, мобильными платформами, дронами, AGV и симулятором через один протокол.",
     url: "/protocol",
+    images: [OG_IMAGE],
   },
 };
 

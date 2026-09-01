@@ -7,6 +7,7 @@ import {
   ArrowIcon,
 } from "@/components/ui";
 import { BreadcrumbJsonLd } from "@/components/schema";
+import { OG_IMAGE } from "@/app/layout";
 
 export const metadata: Metadata = {
   title: "О проекте",
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
     description:
       "Миссия, команда, признание экспертов и дорожная карта отечественной платформы управления роботами.",
     url: "/about",
+    images: [OG_IMAGE],
   },
 };
 

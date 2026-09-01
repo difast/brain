@@ -8,6 +8,7 @@ import {
 } from "@/components/ui";
 import { SEGMENTS } from "@/components/content";
 import { BreadcrumbJsonLd } from "@/components/schema";
+import { OG_IMAGE } from "@/app/layout";
 
 export const metadata: Metadata = {
   title: "Для кого",
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
     description:
       "Интеграторы, стартапы, промышленность, наука — как Mevratek решает задачу управления устройствами для каждого.",
     url: "/for-who",
+    images: [OG_IMAGE],
   },
 };
 

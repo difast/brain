@@ -29,6 +29,34 @@ Next.js встраивает переменные `NEXT_PUBLIC_*` в клиен�
 (`website/Dockerfile`) обе переменные передаются как build ARG; при сборке через
 Node-buildpack переменные окружения панели доступны `npm run build` напрямую.
 
+## Логотип, иконки и превью
+
+`brand/logo-source.png` — мастер-файл марки. Из него собирается всё, что видит
+браузер, домашний экран телефона, мессенджер и поисковик, чтобы источник правды
+был один:
+
+```bash
+python website/brand/build-icons.py
+```
+
+Собирается: `app/favicon.ico` (16/32/48), `app/icon.png` (512),
+`app/apple-icon.png` (180), `public/icon-192.png`, `public/icon-512.png`,
+`public/icon-maskable.png` (с полями под маски Android) и `public/og.png`
+(1200×630 — превью для соцсетей, мессенджеров и Алисы). Тот же набор
+копируется в дашборд (`frontend/app/`).
+
+Ссылки на иконки Next.js расставляет сам по именам файлов в `app/` — в
+`metadata` их дублировать не нужно. Манифест — `app/manifest.ts`
+(`/manifest.webmanifest`).
+
+Превью 1200×630 верстается в `brand/og.html` и печатается через headless
+Chromium, как и раздаточный PDF. Скриншотом его снимать нельзя: у `--screenshot`
+свой масштаб, и карточка выходит обрезанной снизу.
+
+Картинка превью подставляется в `openGraph` каждой страницы через `OG_IMAGE`
+из `app/layout.tsx` — Next.js **не** наследует `openGraph.images` в страницу,
+которая объявила свой `openGraph`, поэтому импорт обязателен.
+
 ## Раздаточный материал (PDF)
 
 `public/mevratek-platform.pdf` — обзор платформы на двух страницах A4, тот же

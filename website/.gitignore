@@ -10,6 +10,8 @@ npm-debug.log*
 next-env.d.ts
 .DS_Store
 
-# Scratch files from the hand-out build (website/handout/build.py)
+# Scratch files from the hand-out and icon builds
 handout/.rendered.html
 handout/.chrome-profile/
+brand/.og*
+brand/.chrome-profile/

@@ -25,7 +25,13 @@ export function OrganizationJsonLd() {
         legalName: COMPANY.legalName,
         url: SITE_URL,
         email: COMPANY.email,
-        logo: `${SITE_URL}/icon.svg`,
+        logo: {
+          "@type": "ImageObject",
+          url: `${SITE_URL}/icon-512.png`,
+          width: 512,
+          height: 512,
+        },
+        image: `${SITE_URL}/og.png`,
         description:
           "Российская платформа управления промышленными роботами и автономными устройствами через единый протокол и AI-движок. Разворачивается в контуре заказчика (on-premise).",
         foundingDate: "2025",
@@ -56,7 +62,12 @@ export function WebSiteJsonLd() {
         name: COMPANY.brand,
         url: SITE_URL,
         inLanguage: "ru-RU",
-        publisher: { "@type": "Organization", name: COMPANY.brand },
+        publisher: {
+          "@type": "Organization",
+          name: COMPANY.brand,
+          url: SITE_URL,
+          logo: `${SITE_URL}/icon-512.png`,
+        },
       }}
     />
   );
@@ -97,6 +108,7 @@ export function SoftwareApplicationJsonLd() {
         operatingSystem: "Linux (on-premise)",
         url: SITE_URL,
         inLanguage: "ru-RU",
+        image: `${SITE_URL}/og.png`,
         description:
           "Платформа-«мозг» для парка автономных устройств: единый SDK и API, телеметрия в реальном времени и структурированные команды AI Decision Engine на базе YandexGPT, GigaChat, Claude и локальных моделей. Разворачивается в закрытом контуре предприятия (on-premise).",
         featureList: [
@@ -147,13 +159,16 @@ export function ArticleJsonLd({
         dateModified: dateModified ?? datePublished,
         mainEntityOfPage: { "@type": "WebPage", "@id": url },
         url,
+        image: [`${SITE_URL}/og.png`],
         author: { "@type": "Organization", name: COMPANY.brand },
         publisher: {
           "@type": "Organization",
           name: COMPANY.brand,
           logo: {
             "@type": "ImageObject",
-            url: `${SITE_URL}/icon.svg`,
+            url: `${SITE_URL}/icon-512.png`,
+            width: 512,
+            height: 512,
           },
         },
       }}
@@ -180,6 +195,7 @@ export function TechArticleJsonLd({
         description,
         inLanguage: "ru-RU",
         url: `${SITE_URL}${path}`,
+        image: [`${SITE_URL}/og.png`],
         author: { "@type": "Organization", name: COMPANY.brand },
         publisher: { "@type": "Organization", name: COMPANY.brand },
       }}

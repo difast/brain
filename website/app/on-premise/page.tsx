@@ -8,6 +8,7 @@ import {
 } from "@/components/ui";
 import { BreadcrumbJsonLd } from "@/components/schema";
 import { Compliance } from "@/components/compliance";
+import { OG_IMAGE } from "@/app/layout";
 
 export const metadata: Metadata = {
   title: "Mevratek On-Premise — платформа в вашем контуре",
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
     description:
       "Платформа управления роботами в закрытом контуре: локальные AI-модели без внешних API-запросов, полный контроль над данными.",
     url: "/on-premise",
+    images: [OG_IMAGE],
   },
 };
 
