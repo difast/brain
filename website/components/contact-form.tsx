@@ -14,12 +14,36 @@ const TOPICS = [
   { value: "other", label: "Другое" },
 ];
 
+// Who is writing. The same four audiences as /for-who, so the first reply can
+// be the right one instead of a generic acknowledgement.
+const SEGMENTS = [
+  { value: "", label: "Не указывать" },
+  { value: "integrator", label: "Интегратор робототехники" },
+  { value: "industry", label: "Промышленное предприятие" },
+  { value: "startup", label: "Стартап / R&D-команда" },
+  { value: "research", label: "Университет / лаборатория" },
+  { value: "other", label: "Другое" },
+];
+
+// The price depends on the size of the fleet, so asking here saves a round of
+// email before anyone can say anything useful about cost.
+const FLEET_SIZES = [
+  { value: "", label: "Не указывать" },
+  { value: "1-5", label: "1–5 устройств" },
+  { value: "6-20", label: "6–20 устройств" },
+  { value: "21-100", label: "21–100 устройств" },
+  { value: "100+", label: "Больше 100" },
+  { value: "planning", label: "Пока планируем" },
+];
+
 const inputCls =
   "w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-accent/50 focus:ring-2 focus:ring-accent/10";
 
 export function ContactForm() {
   const [sent, setSent] = useState(false);
   const [topic, setTopic] = useState("pilot");
+  const [segment, setSegment] = useState("");
+  const [fleetSize, setFleetSize] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +63,12 @@ export function ContactForm() {
       fields.phone ? `Телефон: ${fields.phone}` : "",
       fields.org ? `Организация: ${fields.org}` : "",
       `Тема: ${topicLabel}`,
+      segment
+        ? `Кто вы: ${SEGMENTS.find((x) => x.value === segment)?.label ?? segment}`
+        : "",
+      fleetSize
+        ? `Парк: ${FLEET_SIZES.find((x) => x.value === fleetSize)?.label ?? fleetSize}`
+        : "",
       "",
       fields.message,
     ]
@@ -73,6 +103,8 @@ export function ContactForm() {
           phone: fields.phone,
           organization: fields.org || null,
           topic,
+          segment: segment || null,
+          fleet_size: fleetSize || null,
           message: fields.message,
           website: honeypot,
         }),
@@ -192,6 +224,43 @@ export function ContactForm() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-ink">
+            Кто вы
+          </span>
+          <select
+            name="segment"
+            value={segment}
+            onChange={(e) => setSegment(e.target.value)}
+            className={inputCls}
+          >
+            {SEGMENTS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-ink">
+            Размер парка
+          </span>
+          <select
+            name="fleet_size"
+            value={fleetSize}
+            onChange={(e) => setFleetSize(e.target.value)}
+            className={inputCls}
+          >
+            {FLEET_SIZES.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <label className="mt-5 block">

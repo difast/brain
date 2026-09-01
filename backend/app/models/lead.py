@@ -21,6 +21,11 @@ class ContactLead(UUIDMixin, TimestampMixin, Base):
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
     organization: Mapped[str | None] = mapped_column(String(255), nullable=True)
     topic: Mapped[str] = mapped_column(String(64), nullable=False)
+    # Who is writing (integrator / industry / research / …) and how big their
+    # fleet is. Both qualify the lead before the first call: the price depends
+    # on fleet size, and the four segments need different first conversations.
+    segment: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    fleet_size: Mapped[str | None] = mapped_column(String(32), nullable=True)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     # Best-effort source IP, for abuse tracing only.
     ip: Mapped[str | None] = mapped_column(String(64), nullable=True)

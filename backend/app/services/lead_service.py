@@ -30,13 +30,20 @@ class LeadService:
             phone=payload.phone.strip(),
             organization=(payload.organization or "").strip() or None,
             topic=payload.topic.strip(),
+            segment=(payload.segment or "").strip() or None,
+            fleet_size=(payload.fleet_size or "").strip() or None,
             message=payload.message.strip(),
             ip=ip,
         )
         self.session.add(lead)
         await self.session.flush()
         await self.session.refresh(lead)
-        logger.info("lead_created", lead_id=lead.id, topic=lead.topic)
+        logger.info(
+            "lead_created",
+            lead_id=lead.id,
+            topic=lead.topic,
+            segment=lead.segment,
+        )
         return lead
 
     async def list(self) -> list[ContactLead]:

@@ -13,6 +13,8 @@ class LeadCreate(BaseModel):
     phone: str = Field(min_length=1, max_length=32)
     organization: str | None = Field(default=None, max_length=255)
     topic: str = Field(min_length=1, max_length=64)
+    segment: str | None = Field(default=None, max_length=64)
+    fleet_size: str | None = Field(default=None, max_length=32)
     message: str = Field(min_length=1, max_length=5000)
     # Honeypot — real users leave this empty; bots tend to fill every field.
     website: str | None = Field(default=None, max_length=255)
@@ -35,5 +37,7 @@ class LeadResponse(BaseModel):
     phone: str | None
     organization: str | None
     topic: str
+    segment: str | None
+    fleet_size: str | None
     message: str
     created_at: datetime

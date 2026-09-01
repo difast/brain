@@ -175,6 +175,15 @@ const TOPIC_LABELS: Record<string, string> = {
   other: "Другое",
 };
 
+// Who is writing — the four audiences from the public site.
+const SEGMENT_LABELS: Record<string, string> = {
+  integrator: "Интегратор",
+  industry: "Промышленное предприятие",
+  startup: "Стартап / R&D",
+  research: "Университет / лаборатория",
+  other: "Другое",
+};
+
 function LeadSection({
   leads,
   onChanged,
@@ -248,6 +257,20 @@ function LeadSection({
                     <span className="chip">
                       {TOPIC_LABELS[l.topic] ?? l.topic}
                     </span>
+                    {/* The qualifiers: who is writing, and how big the fleet
+                        is. Absent on leads submitted before the form asked. */}
+                    {l.segment && (
+                      <div style={{ marginTop: 4 }}>
+                        <span className="chip">
+                          {SEGMENT_LABELS[l.segment] ?? l.segment}
+                        </span>
+                      </div>
+                    )}
+                    {l.fleet_size && (
+                      <div className="muted mono" style={{ marginTop: 4, fontSize: 12 }}>
+                        {l.fleet_size} {t("admin.leadDevices")}
+                      </div>
+                    )}
                   </td>
                   <td data-label={t("admin.leadMessage")} style={{ maxWidth: 420, whiteSpace: "pre-wrap" }}>
                     {l.message}

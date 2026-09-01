@@ -490,6 +490,10 @@ export interface AdminLead {
   phone: string | null;
   organization: string | null;
   topic: string;
+  /** Which of the four audiences is writing, when they said. */
+  segment: string | null;
+  /** How large their fleet is — the main input to the price. */
+  fleet_size: string | null;
   message: string;
   created_at: string;
 }

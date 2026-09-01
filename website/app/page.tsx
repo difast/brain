@@ -146,9 +146,9 @@ export default function HomePage() {
       <Section>
         <Container>
           <div className="grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-4">
-            <Stat value="3" label="реальных пользователя на платформе" />
-            <Stat value="1 день" label="до подключения устройства" />
-            <Stat value="∞" label="типов устройств — протокол не зависит от железа" />
+            <Stat value="1 день" label="до подключения первого устройства" />
+            <Stat value="5" label="языков с официальным SDK: Python, JavaScript, Go, C++, C" />
+            <Stat value="0" label="внешних запросов в закрытом контуре" />
             <Stat value="152" label="интегратора робототехники на рынке" />
           </div>
         </Container>

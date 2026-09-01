@@ -7,6 +7,7 @@ import {
   ArrowIcon,
 } from "@/components/ui";
 import { BreadcrumbJsonLd } from "@/components/schema";
+import { Compliance } from "@/components/compliance";
 
 export const metadata: Metadata = {
   title: "Mevratek On-Premise — платформа в вашем контуре",
@@ -154,8 +155,10 @@ export default function OnPremisePage() {
         </Container>
       </Section>
 
+      <Compliance />
+
       {/* Comparison */}
-      <Section className="bg-surface">
+      <Section>
         <Container>
           <SectionHeading
             eyebrow="Этапы"

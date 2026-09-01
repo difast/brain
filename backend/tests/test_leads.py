@@ -77,3 +77,71 @@ async def test_admin_can_delete_lead(client, admin_auth):
     resp = await client.delete(f"{API}/admin/leads/{lead_id}", headers=admin_auth)
     assert resp.status_code == 204
     assert (await client.get(f"{API}/admin/leads", headers=admin_auth)).json() == []
+
+
+# --- Qualifying the lead ---------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_a_lead_carries_its_segment_and_fleet_size(anon_client, admin_auth):
+    resp = await anon_client.post(
+        f"{API}/leads",
+        json={
+            "name": "Пётр",
+            "email": "petr@zavod.ru",
+            "phone": "+7 900 000-00-00",
+            "topic": "pilot",
+            "segment": "industry",
+            "fleet_size": "21-100",
+            "message": "Хотим пилот на складе.",
+        },
+    )
+    assert resp.status_code == 201, resp.text
+
+    listed = await anon_client.get(f"{API}/admin/leads", headers=admin_auth)
+    assert listed.status_code == 200
+    lead = listed.json()[0]
+    assert lead["segment"] == "industry"
+    assert lead["fleet_size"] == "21-100"
+
+
+@pytest.mark.asyncio
+async def test_the_new_fields_stay_optional(anon_client, admin_auth):
+    """The form may omit them, and older leads have neither."""
+    resp = await anon_client.post(
+        f"{API}/leads",
+        json={
+            "name": "Аня",
+            "email": "anya@example.com",
+            "phone": "+7 900 111-11-11",
+            "topic": "press",
+            "message": "Комментарий для статьи.",
+        },
+    )
+    assert resp.status_code == 201, resp.text
+
+    listed = await anon_client.get(f"{API}/admin/leads", headers=admin_auth)
+    lead = listed.json()[0]
+    assert lead["segment"] is None
+    assert lead["fleet_size"] is None
+
+
+@pytest.mark.asyncio
+async def test_blank_qualifiers_are_stored_as_absent(anon_client, admin_auth):
+    resp = await anon_client.post(
+        f"{API}/leads",
+        json={
+            "name": "Иван",
+            "email": "ivan@example.com",
+            "phone": "+7 900 222-22-22",
+            "topic": "other",
+            "segment": "   ",
+            "fleet_size": "",
+            "message": "Вопрос.",
+        },
+    )
+    assert resp.status_code == 201
+
+    lead = (await anon_client.get(f"{API}/admin/leads", headers=admin_auth)).json()[0]
+    assert lead["segment"] is None
+    assert lead["fleet_size"] is None
