@@ -11,20 +11,28 @@ from fastapi import APIRouter, BackgroundTasks
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import AuthError, ConflictError, NotFoundError
 from app.models.organization import Organization
 from app.models.user import UserRole
+from app.models.verification_code import CodePurpose
+from app.schemas.auth import CodeSentResponse
 from app.schemas.team import (
+    DeleteAccountPreview,
+    DeleteAccountRequest,
     InviteCreatedResponse,
     InviteMemberRequest,
     OrganizationDetail,
+    RenameOrganizationRequest,
     SetRoleRequest,
     TeamInvite,
     TeamMember,
     TeamResponse,
 )
 from app.services import email_templates, mailer
+from app.services.auth_service import AuthService
+from app.services.code_delivery import mask_email, send_code
 from app.services.team_service import TeamService
+from app.services.verification_service import VerificationService
 
 router = APIRouter(tags=["team"])
 
@@ -149,3 +157,93 @@ async def remove_member(
 ) -> dict[str, bool]:
     await TeamService(session).remove_member(current_user, user_id)
     return {"ok": True}
+
+
+@router.patch(
+    "/organization",
+    response_model=OrganizationDetail,
+    summary="Rename the caller's own organization",
+)
+async def rename_organization(
+    payload: RenameOrganizationRequest,
+    current_user: CurrentUser,
+    session: SessionDep,
+) -> OrganizationDetail:
+    service = TeamService(session)
+    org = await service.rename_organization(current_user, payload.name)
+    members = await service.list_members(current_user.organization_id)
+    return OrganizationDetail(
+        id=org.id,
+        name=org.name,
+        created_at=org.created_at,
+        member_count=len(members),
+    )
+
+
+@router.get(
+    "/auth/account/deletable",
+    response_model=DeleteAccountPreview,
+    summary="Whether this account can be deleted, and what that would take with it",
+)
+async def account_deletable(
+    current_user: CurrentUser, session: SessionDep
+) -> DeleteAccountPreview:
+    allowed, reason, last = await TeamService(session).can_delete_self(current_user)
+    return DeleteAccountPreview(
+        allowed=allowed, reason=reason, deletes_organization=last
+    )
+
+
+@router.post(
+    "/auth/account/delete/request",
+    response_model=CodeSentResponse,
+    summary="Email a code confirming account deletion",
+)
+async def request_delete_code(
+    payload: DeleteAccountRequest,
+    current_user: CurrentUser,
+    session: SessionDep,
+) -> CodeSentResponse:
+    auth = AuthService(session)
+    auth.check_password(current_user, payload.current_password)
+
+    # Refuse before sending a code the caller could never spend.
+    allowed, reason, _last = await TeamService(session).can_delete_self(current_user)
+    if not allowed:
+        raise ConflictError(reason)
+
+    code = await VerificationService(session).issue(
+        current_user, CodePurpose.account_delete
+    )
+    await send_code(
+        current_user, CodePurpose.account_delete, current_user.email, code
+    )
+    return CodeSentResponse(
+        sent=True,
+        expires_in_seconds=settings.code_ttl_minutes * 60,
+        masked_email=mask_email(current_user.email),
+    )
+
+
+@router.delete(
+    "/auth/account",
+    summary="Delete the caller's own account",
+)
+async def delete_account(
+    payload: DeleteAccountRequest,
+    current_user: CurrentUser,
+    session: SessionDep,
+) -> dict[str, bool]:
+    """Irreversible. The last member of an organization takes it with them."""
+    auth = AuthService(session)
+    auth.check_password(current_user, payload.current_password)
+
+    if settings.email_enabled:
+        if not payload.code:
+            raise AuthError("Требуется код подтверждения из письма.")
+        await VerificationService(session).verify(
+            current_user, CodePurpose.account_delete, payload.code
+        )
+
+    deleted_org = await TeamService(session).delete_self(current_user)
+    return {"ok": True, "organization_deleted": deleted_org}

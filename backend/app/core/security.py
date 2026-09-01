@@ -39,7 +39,17 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, hashed: str) -> bool:
-    return _pwd_context.verify(password, hashed)
+    """Check a password against a stored hash.
+
+    A stored value that is not a recognisable hash — a row written before
+    hashing, or corrupted — makes passlib raise. That must read as "wrong
+    password" rather than a 500: the caller has still failed to authenticate,
+    and an exception would leak the state of the row through the status code.
+    """
+    try:
+        return _pwd_context.verify(password, hashed)
+    except (ValueError, TypeError):
+        return False
 
 
 def create_robot_token(robot_id: str, extra: dict[str, Any] | None = None) -> str:

@@ -12,7 +12,7 @@ from sqlalchemy import select
 from app.core.security import create_user_token
 from app.models.invite import Invite
 from app.models.user import User, UserRole
-from tests.conftest import API, SEED_ADMIN_EMAIL
+from tests.conftest import API, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD
 
 
 async def _member_auth(session_factory, org_id: str, email: str) -> dict[str, str]:
@@ -465,3 +465,223 @@ async def test_organization_isolation_holds_for_the_detail_view(
     assert ours["name"] == "Mevratek"
     assert theirs["name"] == "Acme Robotics"
     assert ours["id"] != theirs["id"]
+
+
+# --- Renaming the organization --------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_an_admin_can_rename_the_organization(client, auth):
+    resp = await client.patch(
+        f"{API}/organization", json={"name": "  Новое имя  "}, headers=auth
+    )
+    assert resp.status_code == 200, resp.text
+    # Surrounding whitespace is trimmed.
+    assert resp.json()["name"] == "Новое имя"
+
+    again = (await client.get(f"{API}/organization", headers=auth)).json()
+    assert again["name"] == "Новое имя"
+
+
+@pytest.mark.asyncio
+async def test_a_member_cannot_rename_the_organization(
+    client, auth, session_factory
+):
+    org_id = await _seed_org_id(session_factory)
+    member = await _member_auth(session_factory, org_id, "renamer@mevratek.ru")
+
+    resp = await client.patch(
+        f"{API}/organization", json={"name": "Hijacked"}, headers=member
+    )
+    assert resp.status_code == 401
+
+    unchanged = (await client.get(f"{API}/organization", headers=auth)).json()
+    assert unchanged["name"] == "Mevratek"
+
+
+@pytest.mark.asyncio
+async def test_an_empty_organization_name_is_refused(client, auth):
+    blank = await client.patch(
+        f"{API}/organization", json={"name": "   "}, headers=auth
+    )
+    assert blank.status_code == 409
+
+    empty = await client.patch(f"{API}/organization", json={"name": ""}, headers=auth)
+    assert empty.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_renaming_does_not_touch_another_organization(
+    client, auth, session_factory
+):
+    from tests.test_auth import _make_second_org
+
+    _org_b, auth_b = await _make_second_org(session_factory)
+    await client.patch(f"{API}/organization", json={"name": "Ours"}, headers=auth)
+
+    theirs = (await client.get(f"{API}/organization", headers=auth_b)).json()
+    assert theirs["name"] == "Acme Robotics"
+
+
+# --- Deleting your own account --------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_the_sole_member_is_warned_it_takes_the_organization(client, auth):
+    resp = await client.get(f"{API}/auth/account/deletable", headers=auth)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["allowed"] is True
+    assert body["deletes_organization"] is True
+
+
+@pytest.mark.asyncio
+async def test_the_last_admin_with_colleagues_cannot_delete_themselves(
+    client, auth, session_factory
+):
+    org_id = await _seed_org_id(session_factory)
+    await _member_auth(session_factory, org_id, "stays@mevratek.ru")
+
+    preview = (await client.get(f"{API}/auth/account/deletable", headers=auth)).json()
+    assert preview["allowed"] is False
+    assert preview["deletes_organization"] is False
+    assert "администратор" in preview["reason"]
+
+    # And the attempt itself is refused, not just the preview.
+    resp = await client.request(
+        "DELETE",
+        f"{API}/auth/account",
+        json={"current_password": SEED_ADMIN_PASSWORD},
+        headers=auth,
+    )
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_a_member_can_delete_themselves(client, auth, session_factory):
+    org_id = await _seed_org_id(session_factory)
+    member = await _member_auth(session_factory, org_id, "leaver@mevratek.ru")
+
+    preview = (
+        await client.get(f"{API}/auth/account/deletable", headers=member)
+    ).json()
+    assert preview["allowed"] is True
+    assert preview["deletes_organization"] is False
+
+    resp = await client.request(
+        "DELETE",
+        f"{API}/auth/account",
+        json={"current_password": "x"},
+        headers=member,
+    )
+    # The seeded member's password is not a real hash, so the check fails —
+    # which is itself the point: deletion always costs the password.
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_deleting_requires_the_right_password(client, auth):
+    resp = await client.request(
+        "DELETE",
+        f"{API}/auth/account",
+        json={"current_password": "not-the-password"},
+        headers=auth,
+    )
+    assert resp.status_code == 401
+
+    still_there = await client.get(f"{API}/auth/me", headers=auth)
+    assert still_there.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_deleting_the_sole_member_removes_the_organization(
+    client, auth, rover_payload, session_factory
+):
+    """The last member takes the tenant with them — devices and all."""
+    registered = await client.post(
+        f"{API}/robots/register", json=rover_payload, headers=auth
+    )
+    assert registered.status_code == 201
+    org_id = await _seed_org_id(session_factory)
+
+    resp = await client.request(
+        "DELETE",
+        f"{API}/auth/account",
+        json={"current_password": SEED_ADMIN_PASSWORD},
+        headers=auth,
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["organization_deleted"] is True
+
+    async with session_factory() as s:
+        from app.models.organization import Organization
+        from app.models.robot import Robot
+
+        assert await s.get(Organization, org_id) is None
+        # The devices cascade with it rather than being orphaned.
+        remaining = list((await s.scalars(select(Robot))).all())
+        assert [r for r in remaining if r.organization_id == org_id] == []
+
+    # The session token is dead now.
+    assert (await client.get(f"{API}/auth/me", headers=auth)).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_deleting_needs_a_code_when_mail_is_on(client, auth, mailbox):
+    """With SMTP configured, the password alone is not enough."""
+    without_code = await client.request(
+        "DELETE",
+        f"{API}/auth/account",
+        json={"current_password": SEED_ADMIN_PASSWORD},
+        headers=auth,
+    )
+    assert without_code.status_code == 401
+    assert "код" in without_code.json()["message"].lower()
+
+    requested = await client.post(
+        f"{API}/auth/account/delete/request",
+        json={"current_password": SEED_ADMIN_PASSWORD},
+        headers=auth,
+    )
+    assert requested.status_code == 200
+    sent = [m for m in mailbox if "удален" in m["subject"].lower()]
+    assert len(sent) == 1
+
+    import re
+
+    code = re.search(r"\b(\d{5})\b", sent[0]["text"]).group(1)
+    deleted = await client.request(
+        "DELETE",
+        f"{API}/auth/account",
+        json={"current_password": SEED_ADMIN_PASSWORD, "code": code},
+        headers=auth,
+    )
+    assert deleted.status_code == 200, deleted.text
+
+
+@pytest.mark.asyncio
+async def test_no_code_is_sent_when_deletion_would_be_refused(
+    client, auth, mailbox, session_factory
+):
+    org_id = await _seed_org_id(session_factory)
+    await _member_auth(session_factory, org_id, "blocker@mevratek.ru")
+
+    resp = await client.post(
+        f"{API}/auth/account/delete/request",
+        json={"current_password": SEED_ADMIN_PASSWORD},
+        headers=auth,
+    )
+    assert resp.status_code == 409
+    assert [m for m in mailbox if "удален" in m["subject"].lower()] == []
+
+
+@pytest.mark.asyncio
+async def test_account_deletion_requires_a_session(anon_client):
+    assert (
+        await anon_client.get(f"{API}/auth/account/deletable")
+    ).status_code == 401
+    assert (
+        await anon_client.request(
+            "DELETE", f"{API}/auth/account", json={"current_password": "x"}
+        )
+    ).status_code == 401

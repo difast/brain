@@ -22,6 +22,7 @@ from app.core.exceptions import AuthError, ConflictError, NotFoundError
 from app.core.logging import get_logger
 from app.core.security import generate_invite_token
 from app.models.invite import Invite
+from app.models.organization import Organization
 from app.models.user import User, UserRole
 
 logger = get_logger("team")
@@ -123,6 +124,90 @@ class TeamService:
             by_user_id=actor.id,
         )
         return member
+
+    # -- the organization itself -----------------------------------------
+
+    async def rename_organization(self, actor: User, name: str) -> Organization:
+        """Rename the caller's own organization."""
+        self.require_admin(actor)
+        cleaned = name.strip()
+        if not cleaned:
+            raise ConflictError("Название организации не может быть пустым.")
+
+        org = await self.session.get(Organization, actor.organization_id)
+        if org is None:  # pragma: no cover - integrity safety net
+            raise NotFoundError("Организация не найдена.")
+
+        org.name = cleaned
+        await self.session.flush()
+        logger.info(
+            "organization_renamed",
+            organization_id=org.id,
+            by_user_id=actor.id,
+        )
+        return org
+
+    # -- leaving ---------------------------------------------------------
+
+    async def can_delete_self(self, actor: User) -> tuple[bool, str, bool]:
+        """May this user delete their own account?
+
+        Returns ``(allowed, reason, is_last_member)``. The last member of an
+        organization takes the whole organization with them — devices, decisions
+        and all — so the caller has to be told that before, not after.
+        """
+        members = await self.list_members(actor.organization_id)
+        is_last_member = len(members) == 1
+
+        if is_last_member:
+            return True, "", True
+
+        # Otherwise the organization must keep an administrator.
+        if (
+            actor.role == UserRole.admin
+            and await self._admin_count(actor.organization_id, excluding=actor.id) == 0
+        ):
+            return (
+                False,
+                "Вы единственный администратор. Назначьте администратором "
+                "коллегу, прежде чем удалять свой аккаунт.",
+                False,
+            )
+        return True, "", False
+
+    async def delete_self(self, actor: User) -> bool:
+        """Delete the caller's own account. Returns whether the organization
+        went with it.
+
+        Deleting the last member removes the organization too: leaving an
+        ownerless tenant behind would strand its devices and data with nobody
+        able to reach them.
+        """
+        allowed, reason, is_last_member = await self.can_delete_self(actor)
+        if not allowed:
+            raise ConflictError(reason)
+
+        organization_id = actor.organization_id
+        await self.session.delete(actor)
+        await self.session.flush()
+
+        if is_last_member:
+            org = await self.session.get(Organization, organization_id)
+            if org is not None:
+                # Devices, decisions, telemetry and keys cascade from here.
+                await self.session.delete(org)
+                await self.session.flush()
+            logger.info(
+                "organization_deleted_with_last_member",
+                organization_id=organization_id,
+            )
+        else:
+            logger.info(
+                "account_self_deleted",
+                organization_id=organization_id,
+                user_id=actor.id,
+            )
+        return is_last_member
 
     # -- invites ---------------------------------------------------------
 

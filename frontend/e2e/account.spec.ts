@@ -28,6 +28,7 @@ test.describe("account page", () => {
   });
 
   test("lists the current session and can end the others", async ({ page }) => {
+    await page.goto("/account#security");
     const sessions = page
       .locator(".panel")
       .filter({ hasText: /Активные сеансы|Active sessions/ });
@@ -90,6 +91,7 @@ test.describe("account page", () => {
   });
 
   test("the activity log records the sign-in and pages", async ({ page }) => {
+    await page.goto("/account#security");
     await page.click("text=/Открыть журнал|Open the log/i");
     await expect(page).toHaveURL(/\/account\/activity/);
 
@@ -122,7 +124,7 @@ test.describe("changing the password", () => {
     request,
   }) => {
     await signIn(page, request);
-    await page.goto("/account");
+    await page.goto("/account#security");
 
     const panel = page
       .locator(".panel")
@@ -157,7 +159,7 @@ test.describe("changing the password", () => {
 
   test("a wrong current password is refused", async ({ page, request }) => {
     await signIn(page, request);
-    await page.goto("/account");
+    await page.goto("/account#security");
 
     const panel = page
       .locator(".panel")

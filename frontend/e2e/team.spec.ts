@@ -11,7 +11,7 @@ import { SEED_EMAIL, clearMailbox, readMailbox, signIn } from "./helpers";
 test.describe("team", () => {
   test.beforeEach(async ({ page, request }) => {
     await signIn(page, request);
-    await page.goto("/account");
+    await page.goto("/account#team");
   });
 
   function panel(page: import("@playwright/test").Page) {

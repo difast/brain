@@ -23,6 +23,7 @@ class CodePurpose(str, enum.Enum):
     password_change = "password_change"
     password_reset = "password_reset"
     email_change = "email_change"
+    account_delete = "account_delete"
 
 
 class VerificationCode(UUIDMixin, TimestampMixin, Base):

@@ -336,6 +336,13 @@ export interface InviteCreated {
   emailed: boolean;
 }
 
+export interface DeleteAccountPreview {
+  allowed: boolean;
+  reason: string;
+  /** True when the caller is the last member: the organization goes too. */
+  deletes_organization: boolean;
+}
+
 export interface OrganizationDetail {
   id: string;
   name: string;
@@ -433,6 +440,17 @@ async function del<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "DELETE",
     headers: authHeaders(),
+  });
+  if (!res.ok) raiseForStatus(res.status, await res.text());
+  return res.json() as Promise<T>;
+}
+
+/** DELETE that carries a body — deleting an account costs a password. */
+async function delWithBody<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "DELETE",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
   if (!res.ok) raiseForStatus(res.status, await res.text());
   return res.json() as Promise<T>;
@@ -638,6 +656,18 @@ export const api = {
     patch<TeamMember>(`/organization/team/members/${id}`, { role }),
   removeMember: (id: string) =>
     del<{ ok: boolean }>(`/organization/team/members/${id}`),
+  renameOrganization: (name: string) =>
+    patch<OrganizationDetail>("/organization", { name }),
+
+  // Deleting your own account
+  accountDeletable: () => get<DeleteAccountPreview>("/auth/account/deletable"),
+  requestDeleteCode: (current_password: string) =>
+    post<CodeSentResponse>("/auth/account/delete/request", { current_password }),
+  deleteAccount: (current_password: string, code?: string) =>
+    delWithBody<{ ok: boolean; organization_deleted: boolean }>(
+      "/auth/account",
+      { current_password, code },
+    ),
 
   listSessions: () => get<UserSession[]>("/auth/sessions"),
   revokeSession: (id: string) => del<{ ok: boolean }>(`/auth/sessions/${id}`),

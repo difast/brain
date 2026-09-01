@@ -26,6 +26,7 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key")
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
@@ -63,6 +64,16 @@ async def engine():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+
+    # SQLite ignores foreign keys unless told otherwise, so without this the
+    # ON DELETE CASCADE that multi-tenancy relies on would never be exercised
+    # in tests while firing for real on PostgreSQL.
+    @event.listens_for(eng.sync_engine, "connect")
+    def _enable_foreign_keys(dbapi_connection, _record):  # type: ignore[no-untyped-def]
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
     async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield eng

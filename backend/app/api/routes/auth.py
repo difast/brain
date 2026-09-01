@@ -22,7 +22,6 @@ from app.core.exceptions import (
 )
 from app.core.security import create_login_challenge_token
 from app.models.audit_log import AuditAction
-from app.models.user import User
 from app.models.verification_code import CodePurpose
 from app.schemas.audit import AuditLogResponse
 from app.schemas.auth import (
@@ -49,6 +48,7 @@ from app.services import email_templates, mailer
 from app.services.audit_service import AuditService
 from app.services.auth_service import AuthService
 from app.services.captcha_service import verify_captcha
+from app.services.code_delivery import mask_email, send_code
 from app.services.session_service import SessionService
 from app.services.throttle_service import (
     ThrottleService,
@@ -62,29 +62,6 @@ router = APIRouter(tags=["auth"])
 
 def _client_ip(request: Request) -> str | None:
     return request.client.host if request.client else None
-
-
-def _mask_email(email: str) -> str:
-    """i***@mevratek.ru — enough to recognise the inbox, not to harvest it."""
-    name, _, domain = email.partition("@")
-    if not domain:
-        return "***"
-    head = name[:1] if name else ""
-    return f"{head}***@{domain}"
-
-
-async def _send_code(user: User, purpose: CodePurpose, to: str, code: str) -> None:
-    """Email a confirmation code, failing the request if it can't go out."""
-    subject, html, text = email_templates.verification_code(
-        purpose.value, code, settings.code_ttl_minutes
-    )
-    try:
-        await mailer.send_email(to, subject, html, text)
-    except mailer.EmailDeliveryError as exc:
-        raise ServiceUnavailableError(
-            "Не удалось отправить письмо с кодом — почтовый сервер сейчас "
-            "недоступен. Попробуйте ещё раз через несколько минут."
-        ) from exc
 
 
 @router.get(
@@ -153,14 +130,14 @@ async def login(
         )
 
     code = await VerificationService(session).issue(user, CodePurpose.login)
-    await _send_code(user, CodePurpose.login, user.email, code)
+    await send_code(user, CodePurpose.login, user.email, code)
     return LoginStartResponse(
         code_required=True,
         challenge=create_login_challenge_token(
             user.id, settings.code_ttl_minutes
         ),
         code_expires_in_seconds=settings.code_ttl_minutes * 60,
-        masked_email=_mask_email(user.email),
+        masked_email=mask_email(user.email),
     )
 
 
@@ -246,13 +223,13 @@ async def request_password_code(
     code = await VerificationService(session).issue(
         current_user, CodePurpose.password_change
     )
-    await _send_code(
+    await send_code(
         current_user, CodePurpose.password_change, current_user.email, code
     )
     return CodeSentResponse(
         sent=True,
         expires_in_seconds=settings.code_ttl_minutes * 60,
-        masked_email=_mask_email(current_user.email),
+        masked_email=mask_email(current_user.email),
     )
 
 
@@ -303,13 +280,13 @@ async def request_email_code(
         current_user, CodePurpose.email_change, new_email=payload.new_email
     )
     # Sent to the *new* address — that's what the code proves ownership of.
-    await _send_code(
+    await send_code(
         current_user, CodePurpose.email_change, payload.new_email, code
     )
     return CodeSentResponse(
         sent=True,
         expires_in_seconds=settings.code_ttl_minutes * 60,
-        masked_email=_mask_email(payload.new_email),
+        masked_email=mask_email(payload.new_email),
     )
 
 
@@ -507,11 +484,11 @@ async def request_password_reset(
     except TooManyRequestsError:
         # Don't reveal that this address has a live code — behave as always.
         return generic
-    await _send_code(user, CodePurpose.password_reset, user.email, code)
+    await send_code(user, CodePurpose.password_reset, user.email, code)
     return CodeSentResponse(
         sent=True,
         expires_in_seconds=settings.code_ttl_minutes * 60,
-        masked_email=_mask_email(user.email),
+        masked_email=mask_email(user.email),
     )
 
 

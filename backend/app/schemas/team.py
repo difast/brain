@@ -80,3 +80,25 @@ class OrganizationDetail(BaseModel):
     name: str
     created_at: datetime
     member_count: int = Field(default=0)
+
+
+class RenameOrganizationRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+
+
+class DeleteAccountRequest(BaseModel):
+    """Deleting an account is irreversible, so it costs a password and — when
+    mail is configured — a code, exactly like a password change."""
+
+    current_password: str = Field(min_length=1)
+    code: str | None = Field(default=None, max_length=16)
+
+
+class DeleteAccountPreview(BaseModel):
+    """What deleting this account would actually do, so the UI can say so."""
+
+    allowed: bool
+    reason: str
+    # True when the caller is the last member: the organization and every
+    # device, decision and key in it go too.
+    deletes_organization: bool
