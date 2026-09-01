@@ -7,6 +7,7 @@ import { useT } from "@/lib/i18n";
 import { useFeedback } from "@/components/feedback";
 import { api, errorMessage, type UserSession } from "@/lib/api";
 import { PasswordInput } from "@/components/PasswordInput";
+import { TeamPanel } from "@/components/TeamPanel";
 import { Spinner, timeAgo } from "@/components/ui";
 import { AvatarCropper } from "@/components/AvatarCropper";
 
@@ -376,6 +377,8 @@ export default function AccountPage() {
           </tbody>
         </table>
       </div>
+
+      <TeamPanel currentUserId={user.id} />
 
       <div className="panel" style={{ marginBottom: 16 }}>
         <h2>{t("account.changeEmail")}</h2>

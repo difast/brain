@@ -26,8 +26,10 @@ from app.api.routes import (
     invites,
     leads,
     logs,
+    metrics,
     robots,
     tasks,
+    team,
     telemetry,
 )
 from app.core.config import settings
@@ -165,6 +167,8 @@ def create_app() -> FastAPI:
         executions,
         logs,
         api_keys,
+        team,
+        metrics,
     ):
         app.include_router(module.router, prefix=api)
 

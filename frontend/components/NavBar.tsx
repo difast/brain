@@ -13,6 +13,7 @@ const OPS: Item[] = [
   { href: "/", key: "nav.robots" },
   { href: "/connect", key: "nav.connect", hint: "nav.connect.hint" },
   { href: "/logs", key: "nav.logs" },
+  { href: "/metrics", key: "nav.metrics" },
   { href: "/tasks", key: "nav.tasks" },
   { href: "/simulator", key: "nav.simulator", hint: "nav.simulator.hint" },
 ];

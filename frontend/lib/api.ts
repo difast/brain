@@ -238,6 +238,111 @@ export interface CodeSentResponse {
   masked_email: string | null;
 }
 
+// --- Metrics ---------------------------------------------------------------
+
+export type MetricsWindow = "24h" | "7d" | "30d";
+
+export interface SeriesPoint {
+  start: string;
+  decisions: number;
+}
+
+export interface MetricsSummary {
+  window: string;
+  since: string;
+  decisions: number;
+  fallback_decisions: number;
+  /** Share of decisions the model did NOT make — the platform improvised. */
+  fallback_rate: number;
+  latency_p50_ms: number | null;
+  latency_p95_ms: number | null;
+  avg_confidence: number | null;
+  sampled: boolean;
+  executions: number;
+  executions_failed: number;
+  execution_success_rate: number | null;
+  devices_total: number;
+  devices_online: number;
+  devices_error: number;
+  devices_paused: number;
+  tasks_queued: number;
+  tasks_in_progress: number;
+  tasks_completed: number;
+  tasks_failed: number;
+  series: SeriesPoint[];
+}
+
+export interface DeviceMetrics {
+  robot_id: string;
+  name: string;
+  robot_type: string;
+  paused: boolean;
+  last_seen_at: string | null;
+  decisions: number;
+  avg_confidence: number | null;
+  avg_latency_ms: number | null;
+  failed_executions: number;
+}
+
+export interface ModelMetrics {
+  provider: string | null;
+  model: string | null;
+  decisions: number;
+  avg_latency_ms: number | null;
+  avg_confidence: number | null;
+  fallback: boolean;
+}
+
+export interface FailureRow {
+  id: string;
+  robot_id: string;
+  robot_name: string;
+  action_type: string | null;
+  error: string | null;
+  duration_ms: number | null;
+  created_at: string;
+}
+
+// --- Team (the caller's own organization) ---------------------------------
+
+export interface TeamMember {
+  id: string;
+  email: string;
+  role: UserRole;
+  created_at: string;
+}
+
+export interface TeamInvite {
+  id: string;
+  email: string;
+  role: UserRole;
+  token: string;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface Team {
+  members: TeamMember[];
+  invites: TeamInvite[];
+  /** Whether the caller may change any of it (organization admins only). */
+  can_manage: boolean;
+}
+
+export interface InviteCreated {
+  invite: TeamInvite;
+  /** Full redemption link, built server-side. */
+  link: string;
+  /** False when mail is off or delivery failed — pass the link on by hand. */
+  emailed: boolean;
+}
+
+export interface OrganizationDetail {
+  id: string;
+  name: string;
+  created_at: string;
+  member_count: number;
+}
+
 export interface UserSession {
   id: string;
   ip: string | null;
@@ -491,6 +596,49 @@ export const api = {
       `/telemetry/export.csv${robotId ? `?robot_id=${robotId}` : ""}`,
       "mevratek-telemetry.csv",
     ),
+  // Metrics
+  metricsSummary: (window: MetricsWindow) =>
+    get<MetricsSummary>(`/metrics/summary?window=${window}`),
+  metricsDevices: (
+    window: MetricsWindow,
+    opts?: { limit?: number; offset?: number },
+  ) =>
+    get<Page<DeviceMetrics>>(
+      `/metrics/devices?window=${window}&limit=${opts?.limit ?? 10}&offset=${
+        opts?.offset ?? 0
+      }`,
+    ),
+  metricsModels: (
+    window: MetricsWindow,
+    opts?: { limit?: number; offset?: number },
+  ) =>
+    get<Page<ModelMetrics>>(
+      `/metrics/models?window=${window}&limit=${opts?.limit ?? 10}&offset=${
+        opts?.offset ?? 0
+      }`,
+    ),
+  metricsFailures: (
+    window: MetricsWindow,
+    opts?: { limit?: number; offset?: number },
+  ) =>
+    get<Page<FailureRow>>(
+      `/metrics/failures?window=${window}&limit=${opts?.limit ?? 10}&offset=${
+        opts?.offset ?? 0
+      }`,
+    ),
+
+  // Team
+  getOrganization: () => get<OrganizationDetail>("/organization"),
+  getTeam: () => get<Team>("/organization/team"),
+  inviteMember: (email: string, role: UserRole) =>
+    post<InviteCreated>("/organization/team/invites", { email, role }),
+  revokeInvite: (id: string) =>
+    del<{ ok: boolean }>(`/organization/team/invites/${id}`),
+  setMemberRole: (id: string, role: UserRole) =>
+    patch<TeamMember>(`/organization/team/members/${id}`, { role }),
+  removeMember: (id: string) =>
+    del<{ ok: boolean }>(`/organization/team/members/${id}`),
+
   listSessions: () => get<UserSession[]>("/auth/sessions"),
   revokeSession: (id: string) => del<{ ok: boolean }>(`/auth/sessions/${id}`),
   revokeOtherSessions: () =>

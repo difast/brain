@@ -209,6 +209,44 @@ def device_alert(robot_name: str, kind: str) -> tuple[str, str, str]:
     return subject, html, text
 
 
+# --- Team invite -----------------------------------------------------------
+
+
+def team_invite(
+    organization: str, inviter_email: str, link: str, role: str
+) -> tuple[str, str, str]:
+    """Sent when a colleague is invited into an organization.
+
+    The link *is* the credential, so the mail says plainly that it is
+    single-use and time-limited.
+    """
+    role_ru = "администратора" if role == "admin" else "участника"
+    subject = f"{BRAND}: приглашение в «{organization}»"
+    html = _layout(
+        "Приглашение в команду",
+        _p(
+            f"<b>{inviter_email}</b> приглашает вас в организацию "
+            f"<b>{organization}</b> на платформе {BRAND} в роли {role_ru}."
+        )
+        + _p("Откройте ссылку и задайте пароль — аккаунт создастся сразу.")
+        + _button("Принять приглашение", link)
+        + _muted(
+            f"Ссылка одноразовая и действует {settings.invite_ttl_hours} часов. "
+            "Если вы не ждали этого письма, просто удалите его — без перехода "
+            "по ссылке ничего не произойдёт."
+        ),
+    )
+    text = (
+        f"Приглашение в команду\n\n"
+        f"{inviter_email} приглашает вас в организацию «{organization}» на "
+        f"платформе {BRAND} в роли {role_ru}.\n\n"
+        f"Откройте ссылку и задайте пароль:\n{link}\n\n"
+        f"Ссылка одноразовая и действует {settings.invite_ttl_hours} часов.\n\n"
+        f"{BRAND} · {SITE_URL}"
+    )
+    return subject, html, text
+
+
 # --- Contact-form receipt --------------------------------------------------
 
 

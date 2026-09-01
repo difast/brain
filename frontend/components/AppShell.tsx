@@ -11,6 +11,7 @@ import { useT } from "@/lib/i18n";
 // is rendered bare (see AppShell) rather than gated behind auth.
 const KNOWN_PREFIXES = [
   "/logs",
+  "/metrics",
   "/tasks",
   "/simulator",
   "/connect",

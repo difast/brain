@@ -233,6 +233,26 @@ In `development` the app auto-creates tables on startup for convenience; in
 `production` migrations are the source of truth (`scripts/start.sh` runs
 `alembic upgrade head` before serving).
 
+### Backups
+
+Everything the platform knows lives in PostgreSQL — including avatars, which
+are stored inline rather than as files — so a database dump is a complete
+backup of the data. Secrets (`SECRET_KEY`, `ADMIN_TOKEN`, `SMTP_PASSWORD`, the
+provider keys) live in the environment and are backed up separately.
+
+```bash
+ops/backup.sh                                  # → backups/mevratek-<UTC>.dump
+ops/restore.sh --yes backups/mevratek-<...>.dump
+cd backend && alembic upgrade head             # the dump's schema may be older
+```
+
+The backup is verified with `pg_restore --list` before it is kept, so a corrupt
+archive is never mistaken for a good backup. Take one **before** running
+migrations on an upgrade.
+
+Full procedure, retention, the cron line and the restore drill:
+**[`ops/README.md`](ops/README.md)**.
+
 ---
 
 ## Deployment (Timeweb Cloud Apps)

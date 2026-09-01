@@ -143,8 +143,20 @@ export function Spinner({ size = 16 }: { size?: number }) {
 export function timeAgo(iso: string): string {
   const d = new Date(iso).getTime();
   const s = Math.floor((Date.now() - d) / 1000);
+  // A future timestamp (an invite's expiry, say) would otherwise read as
+  // "-259200s ago"; show when it falls due instead.
+  if (s < 0) return timeUntil(iso);
   if (s < 60) return `${s}s ago`;
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
   return new Date(iso).toLocaleString();
+}
+
+/** How long until a future timestamp. Past ones read as "now". */
+export function timeUntil(iso: string): string {
+  const s = Math.floor((new Date(iso).getTime() - Date.now()) / 1000);
+  if (s <= 0) return "now";
+  if (s < 3600) return `in ${Math.max(1, Math.floor(s / 60))}m`;
+  if (s < 86400) return `in ${Math.floor(s / 3600)}h`;
+  return `in ${Math.floor(s / 86400)}d`;
 }
