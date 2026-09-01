@@ -36,7 +36,8 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Lint (ruff)
-        run: ruff check app tests
+        # alembic/ included: migrations are code that runs against production.
+        run: ruff check app tests alembic
 
       - name: Type-check (mypy)
         run: mypy app

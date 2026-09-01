@@ -4,16 +4,16 @@ Revision ID: 90c4530475f8
 Revises: 4d888da5dbe2
 Create Date: 2026-06-11 23:47:46.372286
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 revision: str = '90c4530475f8'
-down_revision: Union[str, None] = '4d888da5dbe2'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = '4d888da5dbe2'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

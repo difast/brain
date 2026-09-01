@@ -8,5 +8,7 @@ aiosqlite==0.20.0
 # hand-rolled renderer can't drift out of the exposition format.
 prometheus-client==0.21.1
 httpx==0.28.1
-ruff==0.9.1
+# Keep this current: UP042 (a str+Enum mixin where StrEnum belongs) only
+# started failing the build once ruff was new enough to enforce it by default.
+ruff==0.15.8
 mypy==1.14.1

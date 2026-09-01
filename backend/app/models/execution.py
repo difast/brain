@@ -15,7 +15,7 @@ from app.core.database import Base
 from app.models.base import TimestampMixin, UUIDMixin
 
 
-class ExecutionStatus(str, enum.Enum):
+class ExecutionStatus(enum.StrEnum):
     success = "success"
     failed = "failed"
 

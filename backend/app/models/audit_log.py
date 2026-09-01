@@ -16,7 +16,7 @@ from app.core.database import Base
 from app.models.base import TimestampMixin, UUIDMixin
 
 
-class AuditAction(str, enum.Enum):
+class AuditAction(enum.StrEnum):
     login = "login"
     login_failed = "login_failed"
     password_changed = "password_changed"

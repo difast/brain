@@ -18,7 +18,7 @@ from app.core.database import Base
 from app.models.base import TimestampMixin, UUIDMixin
 
 
-class RobotStatus(str, enum.Enum):
+class RobotStatus(enum.StrEnum):
     online = "online"
     offline = "offline"
     error = "error"

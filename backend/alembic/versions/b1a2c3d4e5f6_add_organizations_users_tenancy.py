@@ -13,15 +13,16 @@ Revision ID: b1a2c3d4e5f6
 Revises: 90c4530475f8
 Create Date: 2026-08-29 17:00:00.000000
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "b1a2c3d4e5f6"
-down_revision: Union[str, None] = "90c4530475f8"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "90c4530475f8"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 SEED_ORG_ID = "00000000000000000000000000000001"
 SEED_ADMIN_ID = "00000000000000000000000000000002"

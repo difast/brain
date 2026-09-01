@@ -11,7 +11,7 @@ from app.core.database import Base
 from app.models.base import TimestampMixin, UUIDMixin
 
 
-class NewsletterStatus(str, enum.Enum):
+class NewsletterStatus(enum.StrEnum):
     sending = "sending"
     sent = "sent"
     failed = "failed"

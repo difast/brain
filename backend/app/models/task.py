@@ -11,14 +11,14 @@ from app.core.database import Base
 from app.models.base import TimestampMixin, UUIDMixin
 
 
-class TaskStatus(str, enum.Enum):
+class TaskStatus(enum.StrEnum):
     pending = "pending"
     in_progress = "in_progress"
     completed = "completed"
     failed = "failed"
 
 
-class TaskSource(str, enum.Enum):
+class TaskSource(enum.StrEnum):
     # Created top-down via the Task Engine (operator/dashboard/API).
     assigned = "assigned"
     # Created bottom-up from a robot's own decision request.

@@ -18,7 +18,7 @@ from app.core.database import Base
 from app.models.base import TimestampMixin, UUIDMixin
 
 
-class CodePurpose(str, enum.Enum):
+class CodePurpose(enum.StrEnum):
     login = "login"
     password_change = "password_change"
     password_reset = "password_reset"

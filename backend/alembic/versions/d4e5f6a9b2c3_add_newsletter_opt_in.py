@@ -7,15 +7,16 @@ Create Date: 2026-08-31 20:00:00.000000
 Consent starts on: the column defaults to true, so every existing account is
 subscribed until its owner turns newsletters off on the account page.
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "d4e5f6a9b2c3"
-down_revision: Union[str, None] = "c3d4e5f6a9b1"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "c3d4e5f6a9b1"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
