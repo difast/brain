@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Render the conference hand-out to website/public/mevratek-platform.pdf.
 
-Two A4 pages, printed from `handout.html` by headless Chromium so the sheet
-uses the same palette, type and diagram as the site — a hand-out that looks
-like a different company is worse than no hand-out.
+One A4 sheet, printed from `handout.html` by headless Chromium so it uses the
+same palette, type and diagram as the site — a hand-out that looks like a
+different company is worse than no hand-out.
+
+One page rather than two on purpose: it prints on any machine without asking
+about duplex, and it is read standing up at a stand. Anything that did not fit
+is on the site, behind the QR code at the bottom of the sheet.
 
     python website/handout/build.py
 

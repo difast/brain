@@ -5,7 +5,11 @@
 <title>Mevratek — платформа управления роботами в вашем контуре</title>
 <!--FONT-FACE-->
 <style>
-  /* The palette is the site's Tailwind theme, copied here verbatim so print
+  /* One A4 sheet, front side only — a brochure someone reads standing up at a
+     stand, not a document they sit down with. Everything that needed a second
+     page lives on the site, behind the QR code at the bottom.
+
+     The palette is the site's Tailwind theme, copied here verbatim so print
      and web stay the same product. */
   :root {
     --ink: #14171c;
@@ -32,81 +36,75 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     color: var(--ink);
     background: #fff;
-    font-size: 9.2pt;
-    line-height: 1.5;
+    font-size: 8.4pt;
+    line-height: 1.45;
     letter-spacing: -0.003em;
   }
 
   .page {
     width: 210mm;
     height: 297mm;
-    padding: 14mm 15mm 12mm;
+    padding: 13mm 14mm 11mm;
     display: flex;
     flex-direction: column;
-    /* Chromium keeps a stray blank page without this on the last sheet. */
-    page-break-after: always;
     overflow: hidden;
   }
-  .page:last-child { page-break-after: auto; }
 
   h1 {
-    font-size: 25pt;
+    font-size: 22pt;
     line-height: 1.08;
     font-weight: 600;
     letter-spacing: -0.022em;
   }
   h2 {
-    font-size: 13.5pt;
+    font-size: 11.5pt;
     line-height: 1.15;
     font-weight: 600;
     letter-spacing: -0.016em;
   }
-  h3 { font-size: 9.6pt; font-weight: 600; line-height: 1.25; }
 
   .eyebrow {
     display: flex;
     align-items: center;
     gap: 7px;
-    font-size: 7pt;
+    font-size: 6.6pt;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.14em;
     color: var(--muted);
+    margin-bottom: 2.5mm;
   }
   .eyebrow::before {
     content: "";
-    width: 22px;
+    width: 18px;
     height: 1px;
     background: rgba(55, 65, 81, 0.5);
   }
 
   .muted { color: var(--muted); }
-  .soft { color: var(--ink-soft); }
 
   /* --- Masthead --- */
   .masthead {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 9mm;
+    padding-bottom: 6mm;
   }
   .wordmark { display: flex; align-items: center; gap: 8px; }
   .wordmark span {
-    font-size: 13pt;
+    font-size: 12.5pt;
     font-weight: 600;
     letter-spacing: -0.015em;
   }
-  .masthead .site { font-size: 8.6pt; font-weight: 500; color: var(--muted); }
-
   .badge {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     border: 1px solid var(--line);
     background: var(--surface);
     border-radius: 999px;
-    padding: 4px 11px;
-    font-size: 7.8pt;
+    padding: 3.5px 11px;
+    font-size: 7.2pt;
     font-weight: 500;
     color: var(--muted);
   }
@@ -117,26 +115,26 @@
   }
 
   .lead {
-    font-size: 10.4pt;
-    line-height: 1.62;
+    font-size: 9.6pt;
+    line-height: 1.58;
     color: var(--muted);
-    max-width: 165mm;
+    max-width: 160mm;
   }
 
-  /* --- Flow diagram (the site's FlowDiagram, laid out for paper) --- */
+  /* --- Flow diagram --- */
   .flow {
     display: flex;
     align-items: stretch;
-    gap: 6px;
+    gap: 5px;
     border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 9px;
+    border-radius: 13px;
+    padding: 8px;
   }
   .node {
     flex: 1;
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px 8px;
+    border-radius: 9px;
+    padding: 8px 6px;
     text-align: center;
     background: #fff;
   }
@@ -145,187 +143,154 @@
     border-color: var(--accent);
     color: #fff;
   }
-  .node .n-label { font-size: 9.4pt; font-weight: 600; line-height: 1.2; }
-  .node .n-sub { margin-top: 3px; font-size: 7.4pt; line-height: 1.3; color: var(--muted); }
+  .node .n-label { font-size: 8.8pt; font-weight: 600; line-height: 1.2; }
+  .node .n-sub { margin-top: 2px; font-size: 6.9pt; line-height: 1.28; color: var(--muted); }
   .node.accent .n-sub { color: rgba(255, 255, 255, 0.72); }
-  .arrow {
-    display: flex;
-    align-items: center;
-    color: var(--muted);
-    flex: 0 0 auto;
-  }
+  .arrow { display: flex; align-items: center; color: var(--muted); flex: 0 0 auto; }
 
-  /* --- Stats --- */
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  /* --- The two-column middle band --- */
+  .band { display: grid; grid-template-columns: 1fr 1fr; gap: 11mm; }
+  /* One heading wraps to two lines and the other does not; reserving the
+     height keeps the stats and the guarantee rows on the same baseline. */
+  .band h2 { min-height: 2.3em; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .stat {
     border: 1px solid var(--line);
     background: var(--surface);
-    border-radius: 11px;
-    padding: 9px 11px;
+    border-radius: 9px;
+    padding: 7px 8px;
   }
-  .stat .v { font-size: 15pt; font-weight: 600; letter-spacing: -0.02em; }
-  .stat .l { margin-top: 2px; font-size: 7.8pt; line-height: 1.3; color: var(--muted); }
+  .stat .v { font-size: 12.5pt; font-weight: 600; letter-spacing: -0.02em; }
+  .stat .l { margin-top: 1px; font-size: 6.8pt; line-height: 1.25; color: var(--muted); }
 
-  /* --- Dark strip --- */
-  .strip {
-    background: var(--accent-strong);
-    color: #fff;
-    border-radius: 18px;
-    padding: 11px 15px;
-    display: grid;
-    grid-template-columns: 1fr 1.05fr;
-    gap: 15px;
-    align-items: center;
-  }
-  .strip .cap {
-    font-size: 7pt;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: rgba(255, 255, 255, 0.6);
-  }
-  .strip .headline { margin-top: 4px; font-size: 10pt; font-weight: 500; line-height: 1.42; }
-  .strip .sub { margin-top: 4px; font-size: 8pt; line-height: 1.4; color: rgba(255, 255, 255, 0.7); }
-  .strip blockquote { font-size: 9.2pt; line-height: 1.45; }
-  .strip figcaption { margin-top: 5px; font-size: 7.6pt; color: rgba(255, 255, 255, 0.6); }
-  .strip .quote { border-left: 1px solid rgba(255, 255, 255, 0.16); padding-left: 15px; }
-
-  /* --- Cards --- */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
-  .card {
-    border: 1px solid var(--line);
-    border-radius: 11px;
-    padding: 9px 11px;
-    background: #fff;
-  }
-  .card.surface { background: var(--surface); }
-  .card .role {
-    font-size: 6.8pt;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-  }
-  .card .name { margin-top: 1px; font-size: 9.2pt; font-weight: 600; }
-  .card p { margin-top: 4px; font-size: 7.9pt; line-height: 1.42; color: var(--muted); }
-
-  /* --- Segment rows --- */
-  .rows { border-top: 1px solid var(--line); }
-  .row {
+  .guarantees { border-top: 1px solid var(--line); }
+  .guarantee {
     border-bottom: 1px solid var(--line);
-    padding: 7px 0;
+    padding: 5.5px 0;
     display: grid;
-    grid-template-columns: 52mm 1fr;
-    gap: 12px;
+    grid-template-columns: 32mm 1fr;
+    gap: 7px;
     align-items: baseline;
   }
-  .row h3 { font-size: 9pt; }
-  .row p { font-size: 8.2pt; line-height: 1.45; color: var(--muted); }
+  .guarantee b { font-size: 8.2pt; font-weight: 600; }
+  .guarantee span { font-size: 7.6pt; line-height: 1.38; color: var(--muted); }
 
-  /* --- Footer / contact --- */
-  .contact {
-    margin-top: auto;
-    border-top: 1px solid var(--line);
-    padding-top: 9px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 16px;
-    align-items: end;
+  /* --- Components, as a compact index rather than eight cards --- */
+  .components { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .component {
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 7px 9px;
   }
-  .contact .lines { font-size: 8.2pt; line-height: 1.55; color: var(--muted); }
-  .contact .email { font-size: 10pt; font-weight: 600; color: var(--ink); }
-  .legal { margin-top: 6px; font-size: 6.9pt; line-height: 1.4; color: var(--muted); }
-
-  .qr { text-align: center; }
-  .qr svg { width: 26mm; height: 26mm; display: block; }
-  .qr .cap { margin-top: 3px; font-size: 6.8pt; color: var(--muted); }
-
-  .foot-rule {
-    margin-top: auto;
-    padding-top: 8px;
-    border-top: 1px solid var(--line);
-    display: flex;
-    justify-content: space-between;
-    font-size: 7.2pt;
+  .component .role {
+    font-size: 6.4pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
     color: var(--muted);
   }
+  .component .name { margin-top: 1px; font-size: 8.4pt; font-weight: 600; }
 
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  /* --- Steps --- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .step {
     border: 1px solid var(--line);
-    border-radius: 11px;
-    padding: 10px 12px;
+    border-radius: 9px;
+    padding: 8px 10px;
   }
   .step .num {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 17px; height: 17px;
+    width: 15px; height: 15px;
     border-radius: 999px;
     background: var(--accent-strong);
     color: #fff;
-    font-size: 7.4pt;
+    font-size: 6.8pt;
     font-weight: 600;
   }
-  .step .t { margin-top: 6px; font-size: 9.2pt; font-weight: 600; line-height: 1.25; }
-  .step p { margin-top: 4px; font-size: 7.9pt; line-height: 1.42; color: var(--muted); }
+  .step .t { margin-top: 4px; font-size: 8.4pt; font-weight: 600; line-height: 1.2; }
+  .step p { margin-top: 2.5px; font-size: 7.4pt; line-height: 1.35; color: var(--muted); }
 
-  .facts {
-    margin-top: 8px;
+  /* --- Recognition, one line --- */
+  .strip {
+    background: var(--accent-strong);
+    color: #fff;
+    border-radius: 13px;
+    padding: 9px 14px;
     display: flex;
-    gap: 18px;
-    font-size: 8pt;
-    color: var(--muted);
-    margin-bottom: 4mm;
+    align-items: center;
+    gap: 14px;
   }
-  .facts b { color: var(--ink); font-weight: 600; }
+  .strip .cap {
+    font-size: 6.4pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+  }
+  .strip .txt { font-size: 8.4pt; line-height: 1.4; }
+  .strip .txt b { font-weight: 600; }
+
+  /* --- Contacts --- */
+  .contact {
+    margin-top: auto;
+    border-top: 1px solid var(--line);
+    padding-top: 7px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 14px;
+    align-items: end;
+  }
+  .contact .email { font-size: 11pt; font-weight: 600; }
+  .contact .lines { margin-top: 2px; font-size: 7.6pt; line-height: 1.45; color: var(--muted); }
+  .legal { margin-top: 5px; font-size: 6.4pt; line-height: 1.35; color: var(--muted); }
+
+  .qr { text-align: center; }
+  .qr svg { width: 24mm; height: 24mm; display: block; }
+  .qr .cap { margin-top: 2px; font-size: 6.4pt; color: var(--muted); }
 
   .sp-3 { height: 3mm; }
   .sp-4 { height: 4mm; }
   .sp-5 { height: 5mm; }
   .sp-6 { height: 6mm; }
-  .sp-7 { height: 7mm; }
 </style>
 </head>
 <body>
 
-<!-- ============================ PAGE 1 ============================ -->
 <section class="page">
   <header class="masthead">
     <div class="wordmark">
-      <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden>
+      <svg width="23" height="23" viewBox="0 0 32 32" aria-hidden>
         <rect width="32" height="32" rx="7" fill="#374151" />
         <circle cx="16" cy="16" r="8" fill="none" stroke="#fff" stroke-width="2.5" />
         <circle cx="16" cy="16" r="3" fill="#fff" />
       </svg>
       <span>Mevratek</span>
     </div>
-    <div class="site">mevratek.ru</div>
+    <div class="badge"><i class="dot"></i>Российская платформа · On-Premise · AI Decision Engine</div>
   </header>
 
-  <div class="badge"><i class="dot"></i>Российская платформа · On-Premise · AI Decision Engine</div>
-
-  <div class="sp-5"></div>
   <h1>Мозг для парка устройств —<br />внутри вашего контура</h1>
 
-  <div class="sp-4"></div>
+  <div class="sp-3"></div>
   <p class="lead">
     Подключите промышленного робота, складскую тележку или симулятор через
-    единый SDK. Передавайте телеметрию в реальном времени и получайте
-    структурированные команды AI-движка на базе российских языковых моделей.
-    Платформа разворачивается в инфраструктуре предприятия — данные не покидают
-    периметр.
+    единый SDK. Передавайте телеметрию и получайте структурированные команды
+    AI-движка на базе российских языковых моделей. Платформа разворачивается в
+    инфраструктуре предприятия — данные не покидают периметр.
   </p>
 
-  <div class="sp-6"></div>
+  <div class="sp-5"></div>
   <div class="flow">
     <div class="node">
       <div class="n-label">Устройство</div>
       <div class="n-sub">робот · тележка · дрон</div>
     </div>
     <div class="arrow">
-      <svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
         <path d="M3 12h16M15 7l5 5-5 5" stroke="currentColor" stroke-width="1.5"
               stroke-linecap="round" stroke-linejoin="round" />
       </svg>
@@ -335,7 +300,7 @@
       <div class="n-sub">телеметрия + состояние</div>
     </div>
     <div class="arrow">
-      <svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
         <path d="M3 12h16M15 7l5 5-5 5" stroke="currentColor" stroke-width="1.5"
               stroke-linecap="round" stroke-linejoin="round" />
       </svg>
@@ -345,190 +310,116 @@
       <div class="n-sub">российские LLM</div>
     </div>
     <div class="arrow">
-      <svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
         <path d="M3 12h16M15 7l5 5-5 5" stroke="currentColor" stroke-width="1.5"
               stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </div>
     <div class="node">
       <div class="n-label">Команды</div>
-      <div class="n-sub">структурированный JSON</div>
+      <div class="n-sub">строгий JSON</div>
     </div>
-  </div>
-
-  <div class="sp-7"></div>
-  <div class="eyebrow">Проблема</div>
-  <div class="sp-3"></div>
-  <h2>Западные платформы ушли — замены не появилось</h2>
-  <div class="sp-3"></div>
-  <p class="soft" style="font-size: 9.4pt; line-height: 1.58; max-width: 172mm">
-    Российские компании, работающие с роботами и автономными устройствами,
-    лишились доступа к западным облачным платформам управления после 2022 года.
-    Отечественных аналогов не существует: каждая команда строит инфраструктуру
-    управления заново, тратя месяцы на то, что должно быть готовой утилитой.
-  </p>
-
-  <div class="sp-4"></div>
-  <div class="stats">
-    <div class="stat"><div class="v">152</div><div class="l">компании-интегратора в России</div></div>
-    <div class="stat"><div class="v">21 000</div><div class="l">устройств в парке, +14% в год</div></div>
-    <div class="stat"><div class="v">0</div><div class="l">готовых отечественных платформ</div></div>
-  </div>
-  <div style="margin-top: 5px; font-size: 7.2pt" class="muted">
-    Источник: НАУРР, Минпромторг, 2026.
   </div>
 
   <div class="sp-6"></div>
-  <div class="strip">
+  <div class="band">
     <div>
-      <div class="cap">Признание экспертов</div>
-      <div class="headline">
-        Топ-36 среди 48&nbsp;478 идей форума «Сильные идеи для нового времени 2026».
+      <div class="eyebrow">Проблема</div>
+      <h2>Западные платформы ушли — замены не появилось</h2>
+      <p class="muted" style="margin-top: 2.5mm; font-size: 8.4pt; line-height: 1.5">
+        Каждая команда строит слой управления заново, тратя месяцы на то, что
+        должно быть готовой утилитой.
+      </p>
+      <div class="sp-3"></div>
+      <div class="stats">
+        <div class="stat"><div class="v">152</div><div class="l">интегратора в России</div></div>
+        <div class="stat"><div class="v">21 000</div><div class="l">устройств, +14% в год</div></div>
+        <div class="stat"><div class="v">0</div><div class="l">готовых платформ</div></div>
       </div>
-      <div class="sub">Оценка экспертов 3/3. Рекомендован к приоритетной поддержке.</div>
+      <div style="margin-top: 4px; font-size: 6.6pt" class="muted">
+        Источник: НАУРР, Минпромторг, 2026.
+      </div>
     </div>
-    <figure class="quote">
-      <blockquote>
-        «Один из наиболее проработанных и рыночно-ориентированных проектов среди
-        рассмотренных».
-      </blockquote>
-      <figcaption>Заключение эксперта форума</figcaption>
-    </figure>
+
+    <div>
+      <div class="eyebrow">Что даёт ваш контур</div>
+      <h2>Данные не покидают предприятие</h2>
+      <div class="sp-3"></div>
+      <div class="guarantees">
+        <div class="guarantee">
+          <b>152-ФЗ</b>
+          <span>Персональные данные обрабатываются на вашем оборудовании.</span>
+        </div>
+        <div class="guarantee">
+          <b>Ноль внешних запросов</b>
+          <span>Телеметрия, кадры и логи решений остаются внутри периметра.</span>
+        </div>
+        <div class="guarantee">
+          <b>Локальные модели</b>
+          <span>YandexGPT, GigaChat или модель, поднятая в вашем контуре.</span>
+        </div>
+        <div class="guarantee">
+          <b>Доступ и аудит</b>
+          <span>Роли, журнал действий, отзыв сессий и ключей API.</span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="sp-7"></div>
-  <div class="eyebrow">Как начать</div>
-  <div class="sp-3"></div>
-  <h2>Первое устройство — за один день</h2>
+  <div class="sp-6"></div>
+  <div class="eyebrow">Компоненты платформы</div>
+  <div class="components">
+    <div class="component"><div class="role">Реестр устройств</div><div class="name">Robot Registry</div></div>
+    <div class="component"><div class="role">Движок задач</div><div class="name">Task Engine</div></div>
+    <div class="component"><div class="role">Движок решений</div><div class="name">Decision Engine</div></div>
+    <div class="component"><div class="role">Память и обучение</div><div class="name">Memory Layer</div></div>
+    <div class="component"><div class="role">Телеметрия</div><div class="name">Telemetry</div></div>
+    <div class="component"><div class="role">Трансляция команд</div><div class="name">Action Translator</div></div>
+    <div class="component"><div class="role">Симулятор</div><div class="name">Simulator</div></div>
+    <div class="component"><div class="role">Интеграция</div><div class="name">SDK / API</div></div>
+  </div>
+  <div style="margin-top: 5px; font-size: 7.6pt" class="muted">
+    Устройство описывается данными, а не кодом: новый тип подключается без
+    изменений в ядре. Официальные SDK для Python, JavaScript, Go, C++ и C.
+  </div>
 
-  <div class="sp-4"></div>
+  <div class="sp-6"></div>
+  <div class="eyebrow">Как начать</div>
   <div class="steps">
     <div class="step">
       <div class="num">1</div>
       <div class="t">Развёртывание</div>
-      <p>Платформа поднимается на вашем сервере: бэкенд, база и панель управления. Внешние сервисы не требуются.</p>
+      <p>Бэкенд, база и панель управления на вашем сервере. Внешние сервисы не требуются.</p>
     </div>
     <div class="step">
       <div class="num">2</div>
       <div class="t">Подключение</div>
-      <p>Устройство регистрируется через SDK и объявляет свои команды. Если железа ещё нет — начните с симулятора.</p>
+      <p>Устройство регистрируется через SDK и объявляет свои команды. Нет железа — начните с симулятора.</p>
     </div>
     <div class="step">
       <div class="num">3</div>
       <div class="t">Работа</div>
-      <p>Устройство шлёт телеметрию и получает команды. Каждое решение сохраняется с обоснованием и задержкой.</p>
+      <p>Телеметрия идёт наверх, команды вниз. Каждое решение сохраняется с обоснованием.</p>
     </div>
   </div>
 
-  <div class="facts">
-    <span><b>5</b> языков с официальным SDK: Python, JavaScript, Go, C++, C</span>
-    <span><b>0</b> внешних запросов в закрытом контуре</span>
-  </div>
-
-  <div class="foot-rule">
-    <span>Mevratek · Платформа управления парком автономных устройств</span>
-    <span>1 / 2</span>
-  </div>
-</section>
-
-<!-- ============================ PAGE 2 ============================ -->
-<section class="page">
-  <div class="eyebrow">Компоненты</div>
-  <div class="sp-3"></div>
-  <h2>Из чего состоит платформа</h2>
-  <div style="margin-top: 4px; font-size: 8.6pt" class="muted">
-    Слоистая архитектура: логические сервисы внутри единого разворачиваемого бэкенда.
-  </div>
-
-  <div class="sp-4"></div>
-  <div class="grid-2">
-    <div class="card">
-      <div class="role">Реестр устройств</div><div class="name">Robot Registry</div>
-      <p>Регистрация устройств, тип, доступные команды и статус подключения. Устройство описывается данными — новый тип не требует изменений ядра.</p>
-    </div>
-    <div class="card">
-      <div class="role">Движок задач</div><div class="name">Task Engine</div>
-      <p>Постановка задач с приоритетом, очередь и выборка следующей задачи устройством. Сценарии от оператора и от самого устройства.</p>
-    </div>
-    <div class="card">
-      <div class="role">Движок решений</div><div class="name">Decision Engine</div>
-      <p>Собирает промпт из возможностей устройства, вызывает языковую модель и возвращает строгий JSON. Ядро платформы.</p>
-    </div>
-    <div class="card">
-      <div class="role">Память и обучение</div><div class="name">Memory Layer</div>
-      <p>История действий, задач и результатов исполнения. Недавняя обратная связь подмешивается в следующее решение.</p>
-    </div>
-    <div class="card">
-      <div class="role">Телеметрия</div><div class="name">Telemetry</div>
-      <p>Заряд, скорость, координаты и ошибки в реальном времени. Присутствие устройства отслеживается в БД — без внешних кэшей.</p>
-    </div>
-    <div class="card">
-      <div class="role">Трансляция команд</div><div class="name">Action Translator</div>
-      <p>Универсальные действия модели отображаются в конкретные команды устройства. Неподдерживаемое отсекается, а не выполняется наугад.</p>
-    </div>
-    <div class="card">
-      <div class="role">Симулятор</div><div class="name">Simulator</div>
-      <p>Виртуальное устройство с живой телеметрией. Интеграция и сценарии проверяются до появления физического железа.</p>
-    </div>
-    <div class="card">
-      <div class="role">Интеграция</div><div class="name">SDK / API</div>
-      <p>SDK для Python, JavaScript, Go, C++ и C плюс REST API. Устройство действует «как оно само» — идентификатор берётся из токена.</p>
-    </div>
-  </div>
-
-  <div class="sp-6"></div>
-  <div class="eyebrow">Требования и данные</div>
-  <div class="sp-3"></div>
-  <h2>Что гарантирует развёртывание в вашем контуре</h2>
-
-  <div class="sp-4"></div>
-  <div class="grid-4">
-    <div class="card surface">
-      <div class="name">152-ФЗ</div>
-      <p>Персональные данные обрабатываются внутри вашего контура, на вашем оборудовании.</p>
-    </div>
-    <div class="card surface">
-      <div class="name">Данные не уходят</div>
-      <p>Телеметрия, кадры, маршруты и логи решений остаются на серверах предприятия.</p>
-    </div>
-    <div class="card surface">
-      <div class="name">Локальные модели</div>
-      <p>YandexGPT, GigaChat или модель внутри контура. В изолированном режиме — ноль внешних запросов.</p>
-    </div>
-    <div class="card surface">
-      <div class="name">Доступ и аудит</div>
-      <p>Роли, журнал действий, отзыв сессий и ключей API, подтверждение операций кодом из письма.</p>
-    </div>
-  </div>
-
-  <div class="sp-6"></div>
-  <div class="eyebrow">Для кого</div>
-  <div class="sp-3"></div>
-  <div class="rows">
-    <div class="row">
-      <h3>Интеграторы робототехники</h3>
-      <p>Один слой управления переиспользуется на всех проектах. Запуск пилота за дни, а не месяцы.</p>
-    </div>
-    <div class="row">
-      <h3>Промышленные предприятия</h3>
-      <p>Единое управление разнородным парком, контроль над данными и инфраструктурой, отсутствие зависимости от вендора.</p>
-    </div>
-    <div class="row">
-      <h3>Стартапы и R&amp;D-команды</h3>
-      <p>Оркестрацию берут на себя движок решений и память — команда занимается железом и сценариями.</p>
-    </div>
-    <div class="row">
-      <h3>Университеты и лаборатории</h3>
-      <p>Симулятор и SDK дают быстрый цикл экспериментов и лёгкий переход от симулятора к реальному устройству.</p>
+  <div class="sp-5"></div>
+  <div class="strip">
+    <div class="cap">Признание<br />экспертов</div>
+    <div class="txt">
+      <b>Топ-36 среди 48&nbsp;478 идей</b> форума «Сильные идеи для нового времени
+      2026». Оценка экспертов 3/3, рекомендован к приоритетной поддержке.
+      «Один из наиболее проработанных и рыночно-ориентированных проектов среди
+      рассмотренных».
     </div>
   </div>
 
   <div class="contact">
     <div>
       <div class="eyebrow">Связаться</div>
-      <div style="margin-top: 5px" class="email">info@mevratek.ru</div>
+      <div class="email">info@mevratek.ru</div>
       <div class="lines">
-        mevratek.ru · Пилотные проекты, партнёрства, условия поставки.<br />
+        mevratek.ru · Пилотные проекты, партнёрства, условия поставки.
         Платформа поставляется по договору, оплата по счёту для юридических лиц.
       </div>
       <div class="legal">
@@ -540,11 +431,6 @@
       <!--QR-SITE-->
       <div class="cap">mevratek.ru</div>
     </div>
-  </div>
-
-  <div class="foot-rule">
-    <span>Mevratek · Платформа управления парком автономных устройств</span>
-    <span>2 / 2</span>
   </div>
 </section>
 

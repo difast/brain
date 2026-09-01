@@ -140,5 +140,5 @@ DAL — центральная идея платформы. Устройство
 - Документация: https://mevratek.ru/documentation
 - Блог: https://mevratek.ru/blog
 - Материалы: https://mevratek.ru/materials
-- Обзор платформы (PDF, 2 страницы A4): https://mevratek.ru/mevratek-platform.pdf
+- Обзор платформы (PDF, 1 страница A4): https://mevratek.ru/mevratek-platform.pdf
 - Контакты: https://mevratek.ru/contacts

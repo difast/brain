@@ -13,13 +13,13 @@
 - [On-Premise](https://mevratek.ru/on-premise): развёртывание в закрытом контуре без выхода данных наружу.
 - [Для кого](https://mevratek.ru/for-who): сценарии и типы заказчиков.
 - [О проекте](https://mevratek.ru/about): команда, признание, статус.
-- [Материалы](https://mevratek.ru/materials): обзор платформы на двух страницах в PDF.
+- [Материалы](https://mevratek.ru/materials): буклет о платформе на одной странице A4 в PDF.
 - [Контакты](https://mevratek.ru/contacts): подключение и пилот.
 
 ## Документация и материалы
 - [Документация платформы](https://mevratek.ru/documentation): архитектура, DAL, эндпоинты API, форматы, SDK и развёртывание.
 - [Блог](https://mevratek.ru/blog): статьи об архитектуре, российских LLM в робототехнике и on-premise.
-- [Обзор платформы, PDF](https://mevratek.ru/mevratek-platform.pdf): две страницы A4 — задача, архитектура, компоненты, гарантии контура.
+- [Обзор платформы, PDF](https://mevratek.ru/mevratek-platform.pdf): одна страница A4 — задача, архитектура, компоненты, гарантии контура.
 
 ## Для ИИ
 - [Полное описание](https://mevratek.ru/llms-full.txt): подробная структурированная справка по платформе.
