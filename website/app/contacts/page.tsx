@@ -59,8 +59,13 @@ export default function ContactsPage() {
           intro="Ответим по существу: предложим сценарий, оценим контур развёртывания и сроки пилота, поможем с интеграцией через SDK."
         />
 
+        {/* On a phone the columns stack, and the form used to land after four
+            channel blocks, the email and the QR card — six screens of scrolling
+            before the only action this page exists for. The order flips below
+            lg so the form comes first; on wide screens the reading column is
+            still on the left where it belongs. */}
         <div className="mt-12 grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
-          <div className="space-y-8">
+          <div className="order-2 space-y-8 lg:order-1">
             {CHANNELS.map((c) => (
               <div key={c.title} className="border-t border-line pt-5">
                 <h3 className="text-base font-semibold text-ink">{c.title}</h3>
@@ -111,7 +116,9 @@ export default function ContactsPage() {
             </div>
           </div>
 
-          <ContactForm />
+          <div className="order-1 lg:order-2">
+            <ContactForm />
+          </div>
         </div>
       </Container>
     </Section>

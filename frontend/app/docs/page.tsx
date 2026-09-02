@@ -60,7 +60,7 @@ const EN: Docs = {
   },
   overview: {
     title: "Overview",
-    p1: "Mevratek is a cloud platform that acts as the brain for any fleet of devices. Devices are thin clients: they stream camera frames, telemetry and their current task, and the cloud returns structured action commands. All decision-making runs in the cloud via the AI Decision Engine (supports YandexGPT, GigaChat, Claude and local models).",
+    p1: "Mevratek is the brain for any fleet of devices, deployed inside your own perimeter. Devices are thin clients: they stream camera frames, telemetry and their current task, and the platform returns structured action commands. Decision-making is moved off the device onto the platform server and runs through the AI Decision Engine (supports YandexGPT, GigaChat, Claude and local models).",
     baseUrl: "Base API URL:",
     interactive: "Interactive API:",
   },
@@ -121,7 +121,7 @@ const EN: Docs = {
   },
   dal: {
     title: "Device Abstraction Layer (DAL)",
-    p1: "The DAL lets the cloud control any device through one protocol. The LLM never emits hardware commands — it emits universal actions, and the platform translates them into each device's own low-level commands based on its declared capabilities. New device types plug in with no changes to the core.",
+    p1: "The DAL lets the platform control any device through one protocol. The LLM never emits hardware commands — it emits universal actions, and the platform translates them into each device's own low-level commands based on its declared capabilities. New device types plug in with no changes to the core.",
   },
   universal: {
     title: "Universal Actions",
@@ -235,7 +235,7 @@ const RU: Docs = {
   },
   overview: {
     title: "Обзор",
-    p1: "Mevratek — облачная платформа, которая выступает «мозгом» для любого парка устройств. Устройства — тонкие клиенты: они передают кадры с камеры, телеметрию и текущую задачу, а облако возвращает структурированные команды действий. Всё принятие решений выполняется в облаке через AI Decision Engine (поддержка YandexGPT, GigaChat, Claude и локальных моделей).",
+    p1: "Mevratek — «мозг» для любого парка устройств, разворачиваемый внутри вашего контура. Устройства — тонкие клиенты: они передают кадры с камеры, телеметрию и текущую задачу, а платформа возвращает структурированные команды действий. Принятие решений вынесено с устройства на сервер платформы и выполняется через AI Decision Engine (поддержка YandexGPT, GigaChat, Claude и локальных моделей).",
     baseUrl: "Базовый URL API:",
     interactive: "Интерактивный API:",
   },
@@ -296,7 +296,7 @@ const RU: Docs = {
   },
   dal: {
     title: "Слой абстракции устройств (DAL)",
-    p1: "DAL позволяет облаку управлять любым устройством через единый протокол. LLM никогда не выдаёт аппаратные команды — она выдаёт универсальные действия, а платформа транслирует их в собственные низкоуровневые команды устройства на основе его capabilities. Новые типы устройств подключаются без изменения ядра.",
+    p1: "DAL позволяет платформе управлять любым устройством через единый протокол. LLM никогда не выдаёт аппаратные команды — она выдаёт универсальные действия, а платформа транслирует их в собственные низкоуровневые команды устройства на основе его capabilities. Новые типы устройств подключаются без изменения ядра.",
   },
   universal: {
     title: "Универсальные действия",

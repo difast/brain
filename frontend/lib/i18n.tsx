@@ -287,7 +287,7 @@ const EN: Dict = {
   "banner.offline": "No connection to the API — data may be out of date",
   // robots
   "robots.title": "Device Fleet",
-  "robots.sub": "Connected devices and their live status. Decisions are made in the cloud.",
+  "robots.sub": "Connected devices and their live status. Decisions are made by the platform inside your perimeter.",
   "robots.total": "Total devices",
   "robots.online": "Online",
   "robots.types": "Types",
@@ -832,7 +832,7 @@ const RU: Dict = {
   "toast.renamed": "Имя сохранено",
   "banner.offline": "Нет связи с API — данные могут быть неактуальны",
   "robots.title": "Парк устройств",
-  "robots.sub": "Подключённые устройства и их статус в реальном времени. Решения принимаются в облаке.",
+  "robots.sub": "Подключённые устройства и их статус в реальном времени. Решения принимает платформа внутри вашего контура.",
   "robots.total": "Всего устройств",
   "robots.online": "Онлайн",
   "robots.types": "Типов",

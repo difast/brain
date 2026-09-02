@@ -22,6 +22,9 @@ export default function TasksPage() {
   const tasks = data?.items ?? [];
   const total = data?.total ?? 0;
   const robotList = robots.data?.items ?? [];
+  // The device list is already here for the assignment form; reuse it so the
+  // queue names devices instead of showing a slice of a hash.
+  const robotNames = new Map(robotList.map((r) => [r.id, r.name]));
 
   const [robotId, setRobotId] = useState("");
   const [description, setDescription] = useState("");
@@ -100,7 +103,7 @@ export default function TasksPage() {
       <div className="panel">
         <h2>{t("tasks.queue")}</h2>
         <div className="table-scroll">
-          <table>
+          <table className="cards-table">
             <thead>
               <tr>
                 <th>{t("tasks.priority")}</th>
@@ -115,18 +118,26 @@ export default function TasksPage() {
               {loading && tasks.length === 0 && <SkeletonRows cols={6} />}
               {tasks.map((tk) => (
                 <tr key={tk.id}>
-                  <td className="mono">{tk.priority}</td>
-                  <td>{tk.description}</td>
-                  <td>
-                    <Link href={`/robots/${tk.robot_id}`} className="mono">
-                      {tk.robot_id.slice(0, 8)}…
+                  <td className="mono" data-label={t("tasks.priority")}>
+                    {tk.priority}
+                  </td>
+                  <td data-label={t("tasks.description")}>{tk.description}</td>
+                  <td data-label={t("common.robot")}>
+                    <Link href={`/robots/${tk.robot_id}`}>
+                      {robotNames.get(tk.robot_id) ?? (
+                        <span className="mono">{tk.robot_id.slice(0, 8)}…</span>
+                      )}
                     </Link>
                   </td>
-                  <td>
+                  <td data-label={t("common.status")}>
                     <span className="chip">{tk.status}</span>
                   </td>
-                  <td className="muted">{tk.source}</td>
-                  <td className="muted">{timeAgo(tk.updated_at)}</td>
+                  <td className="muted" data-label={t("tasks.source")}>
+                    {tk.source}
+                  </td>
+                  <td className="muted" data-label={t("common.updated")}>
+                    {timeAgo(tk.updated_at)}
+                  </td>
                 </tr>
               ))}
             </tbody>

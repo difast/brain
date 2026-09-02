@@ -45,6 +45,10 @@ export default function LogsPage() {
   const logs = data?.items ?? [];
   const total = data?.total ?? 0;
   const robotList = robots.data?.items ?? [];
+  // The log carries a robot_id and nothing else, but the device list is
+  // already fetched for the filter above — so the column can show a name
+  // instead of eight characters of a hash nobody can act on.
+  const robotNames = new Map(robotList.map((r) => [r.id, r.name]));
 
   // Chronological (oldest→newest) series for the sparklines.
   const chrono = [...logs].reverse();
@@ -106,7 +110,7 @@ export default function LogsPage() {
 
       <div className="panel">
         <div className="table-scroll">
-          <table>
+          <table className="cards-table">
             <thead>
               <tr>
                 <th>{t("common.when")}</th>
@@ -123,15 +127,21 @@ export default function LogsPage() {
               {loading && logs.length === 0 && <SkeletonRows cols={8} />}
               {logs.map((d) => (
                 <tr key={d.id}>
-                  <td className="muted" style={{ whiteSpace: "nowrap" }}>
+                  <td
+                    className="muted"
+                    data-label={t("common.when")}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
                     {timeAgo(d.created_at)}
                   </td>
-                  <td>
-                    <Link href={`/robots/${d.robot_id}`} className="mono">
-                      {d.robot_id.slice(0, 8)}…
+                  <td data-label={t("common.robot")}>
+                    <Link href={`/robots/${d.robot_id}`}>
+                      {robotNames.get(d.robot_id) ?? (
+                        <span className="mono">{d.robot_id.slice(0, 8)}…</span>
+                      )}
                     </Link>
                   </td>
-                  <td style={{ maxWidth: 320 }}>
+                  <td data-label={t("logs.goalThought")} style={{ maxWidth: 320 }}>
                     <div>{d.goal}</div>
                     {d.thought && (
                       <div className="muted" style={{ fontSize: 12 }}>
@@ -139,19 +149,19 @@ export default function LogsPage() {
                       </div>
                     )}
                   </td>
-                  <td>
+                  <td data-label={t("logs.actions")}>
                     <Actions actions={d.actions} />
                   </td>
-                  <td style={{ minWidth: 110 }}>
+                  <td data-label={t("logs.confidence")} style={{ minWidth: 110 }}>
                     <Confidence value={d.confidence} />
                   </td>
-                  <td>
+                  <td data-label={t("logs.provider")}>
                     <span className="chip">{d.provider ?? "—"}</span>
                   </td>
-                  <td>
+                  <td data-label={t("logs.model")}>
                     <span className="chip">{d.model ?? "—"}</span>
                   </td>
-                  <td className="mono muted">
+                  <td className="mono muted" data-label={t("logs.latency")}>
                     {d.latency_ms != null ? `${d.latency_ms}ms` : "—"}
                   </td>
                 </tr>

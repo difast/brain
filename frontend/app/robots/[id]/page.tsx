@@ -298,7 +298,7 @@ export default function RobotDetail({
 
           <div className="panel" style={{ marginTop: 16 }}>
             <h2>{t("rd.tasks")}</h2>
-            <table>
+            <table className="cards-table">
               <thead>
                 <tr>
                   <th>{t("tasks.description")}</th>
@@ -309,11 +309,13 @@ export default function RobotDetail({
               <tbody>
                 {robotTasks.map((tk) => (
                   <tr key={tk.id}>
-                    <td>{tk.description}</td>
-                    <td>
+                    <td data-label={t("tasks.description")}>{tk.description}</td>
+                    <td data-label={t("common.status")}>
                       <span className="chip">{tk.status}</span>
                     </td>
-                    <td className="muted">{timeAgo(tk.updated_at)}</td>
+                    <td className="muted" data-label={t("common.updated")}>
+                      {timeAgo(tk.updated_at)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -342,7 +344,7 @@ export default function RobotDetail({
                 </div>
               )}
             </div>
-            <table style={{ marginTop: 12 }}>
+            <table className="cards-table" style={{ marginTop: 12 }}>
               <thead>
                 <tr>
                   <th>{t("common.when")}</th>
@@ -355,10 +357,14 @@ export default function RobotDetail({
               <tbody>
                 {decisions.map((d) => (
                   <tr key={d.id}>
-                    <td className="muted" style={{ whiteSpace: "nowrap" }}>
+                    <td
+                      className="muted"
+                      data-label={t("common.when")}
+                      style={{ whiteSpace: "nowrap" }}
+                    >
                       {timeAgo(d.created_at)}
                     </td>
-                    <td>
+                    <td data-label={t("rd.goal")}>
                       <div>{d.goal}</div>
                       {d.thought && (
                         <div className="muted" style={{ fontSize: 12 }}>
@@ -366,13 +372,15 @@ export default function RobotDetail({
                         </div>
                       )}
                     </td>
-                    <td>
+                    <td data-label={t("logs.actions")}>
                       <Actions actions={d.actions} />
                     </td>
-                    <td style={{ minWidth: 110 }}>
+                    <td data-label={t("logs.confidence")} style={{ minWidth: 110 }}>
                       <Confidence value={d.confidence} />
                     </td>
-                    <td className="mono muted">{d.frame_url ? "✓" : "—"}</td>
+                    <td className="mono muted" data-label={t("rd.frame")}>
+                      {d.frame_url ? "✓" : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -390,7 +398,7 @@ export default function RobotDetail({
 
           <div className="panel" style={{ marginTop: 16 }}>
             <h2>{t("rd.feedback")}</h2>
-            <table>
+            <table className="cards-table">
               <thead>
                 <tr>
                   <th>{t("common.when")}</th>
@@ -403,10 +411,14 @@ export default function RobotDetail({
               <tbody>
                 {execs.map((e) => (
                   <tr key={e.id}>
-                    <td className="muted" style={{ whiteSpace: "nowrap" }}>
+                    <td
+                      className="muted"
+                      data-label={t("common.when")}
+                      style={{ whiteSpace: "nowrap" }}
+                    >
                       {timeAgo(e.created_at)}
                     </td>
-                    <td>
+                    <td data-label={t("rd.action")}>
                       <div className="mono">
                         {e.action_type ?? e.action_id.slice(0, 8)}
                       </div>
@@ -416,7 +428,7 @@ export default function RobotDetail({
                         </div>
                       )}
                     </td>
-                    <td>
+                    <td data-label={t("common.status")}>
                       <span
                         className={`badge ${e.status === "success" ? "online" : "error"}`}
                       >
@@ -424,10 +436,14 @@ export default function RobotDetail({
                         {t(`common.${e.status}`)}
                       </span>
                     </td>
-                    <td className="mono muted">
+                    <td className="mono muted" data-label={t("rd.duration")}>
                       {e.duration_ms != null ? `${e.duration_ms}ms` : "—"}
                     </td>
-                    <td className="mono" style={{ color: "var(--error)" }}>
+                    <td
+                      className="mono"
+                      data-label={t("rd.errorCol")}
+                      style={{ color: "var(--error)" }}
+                    >
                       {e.error ?? ""}
                     </td>
                   </tr>

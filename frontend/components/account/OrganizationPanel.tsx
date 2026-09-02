@@ -101,7 +101,10 @@ export function OrganizationPanel({
                   </button>
                 </div>
               ) : (
-                <div className="row" style={{ gap: 8, alignItems: "center" }}>
+                <div
+                  className="row"
+                  style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}
+                >
                   <span>{org.name}</span>
                   {canManage && (
                     <button
@@ -134,7 +137,11 @@ export function OrganizationPanel({
           </tr>
           <tr>
             <th>{t("org.id")}</th>
-            <td className="mono muted">{org.id}</td>
+            {/* A 32-character hash with nothing to break on pushed the whole
+                page 58px wider than a phone screen. */}
+            <td className="mono muted" style={{ overflowWrap: "anywhere" }}>
+              {org.id}
+            </td>
           </tr>
         </tbody>
       </table>

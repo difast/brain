@@ -111,7 +111,7 @@ export default function ApiPage() {
 
       <div className="panel">
         <h2>{t("api.yourKeys")}</h2>
-        <table>
+        <table className="cards-table">
           <thead>
             <tr>
               <th>{t("api.name")}</th>
@@ -125,13 +125,17 @@ export default function ApiPage() {
           <tbody>
             {keys.map((k) => (
               <tr key={k.id}>
-                <td>{k.name}</td>
-                <td className="mono">{k.prefix}…</td>
-                <td className="muted">{timeAgo(k.created_at)}</td>
-                <td className="muted">
+                <td data-label={t("api.name")}>{k.name}</td>
+                <td className="mono" data-label={t("api.prefix")}>
+                  {k.prefix}…
+                </td>
+                <td className="muted" data-label={t("api.created")}>
+                  {timeAgo(k.created_at)}
+                </td>
+                <td className="muted" data-label={t("api.lastUsed")}>
                   {k.last_used_at ? timeAgo(k.last_used_at) : t("common.never")}
                 </td>
-                <td>
+                <td data-label={t("common.status")}>
                   <span className={`badge ${k.revoked ? "error" : "online"}`}>
                     <span className="dot" />
                     {k.revoked ? t("common.revoked") : t("common.active")}

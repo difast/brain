@@ -112,11 +112,13 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         version=__version__,
         description=(
-            "Mevratek — cloud platform for controlling any device through a "
-            "single protocol. Devices are thin clients; all decision-making "
-            "runs in the cloud via the AI Decision Engine (supports YandexGPT, "
-            "GigaChat, Claude and local models). Register a device, stream "
-            "frames + telemetry, and receive structured action commands."
+            "Mevratek — a platform for controlling any device through a single "
+            "protocol, deployed inside the customer's own perimeter. Devices "
+            "are thin clients; decision-making is moved off the device onto "
+            "the platform server and runs through the AI Decision Engine "
+            "(supports YandexGPT, GigaChat, Claude and local models). Register "
+            "a device, stream frames + telemetry, and receive structured "
+            "action commands."
         ),
         lifespan=lifespan,
         docs_url="/docs",

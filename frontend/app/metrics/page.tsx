@@ -204,7 +204,7 @@ export default function MetricsPage() {
       <div className="panel" style={{ marginTop: 16 }}>
         <h2>{t("metrics.byDevice")}</h2>
         <div className="table-scroll">
-          <table>
+          <table className="cards-table">
             <thead>
               <tr>
                 <th>{t("common.robot")}</th>
@@ -220,11 +220,11 @@ export default function MetricsPage() {
               {devices.loading && !devices.data && <SkeletonRows cols={7} />}
               {(devices.data?.items ?? []).map((d) => (
                 <tr key={d.robot_id}>
-                  <td>
+                  <td data-label={t("common.robot")}>
                     <Link href={`/robots/${d.robot_id}`}>{d.name}</Link>
                     <div className="mono muted">{d.robot_type}</div>
                   </td>
-                  <td>
+                  <td data-label={t("common.status")}>
                     <StatusBadge
                       status={
                         d.paused
@@ -235,22 +235,27 @@ export default function MetricsPage() {
                       }
                     />
                   </td>
-                  <td className="mono">{d.decisions}</td>
-                  <td style={{ minWidth: 110 }}>
+                  <td className="mono" data-label={t("metrics.decisions")}>
+                    {d.decisions}
+                  </td>
+                  <td data-label={t("logs.confidence")} style={{ minWidth: 110 }}>
                     {d.avg_confidence == null ? (
                       "—"
                     ) : (
                       <Confidence value={d.avg_confidence} />
                     )}
                   </td>
-                  <td className="mono muted">{num(d.avg_latency_ms, "ms")}</td>
+                  <td className="mono muted" data-label={t("metrics.avgLatency")}>
+                    {num(d.avg_latency_ms, "ms")}
+                  </td>
                   <td
                     className="mono"
+                    data-label={t("metrics.failures")}
                     style={{ color: d.failed_executions > 0 ? "var(--error)" : undefined }}
                   >
                     {d.failed_executions}
                   </td>
-                  <td className="muted">
+                  <td className="muted" data-label={t("metrics.lastSeen")}>
                     {d.last_seen_at ? timeAgo(d.last_seen_at) : t("common.never")}
                   </td>
                 </tr>
@@ -276,7 +281,7 @@ export default function MetricsPage() {
           {t("metrics.byModelHint")}
         </p>
         <div className="table-scroll">
-          <table>
+          <table className="cards-table">
             <thead>
               <tr>
                 <th>{t("logs.provider")}</th>
@@ -290,7 +295,7 @@ export default function MetricsPage() {
               {models.loading && !models.data && <SkeletonRows cols={5} />}
               {(models.data?.items ?? []).map((m, i) => (
                 <tr key={`${m.provider}-${m.model}-${i}`}>
-                  <td>
+                  <td data-label={t("logs.provider")}>
                     <span
                       className="chip"
                       style={
@@ -307,10 +312,16 @@ export default function MetricsPage() {
                       </div>
                     )}
                   </td>
-                  <td className="mono muted">{m.model ?? "—"}</td>
-                  <td className="mono">{m.decisions}</td>
-                  <td className="mono muted">{num(m.avg_latency_ms, "ms")}</td>
-                  <td style={{ minWidth: 110 }}>
+                  <td className="mono muted" data-label={t("logs.model")}>
+                    {m.model ?? "—"}
+                  </td>
+                  <td className="mono" data-label={t("metrics.decisions")}>
+                    {m.decisions}
+                  </td>
+                  <td className="mono muted" data-label={t("metrics.avgLatency")}>
+                    {num(m.avg_latency_ms, "ms")}
+                  </td>
+                  <td data-label={t("logs.confidence")} style={{ minWidth: 110 }}>
                     {m.avg_confidence == null ? (
                       "—"
                     ) : (
@@ -340,7 +351,7 @@ export default function MetricsPage() {
           {t("metrics.failuresHint")}
         </p>
         <div className="table-scroll">
-          <table>
+          <table className="cards-table">
             <thead>
               <tr>
                 <th>{t("common.when")}</th>
@@ -354,17 +365,25 @@ export default function MetricsPage() {
               {failures.loading && !failures.data && <SkeletonRows cols={5} />}
               {(failures.data?.items ?? []).map((f) => (
                 <tr key={f.id}>
-                  <td className="muted" style={{ whiteSpace: "nowrap" }}>
+                  <td
+                    className="muted"
+                    data-label={t("common.when")}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
                     {timeAgo(f.created_at)}
                   </td>
-                  <td>
+                  <td data-label={t("common.robot")}>
                     <Link href={`/robots/${f.robot_id}`}>{f.robot_name}</Link>
                   </td>
-                  <td>
+                  <td data-label={t("metrics.action")}>
                     <span className="chip">{f.action_type ?? "—"}</span>
                   </td>
-                  <td style={{ maxWidth: 380 }}>{f.error ?? "—"}</td>
-                  <td className="mono muted">{num(f.duration_ms, "ms")}</td>
+                  <td data-label={t("metrics.error")} style={{ maxWidth: 380 }}>
+                    {f.error ?? "—"}
+                  </td>
+                  <td className="mono muted" data-label={t("logs.latency")}>
+                    {num(f.duration_ms, "ms")}
+                  </td>
                 </tr>
               ))}
             </tbody>

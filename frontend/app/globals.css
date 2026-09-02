@@ -47,7 +47,7 @@ a:hover {
 .nav-bar {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   max-width: 1200px;
   margin: 0 auto;
   padding: 12px 28px;
@@ -63,7 +63,11 @@ a:hover {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
+  /* A flex child refuses to shrink below its content unless told to, and every
+     link here is nowrap — without this the row silently pushes past the bar's
+     own max-width and the logout button ends up off-screen. */
+  min-width: 0;
 }
 .nav-sep {
   width: 1px;
@@ -146,13 +150,20 @@ a:hover {
   margin: 8px 4px;
 }
 
-@media (max-width: 860px) {
+/* Eleven items in one row need about 1125px; the bar's own box gives 1144 at
+   its widest. Below that the burger takes over — measured, not guessed, and
+   the number is why 860 was wrong: between 861 and 1200 the full nav was shown
+   and clipped, which covers 1024 and the 1280 laptops everyone brings. */
+@media (max-width: 1199px) {
   .nav-links {
     display: none;
   }
   .nav-burger {
     display: inline-flex;
   }
+}
+
+@media (max-width: 860px) {
   .nav-bar {
     padding: 12px 20px;
   }
@@ -606,6 +617,22 @@ label {
   margin-left: auto;
   flex-wrap: wrap;
 }
+@media (max-width: 960px) {
+  /* Squeezed to their content these read as stray labels rather than charts.
+     Side by side at full width they read as what they are. */
+  .spark-cards {
+    margin-left: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .spark-card {
+    min-width: 0;
+  }
+  .spark-card svg {
+    width: 100%;
+  }
+}
 .spark-card {
   border: 1px solid var(--border);
   border-radius: 9px;
@@ -648,7 +675,12 @@ label {
 }
 
 /* --- Responsive card table (Devices) --- */
-@media (max-width: 720px) {
+/* Cards, not tables, up to 960. Measured: the decision log needs 842px before
+   it starts scrolling sideways, and the device list overflowed the page
+   outright between 721 and 820. A tablet in portrait is 768 or 820, so the old
+   720 threshold left exactly the sizes people actually use showing a clipped
+   table. */
+@media (max-width: 960px) {
   .cards-table,
   .cards-table thead,
   .cards-table tbody,
@@ -688,8 +720,12 @@ label {
     letter-spacing: 0.5px;
     text-align: left;
   }
-  .cards-table td[data-label=""]::before {
-    content: "";
+  /* A cell with no label — the skeleton rows, or an actions column — should
+     not reserve space for one, or the value ends up pushed to the right of an
+     invisible gap. */
+  .cards-table td[data-label=""]::before,
+  .cards-table td:not([data-label])::before {
+    display: none;
   }
 }
 
