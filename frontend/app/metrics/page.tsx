@@ -23,6 +23,40 @@ function percent(value: number | null | undefined): string {
   return value == null ? "—" : `${Math.round(value * 100)}%`;
 }
 
+/**
+ * A KPI whose value can legitimately be undefined.
+ *
+ * An average over no decisions, or a success rate over no executions, is not
+ * zero — it does not exist, and showing 0% would claim every command failed.
+ * So the dash stays, but it reads as absence rather than as a value: muted,
+ * and carrying the reason on hover instead of leaving the reader to guess
+ * whether something is broken.
+ */
+function Value({
+  text,
+  missing,
+  hint,
+  color,
+}: {
+  text: string;
+  missing: boolean;
+  hint: string;
+  color?: string;
+}) {
+  if (missing) {
+    return (
+      <div className="kpi-value kpi-value-empty" title={hint}>
+        {text}
+      </div>
+    );
+  }
+  return (
+    <div className="kpi-value" style={color ? { color } : undefined}>
+      {text}
+    </div>
+  );
+}
+
 export default function MetricsPage() {
   const { t, lang } = useT();
   const [window, setWindow] = useState<MetricsWindow>("24h");
@@ -116,11 +150,19 @@ export default function MetricsPage() {
         </div>
         <div className="kpi">
           <div className="kpi-label">{t("metrics.latencyP50")}</div>
-          <div className="kpi-value">{num(s?.latency_p50_ms, " ms")}</div>
+          <Value
+            text={num(s?.latency_p50_ms, " ms")}
+            missing={s?.latency_p50_ms == null}
+            hint={t("metrics.noDecisionsYet")}
+          />
         </div>
         <div className="kpi">
           <div className="kpi-label">{t("metrics.latencyP95")}</div>
-          <div className="kpi-value">{num(s?.latency_p95_ms, " ms")}</div>
+          <Value
+            text={num(s?.latency_p95_ms, " ms")}
+            missing={s?.latency_p95_ms == null}
+            hint={t("metrics.noDecisionsYet")}
+          />
         </div>
       </div>
 
@@ -135,25 +177,24 @@ export default function MetricsPage() {
       <div className="kpi-strip" style={{ marginTop: 12 }}>
         <div className="kpi">
           <div className="kpi-label">{t("metrics.confidence")}</div>
-          <div className="kpi-value">
-            {s?.avg_confidence == null
-              ? "—"
-              : `${Math.round(s.avg_confidence * 100)}%`}
-          </div>
+          <Value
+            text={percent(s?.avg_confidence)}
+            missing={s?.avg_confidence == null}
+            hint={t("metrics.noDecisionsYet")}
+          />
         </div>
         <div className="kpi">
           <div className="kpi-label">{t("metrics.execSuccess")}</div>
-          <div
-            className="kpi-value"
-            style={{
-              color:
-                s?.execution_success_rate != null && s.execution_success_rate < 0.9
-                  ? "var(--error)"
-                  : undefined,
-            }}
-          >
-            {percent(s?.execution_success_rate)}
-          </div>
+          <Value
+            text={percent(s?.execution_success_rate)}
+            missing={s?.execution_success_rate == null}
+            hint={t("metrics.noExecutionsYet")}
+            color={
+              s?.execution_success_rate != null && s.execution_success_rate < 0.9
+                ? "var(--error)"
+                : undefined
+            }
+          />
         </div>
         <div className="kpi">
           <div className="kpi-label">{t("metrics.devicesOnline")}</div>

@@ -466,7 +466,7 @@ const EN: Dict = {
   // metrics page
   "metrics.title": "Metrics",
   "metrics.sub":
-    "Fleet health: how much the brain decided, how fast, and what the devices could not carry out.",
+    "Fleet health: how much the engine decided, how fast, and what the devices could not carry out.",
   "metrics.window.24h": "24 hours",
   "metrics.window.7d": "7 days",
   "metrics.window.30d": "30 days",
@@ -481,6 +481,8 @@ const EN: Dict = {
   "metrics.latencyP95": "Latency, p95",
   "metrics.confidence": "Average confidence",
   "metrics.execSuccess": "Commands carried out",
+  "metrics.noDecisionsYet": "No decisions in this window — there is nothing to average yet.",
+  "metrics.noExecutionsYet": "No devices reported carrying out a command in this window, so there is no rate to compute.",
   "metrics.devicesOnline": "Online",
   "metrics.devicesError": "In error",
   "metrics.volume": "Decision volume",
@@ -896,7 +898,7 @@ const RU: Dict = {
   "rd.feedbackEmpty": "Пока нет обратной связи по выполнению.",
   "rd.forDecision": "по решению",
   "sim.title": "Симулятор устройства",
-  "sim.sub": "Работает как тонкий клиент: зарегистрируйтесь и запросите решение у облачного мозга. (Если AI-движок не настроен — вернётся детерминированное демо-решение.)",
+  "sim.sub": "Работает как тонкий клиент: зарегистрируйтесь и запросите решение у AI-движка. (Если движок не настроен — вернётся детерминированное демо-решение.)",
   "sim.register": "1 · Регистрация устройства",
   "sim.name": "Имя",
   "sim.type": "Тип устройства",
@@ -1006,7 +1008,7 @@ const RU: Dict = {
   // страница метрик
   "metrics.title": "Метрики",
   "metrics.sub":
-    "Состояние парка: сколько решений принял мозг, как быстро и что устройства не смогли выполнить.",
+    "Состояние парка: сколько решений принял движок, как быстро и что устройства не смогли выполнить.",
   "metrics.window.24h": "24 часа",
   "metrics.window.7d": "7 дней",
   "metrics.window.30d": "30 дней",
@@ -1021,6 +1023,8 @@ const RU: Dict = {
   "metrics.latencyP95": "Задержка, p95",
   "metrics.confidence": "Средняя уверенность",
   "metrics.execSuccess": "Команд выполнено",
+  "metrics.noDecisionsYet": "За этот период решений не было — усреднять нечего.",
+  "metrics.noExecutionsYet": "Ни одно устройство не отчиталось об исполнении за период, поэтому доля не считается.",
   "metrics.devicesOnline": "Онлайн",
   "metrics.devicesError": "С ошибкой",
   "metrics.volume": "Поток решений",

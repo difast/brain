@@ -47,7 +47,10 @@ a:hover {
 .nav-bar {
   display: flex;
   align-items: center;
-  gap: 16px;
+  /* The bar's horizontal padding matches .container so the wordmark lines up
+     with the page heading below it; the room the row needs is therefore taken
+     out of the gaps between its own items, not off the edges. */
+  gap: 14px;
   max-width: 1200px;
   margin: 0 auto;
   padding: 12px 28px;
@@ -63,17 +66,18 @@ a:hover {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 14px;
-  /* A flex child refuses to shrink below its content unless told to, and every
-     link here is nowrap — without this the row silently pushes past the bar's
-     own max-width and the logout button ends up off-screen. */
-  min-width: 0;
+  gap: 11px;
+  /* Never compressed. Every link inside is nowrap, so letting this box shrink
+     does not shorten the row — it only lets the text spill out of the box and
+     land on top of whatever sits to its right, which is exactly what used to
+     happen to the account email. The right-hand group gives way instead: the
+     email there is ellipsised and can absorb the squeeze. */
+  flex: 0 0 auto;
 }
 .nav-sep {
   width: 1px;
   height: 18px;
   background: var(--border);
-  margin: 0 2px;
 }
 .nav-link {
   position: relative;
@@ -104,7 +108,9 @@ a:hover {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  /* The side that yields when the bar runs out of room — see .nav-links. */
+  min-width: 0;
 }
 .nav-burger {
   display: none;
@@ -570,6 +576,14 @@ label {
   font-weight: 700;
   line-height: 1.1;
 }
+/* A KPI with nothing to average yet. The dash has to read as "no data", not
+   as a value someone forgot to fill in, so it takes the muted ink and a
+   help cursor that hints there is a reason on hover. */
+.kpi .kpi-value-empty {
+  color: var(--muted);
+  font-weight: 600;
+  cursor: help;
+}
 
 /* --- Toolbar: search + filter chips + sort --- */
 .toolbar {
@@ -941,9 +955,15 @@ pre {
 .nav-user {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  min-width: 0;
 }
 .nav-user-email {
+  /* An address is arbitrarily long, so it is capped, ellipsised, and allowed
+     to fall below that cap — it is the one thing in the bar that can be cut
+     short without losing meaning. */
+  flex: 0 1 auto;
+  min-width: 0;
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
