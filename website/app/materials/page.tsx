@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ArrowIcon, Button, Container, Section, SectionHeading } from "@/components/ui";
+import { DownloadPdfButton } from "@/components/download-pdf-button";
 import { BreadcrumbJsonLd } from "@/components/schema";
 import { HANDOUT_URL, HandoutQr } from "@/components/qr";
 import { OG_IMAGE } from "@/app/layout";
@@ -61,15 +62,16 @@ export default function MaterialsPage() {
         <div className="mt-12 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <Button href={FILE}>
+              <DownloadPdfButton href={FILE} filename="mevratek-platform.pdf">
                 Скачать PDF <ArrowIcon />
-              </Button>
+              </DownloadPdfButton>
               <Button href="/contacts" variant="secondary">
                 Обсудить пилот
               </Button>
             </div>
             <p className="mt-4 text-sm text-muted">
-              PDF · 1 страница · A4 · на русском языке
+              PDF · 1 страница · A4 · на русском языке. Откроется в новой
+              вкладке и сохранится на устройство.
             </p>
 
             <div className="mt-10 space-y-6">

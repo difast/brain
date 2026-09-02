@@ -54,17 +54,16 @@ export function SectionHeading({
   );
 }
 
-export function Button({
-  href,
-  children,
-  variant = "primary",
+export type ButtonVariant = "primary" | "secondary" | "ghost";
+
+/**
+ * The button's classes, exported so a component that needs its own click
+ * handler can look identical without copying the strings.
+ */
+export function buttonClass(
+  variant: ButtonVariant = "primary",
   className = "",
-}: {
-  href: string;
-  children: ReactNode;
-  variant?: "primary" | "secondary" | "ghost";
-  className?: string;
-}) {
+): string {
   const base =
     "inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
   const styles = {
@@ -74,16 +73,31 @@ export function Button({
       "bg-white text-ink ring-1 ring-line hover:ring-accent/40 hover:bg-surface",
     ghost: "text-ink hover:text-accent",
   }[variant];
+  return `${base} ${styles} ${className}`;
+}
+
+export function Button({
+  href,
+  children,
+  variant = "primary",
+  className = "",
+}: {
+  href: string;
+  children: ReactNode;
+  variant?: ButtonVariant;
+  className?: string;
+}) {
+  const styles = buttonClass(variant, className);
   const external = href.startsWith("http") || href.startsWith("mailto:");
   if (external) {
     return (
-      <a href={href} className={`${base} ${styles} ${className}`}>
+      <a href={href} className={styles}>
         {children}
       </a>
     );
   }
   return (
-    <Link href={href} className={`${base} ${styles} ${className}`}>
+    <Link href={href} className={styles}>
       {children}
     </Link>
   );
