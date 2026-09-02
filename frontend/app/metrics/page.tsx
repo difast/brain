@@ -7,7 +7,7 @@ import {
   type MetricsWindow,
 } from "@/lib/api";
 import { usePoll } from "@/lib/usePoll";
-import { Confidence, Pager, Sparkline, StatusBadge, timeAgo } from "@/components/ui";
+import { Confidence, Pager, StatusBadge, TimeBars, timeAgo } from "@/components/ui";
 import { EmptyState, SkeletonRows } from "@/components/feedback";
 import { useT } from "@/lib/i18n";
 
@@ -24,7 +24,7 @@ function percent(value: number | null | undefined): string {
 }
 
 export default function MetricsPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [window, setWindow] = useState<MetricsWindow>("24h");
 
   // Independent offsets: paging one table must not reset the others.
@@ -50,7 +50,19 @@ export default function MetricsPage() {
   );
 
   const s = summary.data;
-  const series = (s?.series ?? []).map((p) => p.decisions);
+  const series = (s?.series ?? []).map((p) => ({
+    start: p.start,
+    value: p.decisions,
+  }));
+
+  // Hourly buckets want a clock; daily buckets want a date. Formatted in the
+  // reader's own language rather than with a hand-rolled table.
+  const bucketLabel = (start: string) =>
+    new Date(start).toLocaleString(lang === "ru" ? "ru-RU" : "en-GB", {
+      ...(window === "24h"
+        ? { hour: "2-digit", minute: "2-digit" }
+        : { day: "numeric", month: "short" }),
+    });
 
   // The headline risk: decisions the model did not actually make.
   const fallbackShare = s ? s.fallback_rate : 0;
@@ -169,7 +181,14 @@ export default function MetricsPage() {
         <p className="muted" style={{ marginTop: -6 }}>
           {t(window === "24h" ? "metrics.volumeHourly" : "metrics.volumeDaily")}
         </p>
-        <Sparkline values={series} color="var(--accent)" />
+        <TimeBars
+          points={series}
+          label={`${t("metrics.volume")}: ${t(
+            window === "24h" ? "metrics.volumeHourly" : "metrics.volumeDaily",
+          )}`}
+          formatBucket={bucketLabel}
+          emptyLabel={t("metrics.volumeEmpty")}
+        />
       </div>
 
       {/* Tasks */}

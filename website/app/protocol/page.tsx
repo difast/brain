@@ -135,7 +135,9 @@ export default function ProtocolPage() {
               title="Строгий контракт вместо свободного текста"
               intro="Устройство объявляет свои возможности, шлёт состояние и телеметрию, а в ответ получает строго структурированный JSON: цель, уверенность и список команд с идентификаторами. Никакого свободного текста — только исполнимые действия."
             />
-            <div className="space-y-4">
+            {/* Same reason as the docs page: without min-w-0 the JSON
+                samples set the column width and the section overflows. */}
+            <div className="min-w-0 space-y-4">
               <div className="rounded-2xl border border-line bg-white p-5">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
                   1 · Возможности устройства
@@ -193,7 +195,7 @@ export default function ProtocolPage() {
               title="Подключение за один день"
               intro="На базе протокола — устанавливаемый SDK и REST API. Устройство подключается несколькими строками кода: регистрация → отправка состояния → получение команд → исполнение → обратная связь. Реальное устройство или симулятор — путь одинаковый."
             />
-            <div className="rounded-2xl border border-line bg-white p-6">
+            <div className="min-w-0 rounded-2xl border border-line bg-white p-6">
               <pre className="overflow-x-auto rounded-lg bg-surface px-4 py-3 font-mono text-xs leading-relaxed text-ink-soft">
 {`bot = BrainClient.register(API, api_key="cbk_...",
         name="rover-01", robot_type="rover", capabilities=[...])

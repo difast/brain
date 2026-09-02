@@ -373,7 +373,12 @@ export default function DocumentationPage() {
             </div>
           </nav>
 
-          <div className="max-w-3xl">
+          {/* min-w-0: a grid child refuses to shrink below its content by
+              default, so the widest code block or table here decided the
+              column's width and pushed the whole page 132px past a phone
+              screen — while the overflow-x-auto meant to catch it never
+              engaged, because the element was never constrained. */}
+          <div className="min-w-0 max-w-3xl">
             {SECTIONS.map((s) => (
               <section key={s.id} id={s.id} className="scroll-mt-24 pb-12">
                 <h2 className="text-2xl font-semibold text-ink">{s.title}</h2>

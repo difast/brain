@@ -648,6 +648,35 @@ label {
   margin-bottom: 2px;
 }
 
+/* --- Time-bucket bar chart (decision flow) --- */
+.timebars {
+  margin-top: 10px;
+  width: 100%;
+}
+.timebars svg {
+  display: block;
+}
+/* Hovering a bar dims the rest just enough to pick it out; the value itself
+   comes from the bar's own tooltip. */
+.timebars svg:hover rect {
+  opacity: 0.55;
+}
+.timebars svg rect:hover {
+  opacity: 1;
+}
+.timebars-x {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 2px;
+}
+.timebars-empty {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 18px 0 6px;
+}
+
 /* --- Pagination --- */
 .pager {
   display: flex;
