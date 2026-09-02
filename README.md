@@ -253,6 +253,28 @@ migrations on an upgrade.
 Full procedure, retention, the cron line and the restore drill:
 **[`ops/README.md`](ops/README.md)**.
 
+### Device agent
+
+`device/` is a real client that plays the part of a device: it runs on a
+laptop, talks to the backend over the network through the Python SDK, executes
+what the brain answers and reports how each command went.
+
+```bash
+cd device
+MEVRATEK_API_KEY=cbk_... python run.py --task "find the bottle" --camera webcam
+```
+
+It exists to answer a question nothing else can: **is the brain actually
+thinking?** With no provider configured the platform answers with a
+deterministic placeholder, the device keeps moving and the dashboard stays
+green — indistinguishable from working. The agent counts the share of
+decisions that came from a fallback and says it out loud at the end of a run.
+
+The hardware sits behind a two-method interface (`capabilities()`, `execute()`),
+so a real rover is a new file rather than a rewrite, and the loop, the identity
+handling and the console output stay as they are. Details in
+**[`device/README.md`](device/README.md)**.
+
 ### Monitoring
 
 `GET /metrics` serves the whole installation in Prometheus exposition format —

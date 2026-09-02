@@ -1,0 +1,6 @@
+# Агенту нужен только SDK, а SDK — только httpx.
+httpx>=0.27
+
+# Необязательное:
+#   opencv-python   веб-камера (--camera webcam)
+#   PyYAML          чтение config.yaml
