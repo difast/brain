@@ -70,6 +70,7 @@ export function TimeBars({
   points,
   label,
   formatBucket,
+  nowLabel,
   emptyLabel,
   height = 132,
 }: {
@@ -78,6 +79,18 @@ export function TimeBars({
   label: string;
   /** Bucket start -> axis text, e.g. "14:00" or "3 сен". */
   formatBucket: (start: string) => string;
+  /**
+   * What to call the right-hand end of the axis.
+   *
+   * The last bucket is the one still filling up, so its right edge is the
+   * present moment — and naming it that way is the only thing that makes the
+   * axis readable over a 24-hour window. Printing its *start* instead put
+   * "23:09" on the left and "22:09" on the right, which is correct to the
+   * minute (yesterday evening through to the last full hour) and still reads
+   * as time running backwards. The exact bucket time stays one hover away on
+   * every bar.
+   */
+  nowLabel: string;
   emptyLabel: string;
   height?: number;
 }) {
@@ -172,7 +185,7 @@ export function TimeBars({
           </svg>
           <div className="timebars-x" style={{ paddingLeft: PLOT_LEFT }}>
             <span>{formatBucket(points[0].start)}</span>
-            <span>{formatBucket(points[points.length - 1].start)}</span>
+            <span>{nowLabel}</span>
           </div>
         </>
       )}

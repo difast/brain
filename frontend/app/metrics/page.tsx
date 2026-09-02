@@ -228,6 +228,7 @@ export default function MetricsPage() {
             window === "24h" ? "metrics.volumeHourly" : "metrics.volumeDaily",
           )}`}
           formatBucket={bucketLabel}
+          nowLabel={t("metrics.axisNow")}
           emptyLabel={t("metrics.volumeEmpty")}
         />
       </div>
