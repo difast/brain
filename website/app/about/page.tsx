@@ -28,10 +28,7 @@ const TEAM = [
   {
     role: FOUNDER.role,
     name: FOUNDER.name,
-    detail:
-      "Серийный предприниматель. Основал Mevratek, Panteon Chess, OneOnOne " +
-      "и онлайн-школу программирования «ТехФабрика». Отвечает за продукт " +
-      "и развитие.",
+    detail: "Отвечает за продукт и развитие.",
     links: [
       { label: "Telegram", href: FOUNDER.social.telegram },
       { label: "YouTube", href: FOUNDER.social.youtube },
@@ -177,7 +174,7 @@ export default function AboutPage() {
                   {m.detail}
                 </p>
                 {m.links && (
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                  <div className="mt-3 flex flex-col items-start gap-1">
                     {m.links.map((link) => (
                       <a
                         key={link.href}
