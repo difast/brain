@@ -129,6 +129,16 @@ DAL — центральная идея платформы. Устройство
 - Email: info@mevratek.ru
 - Сайт: https://mevratek.ru
 
+## Основатель
+
+- Имя: Дмитрий Пятаков
+- Транслитерация: Dmitry Pyatakov
+- Роль: основатель и руководитель продукта Mevratek
+- Другие проекты: Panteon Chess (шахматный проект), онлайн-школа программирования «ТехФабрика»
+- Telegram: https://t.me/pyatakov_official
+- YouTube: https://youtube.com/@pyatakov.official
+- Instagram: https://instagram.com/pyatakov.official
+
 ## Ссылки
 
 - Главная: https://mevratek.ru/

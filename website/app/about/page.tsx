@@ -6,7 +6,8 @@ import {
   SectionHeading,
   ArrowIcon,
 } from "@/components/ui";
-import { BreadcrumbJsonLd } from "@/components/schema";
+import { BreadcrumbJsonLd, FounderJsonLd } from "@/components/schema";
+import { FOUNDER } from "@/components/founder";
 import { OG_IMAGE } from "@/app/layout";
 
 export const metadata: Metadata = {
@@ -25,9 +26,16 @@ export const metadata: Metadata = {
 
 const TEAM = [
   {
-    role: "Основатель",
+    role: FOUNDER.role,
+    name: FOUNDER.name,
     detail:
-      "Серийный предприниматель. Запустил OneOnOne и Техфабрику. Отвечает за продукт и развитие.",
+      "Серийный предприниматель. Запустил Panteon Chess и онлайн-школу " +
+      "программирования «ТехФабрика». Отвечает за продукт и развитие.",
+    links: [
+      { label: "Telegram", href: FOUNDER.social.telegram },
+      { label: "YouTube", href: FOUNDER.social.youtube },
+      { label: "Instagram", href: FOUNDER.social.instagram },
+    ],
   },
   { role: "Разработчик", detail: "Бэкенд платформы, движок решений и интеграции." },
   { role: "Разработчик", detail: "SDK, симулятор и клиентские инструменты." },
@@ -67,6 +75,7 @@ export default function AboutPage() {
           { name: "О проекте", url: "/about" },
         ]}
       />
+      <FounderJsonLd />
       {/* Mission */}
       <Section className="pt-14 sm:pt-16">
         <Container>
@@ -157,10 +166,30 @@ export default function AboutPage() {
                 key={m.role + i}
                 className="rounded-xl border border-line bg-white p-6"
               >
-                <div className="text-base font-semibold text-ink">{m.role}</div>
+                <div className="text-base font-semibold text-ink">
+                  {m.name ?? m.role}
+                </div>
+                {m.name && (
+                  <div className="mt-0.5 text-sm text-muted">{m.role}</div>
+                )}
                 <p className="mt-2 text-sm leading-relaxed text-muted">
                   {m.detail}
                 </p>
+                {m.links && (
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                    {m.links.map((link) => (
+                      <a
+                        key={link.href}
+                        href={link.href}
+                        target="_blank"
+                        rel="me noopener noreferrer"
+                        className="text-sm font-medium text-accent hover:underline"
+                      >
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

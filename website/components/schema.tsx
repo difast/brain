@@ -1,6 +1,7 @@
 // Schema.org structured data (JSON-LD) for search engines and AI crawlers.
 
 import { COMPANY } from "./company";
+import { FOUNDER, FOUNDER_SAME_AS } from "./founder";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mevratek.ru";
 
@@ -46,7 +47,58 @@ export function OrganizationJsonLd() {
           { "@type": "PropertyValue", propertyID: "ИНН", value: COMPANY.inn },
         ],
         areaServed: "RU",
+        // У самого бренда публичных аккаунтов нет; личные аккаунты основателя
+        // висят на Person ниже, а не на юрлице — иначе поисковик свяжет
+        // профили человека с организацией и покажет их в её карточке.
         sameAs: [] as string[],
+        founder: {
+          "@type": "Person",
+          "@id": `${SITE_URL}/about#founder`,
+          name: FOUNDER.name,
+        },
+      }}
+    />
+  );
+}
+
+/**
+ * Person — основатель.
+ *
+ * Смысл именно в `sameAs`: это тот список, по которому поисковики и ИИ-краулеры
+ * склеивают упоминания имени в разных местах в одного человека. Без него
+ * «Дмитрий Пятаков» на сайте и «Дмитрий Пятаков» в соцсетях остаются для
+ * машины двумя разными людьми.
+ *
+ * Ставится на странице «О проекте», где эти же имя, проекты и ссылки есть в
+ * видимом тексте: разметка, которой не соответствует ничего на странице,
+ * поисковиками игнорируется, а в худшем случае считается манипуляцией.
+ */
+export function FounderJsonLd() {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "@id": `${SITE_URL}/about#founder`,
+        name: FOUNDER.name,
+        alternateName: FOUNDER.nameLatin,
+        givenName: FOUNDER.givenName,
+        familyName: FOUNDER.familyName,
+        jobTitle: FOUNDER.jobTitle,
+        url: `${SITE_URL}/about`,
+        nationality: { "@type": "Country", name: "RU" },
+        worksFor: {
+          "@type": "Organization",
+          name: COMPANY.brand,
+          legalName: COMPANY.legalName,
+          url: SITE_URL,
+        },
+        founderOf: FOUNDER.projects.map((project) => ({
+          "@type": "Organization",
+          name: project.name,
+          description: project.note,
+        })),
+        sameAs: FOUNDER_SAME_AS,
       }}
     />
   );
