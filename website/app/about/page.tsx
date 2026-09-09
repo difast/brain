@@ -29,8 +29,8 @@ const TEAM = [
     role: FOUNDER.role,
     name: FOUNDER.name,
     detail:
-      "Серийный предприниматель. Запустил Panteon Chess, OneOnOne и " +
-      "онлайн-школу программирования «ТехФабрика». Отвечает за продукт " +
+      "Серийный предприниматель. Основал Mevratek, Panteon Chess, OneOnOne " +
+      "и онлайн-школу программирования «ТехФабрика». Отвечает за продукт " +
       "и развитие.",
     links: [
       { label: "Telegram", href: FOUNDER.social.telegram },

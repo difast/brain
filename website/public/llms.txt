@@ -6,7 +6,7 @@
 
 Юридическое лицо: ООО «ИНТЕГРО». Бренд: Mevratek. Контакт: info@mevratek.ru.
 
-Основатель: Дмитрий Пятаков (Dmitry Pyatakov) — основатель и руководитель продукта. Другие его проекты: Panteon Chess, OneOnOne, онлайн-школа программирования «ТехФабрика». Личные аккаунты: Telegram https://t.me/pyatakov_official, YouTube https://youtube.com/@pyatakov.official, Instagram https://instagram.com/pyatakov.official.
+Основатель: Дмитрий Пятаков (Dmitry Pyatakov) — основатель и руководитель продукта. Его проекты: Mevratek, Panteon Chess, OneOnOne, онлайн-школа программирования «ТехФабрика». Личные аккаунты: Telegram https://t.me/pyatakov_official, YouTube https://youtube.com/@pyatakov.official, Instagram https://instagram.com/pyatakov.official.
 
 ## Основные страницы
 - [Главная](https://mevratek.ru/): обзор платформы и проблемы, которую она решает.
