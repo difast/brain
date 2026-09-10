@@ -31,6 +31,7 @@ export const FOUNDER = {
   social: {
     instagram: "https://instagram.com/pyatakov.official",
     youtube: "https://youtube.com/@pyatakov.official",
+    rutube: "https://rutube.ru/channel/81140376/",
     telegram: "https://t.me/pyatakov_official",
   },
 } as const;

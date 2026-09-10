@@ -32,6 +32,7 @@ const TEAM = [
     links: [
       { label: "Telegram", href: FOUNDER.social.telegram },
       { label: "YouTube", href: FOUNDER.social.youtube },
+      { label: "RUTUBE", href: FOUNDER.social.rutube },
       { label: "Instagram", href: FOUNDER.social.instagram },
     ],
   },
