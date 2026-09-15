@@ -18,10 +18,19 @@
 - [Материалы](https://mevratek.ru/materials): буклет о платформе на одной странице A4 в PDF.
 - [Контакты](https://mevratek.ru/contacts): подключение и пилот.
 
+Сайт доступен на двух языках. Русская версия — по адресам без префикса (https://mevratek.ru/platform), английская — с префиксом /en (https://mevratek.ru/en/platform). Содержание страниц совпадает; языковые версии связаны через hreflang.
+
 ## Документация и материалы
-- [Документация платформы](https://mevratek.ru/documentation): архитектура, DAL, эндпоинты API, форматы, SDK и развёртывание.
+- [Документация платформы](https://mevratek.ru/documentation): архитектура, DAL, эндпоинты API, форматы, SDK, MCP-коннектор и развёртывание.
+- [MCP-коннектор](https://mevratek.ru/mcp): подключение парка устройств к Claude и ChatGPT по MCP (Streamable HTTP, OAuth 2.0 с PKCE), шесть инструментов.
 - [Блог](https://mevratek.ru/blog): статьи об архитектуре, российских LLM в робототехнике и on-premise.
 - [Обзор платформы, PDF](https://mevratek.ru/mevratek-platform.pdf): одна страница A4 — задача, архитектура, компоненты, гарантии контура.
 
+## Юридические документы
+- [Политика конфиденциальности](https://mevratek.ru/privacy): обработка персональных данных на сайте и в личном кабинете.
+- [Privacy Policy (MCP)](https://mevratek.ru/privacy-policy): что читает и записывает MCP-коннектор, как ограничен его доступ и как его отозвать.
+- [Согласие на обработку ПД](https://mevratek.ru/consent): согласие, которое даётся при отправке формы обратной связи.
+
 ## Для ИИ
 - [Полное описание](https://mevratek.ru/llms-full.txt): подробная структурированная справка по платформе.
+- [MCP-сервер](https://api.mevratek.ru/mcp): инструменты get_devices, get_device_status, get_telemetry, get_decision_logs, send_task, run_simulator. Требуется OAuth-авторизация владельца организации.

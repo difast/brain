@@ -1,4 +1,5 @@
 import { Container, Section, SectionHeading } from "@/components/ui";
+import type { Dict, Locale } from "@/i18n/config";
 
 /**
  * What the on-premise architecture actually guarantees about data and access.
@@ -10,8 +11,8 @@ import { Container, Section, SectionHeading } from "@/components/ui";
  */
 
 type Item = {
-  title: string;
-  detail: string;
+  title: Dict;
+  detail: Dict;
   /** Which shield glyph to draw — see `Glyph` below. */
   icon: "law" | "perimeter" | "models" | "access";
 };
@@ -19,29 +20,68 @@ type Item = {
 const ITEMS: Item[] = [
   {
     icon: "law",
-    title: "152-ФЗ «О персональных данных»",
-    detail:
-      "Персональные данные обрабатываются внутри вашего контура, на вашем оборудовании. Политика обработки и форма согласия опубликованы и применяются к сайту и личному кабинету.",
+    title: {
+      ru: "152-ФЗ «О персональных данных»",
+      en: "Federal Law 152-FZ on personal data",
+    },
+    detail: {
+      ru: "Персональные данные обрабатываются внутри вашего контура, на вашем оборудовании. Политика обработки и форма согласия опубликованы и применяются к сайту и личному кабинету.",
+      en: "Personal data is processed inside your own perimeter, on your own hardware. The processing policy and the consent form are published and apply to this site and to the dashboard.",
+    },
   },
   {
     icon: "perimeter",
-    title: "Данные не покидают периметр",
-    detail:
-      "Телеметрия, кадры с камер, маршруты и логи решений остаются на серверах предприятия. Трансграничной передачи нет, потому что передавать наружу нечего.",
+    title: {
+      ru: "Данные не покидают периметр",
+      en: "Data never leaves the perimeter",
+    },
+    detail: {
+      ru: "Телеметрия, кадры с камер, маршруты и логи решений остаются на серверах предприятия. Трансграничной передачи нет, потому что передавать наружу нечего.",
+      en: "Telemetry, camera frames, routes and decision logs stay on the enterprise's own servers. There is no cross-border transfer because there is nothing being sent out.",
+    },
   },
   {
     icon: "models",
-    title: "Российские и локальные модели",
-    detail:
-      "YandexGPT, GigaChat или модель, поднятая внутри контура. В изолированном режиме внешних запросов не выполняется ни одного — платформа не зависит от зарубежных сервисов.",
+    title: {
+      ru: "Российские и локальные модели",
+      en: "Russian and local models",
+    },
+    detail: {
+      ru: "YandexGPT, GigaChat или модель, поднятая внутри контура. В изолированном режиме внешних запросов не выполняется ни одного — платформа не зависит от зарубежных сервисов.",
+      en: "YandexGPT, GigaChat, or a model you host inside the perimeter yourself. In isolated mode not one outbound request is made — the platform depends on no foreign service.",
+    },
   },
   {
     icon: "access",
-    title: "Разграничение доступа и аудит",
-    detail:
-      "Роли администратора и участника, журнал действий по каждому аккаунту, отзыв сессий и ключей API, подтверждение важных операций кодом из письма.",
+    title: {
+      ru: "Разграничение доступа и аудит",
+      en: "Access control and audit",
+    },
+    detail: {
+      ru: "Роли администратора и участника, журнал действий по каждому аккаунту, отзыв сессий и ключей API, подтверждение важных операций кодом из письма.",
+      en: "Administrator and member roles, an activity log for every account, revocable sessions and API keys, and email-code confirmation for sensitive operations.",
+    },
   },
 ];
+
+const COMPLIANCE_COPY = {
+  ru: {
+    eyebrow: "Требования и данные",
+    title: "Что гарантирует развёртывание в вашем контуре",
+    intro:
+      "Мы не храним ваши данные — они физически не покидают предприятие. Ниже то, что из этого следует для требований, под которыми вы работаете.",
+    footnote:
+      "Аттестация под конкретный стандарт — 187-ФЗ о безопасности КИИ, отраслевые требования вашей службы безопасности — зависит от контура, в котором разворачивается платформа, и прорабатывается в рамках проекта. Мы готовы участвовать в этой работе и предоставить описание архитектуры, состав компонентов и модель угроз.",
+  },
+  en: {
+    eyebrow: "Requirements and data",
+    title: "What a deployment in your perimeter guarantees",
+    intro:
+      "We do not hold your data — it physically never leaves the enterprise. Here is what follows from that for the requirements you work under.",
+    footnote:
+      "Attestation against a particular standard — Federal Law 187-FZ on critical infrastructure security, or your own security team's sector requirements — depends on the perimeter the platform is deployed into and is worked through as part of the project. We are ready to take part in that and to supply the architecture description, the component inventory and the threat model.",
+  },
+} as const;
 
 /** A shield outline with a simple mark inside. Drawn, not iconographic. */
 function Glyph({ kind }: { kind: Item["icon"] }) {
@@ -90,40 +130,38 @@ function Glyph({ kind }: { kind: Item["icon"] }) {
   );
 }
 
-export function Compliance() {
+export function Compliance({ locale }: { locale: Locale }) {
+  const c = COMPLIANCE_COPY[locale];
   return (
     <Section className="bg-surface">
       <Container>
         <SectionHeading
-          eyebrow="Требования и данные"
-          title="Что гарантирует развёртывание в вашем контуре"
-          intro="Мы не храним ваши данные — они физически не покидают предприятие. Ниже то, что из этого следует для требований, под которыми вы работаете."
+          eyebrow={c.eyebrow}
+          title={c.title}
+          intro={c.intro}
         />
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {ITEMS.map((item) => (
             <div
-              key={item.title}
+              key={item.title.ru}
               className="rounded-2xl border border-line bg-white p-6"
             >
               <Glyph kind={item.icon} />
               <div className="mt-4 text-base font-semibold leading-snug text-ink">
-                {item.title}
+                {item.title[locale]}
               </div>
               <p className="mt-2.5 text-sm leading-relaxed text-muted">
-                {item.detail}
+                {item.detail[locale]}
               </p>
             </div>
           ))}
         </div>
 
         <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted">
-          Аттестация под конкретный стандарт — 187-ФЗ о безопасности КИИ,
-          отраслевые требования вашей службы безопасности — зависит от контура,
-          в котором разворачивается платформа, и прорабатывается в рамках
-          проекта. Мы готовы участвовать в этой работе и предоставить описание
-          архитектуры, состав компонентов и модель угроз.
+          {c.footnote}
         </p>
+
       </Container>
     </Section>
   );

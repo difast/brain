@@ -91,6 +91,8 @@ DAL — центральная идея платформы. Устройство
 - GET/PATCH /organization, GET /organization/team, POST/DELETE /organization/team/invites, PATCH/DELETE /organization/team/members/{id} — организация, её участники, роли и приглашения.
 - POST /auth/account/delete/request, DELETE /auth/account — удаление собственного аккаунта с подтверждением кодом из письма.
 - POST /leads — заявка с сайта.
+- POST/GET/DELETE /mcp — MCP-сервер (Streamable HTTP), авторизация отдельным MCP-токеном.
+- GET /.well-known/oauth-authorization-server, GET /.well-known/oauth-protected-resource, POST /oauth/register, GET+POST /oauth/authorize, POST /oauth/token, POST /oauth/revoke — OAuth 2.0 с PKCE для MCP-клиентов.
 
 Отдельно от продуктового API: `GET /metrics` вне префикса версии отдаёт метрики всей установки в формате экспозиции Prometheus (частота и латентность запросов, доля решений, пришедших от заглушки вместо модели, размеры парка и очереди). Скрейп авторизуется bearer-токеном; в production без него эндпоинт недоступен.
 
@@ -99,6 +101,18 @@ DAL — центральная идея платформы. Устройство
 Официальные SDK — пять полноценных пакетов, а не примеры кода: Python (`mevratek`), JavaScript/TypeScript (`@mevratek/sdk`, без зависимостей поверх fetch), Go (`github.com/difast/brain/sdk/go`, только стандартная библиотека), C (libcurl) и C++17 (обёртка над C). Каждый оборачивает весь протокол и покрыт собственными тестами. Подходит и любой другой язык с HTTP-клиентом — протокол это обычный REST + JSON.
 
 Типичный сценарий устройства одинаков во всех пяти: зарегистрироваться по ключу API организации, объявить свои capabilities, запрашивать решение (`decide`), исполнять полученные действия и отправлять обратную связь о результате (`report_execution`), чтобы она попала в контекст следующего решения.
+
+## MCP-коннектор
+
+Парком можно управлять из ассистента: платформа поднимает MCP-сервер по адресу https://api.mevratek.ru/mcp с транспортом Streamable HTTP и авторизацией OAuth 2.0 с PKCE (S256) и динамической регистрацией клиента. Подключается любой MCP-клиент — Claude, ChatGPT или собственный.
+
+Доступно шесть инструментов: `get_devices`, `get_device_status`, `get_telemetry`, `get_decision_logs` (только чтение), `send_task` и `run_simulator` (изменяют данные). Организация определяется на сервере из аккаунта, подтвердившего подключение, — не из того, что присылает ассистент; идентификатор устройства чужой организации возвращается как «не найдено». Токен коннектора живёт 8 часов, ограничен этими инструментами и не может обращаться к API дашборда. Код авторизации действует 60 секунд и одноразовый: повторное предъявление отклоняется и отзывает выданную сессию. Доступ отзывается в разделе «Аккаунт → Сессии», где коннектор виден как отдельная сессия.
+
+Описание для пользователей: https://mevratek.ru/mcp. Политика конфиденциальности интеграции: https://mevratek.ru/privacy-policy.
+
+## Языковые версии
+
+Сайт публикуется на русском и английском. Русская версия — по адресам без префикса (https://mevratek.ru/platform), английская — с префиксом /en (https://mevratek.ru/en/platform). Содержание совпадает, версии связаны через hreflang, канонический адрес — русский. Юридические документы (политика, согласие) на английском опубликованы как перевод для удобства: юридически действует русский текст.
 
 ## Команда и роли
 
@@ -149,7 +163,12 @@ DAL — центральная идея платформы. Устройство
 - Для кого: https://mevratek.ru/for-who
 - О проекте: https://mevratek.ru/about
 - Документация: https://mevratek.ru/documentation
+- MCP-коннектор: https://mevratek.ru/mcp
 - Блог: https://mevratek.ru/blog
 - Материалы: https://mevratek.ru/materials
 - Обзор платформы (PDF, 1 страница A4): https://mevratek.ru/mevratek-platform.pdf
 - Контакты: https://mevratek.ru/contacts
+- Политика конфиденциальности: https://mevratek.ru/privacy
+- Privacy Policy (MCP): https://mevratek.ru/privacy-policy
+- Согласие на обработку ПД: https://mevratek.ru/consent
+- Английская версия сайта: https://mevratek.ru/en

@@ -1,28 +1,53 @@
 import type { ReactNode } from "react";
 import { Container, Section } from "./ui";
 import { COMPANY } from "./company";
+import { defaultLocale, type Locale } from "@/i18n/config";
 
-export function Requisites() {
+const LEGAL_COPY = {
+  ru: {
+    requisites: "Реквизиты оператора",
+    name: "Наименование",
+    ogrn: "ОГРН",
+    inn: "ИНН",
+    email: "Email",
+    address: "Адрес",
+    revision: "Редакция от",
+  },
+  en: {
+    requisites: "Operator details",
+    name: "Legal name",
+    ogrn: "OGRN",
+    inn: "INN",
+    email: "Email",
+    address: "Address",
+    revision: "Revision of",
+  },
+} as const;
+
+export function Requisites({ locale = defaultLocale }: { locale?: Locale } = {}) {
+  const c = LEGAL_COPY[locale];
   return (
     <div className="rounded-xl border border-line bg-surface p-6 text-sm leading-relaxed">
       <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-        Реквизиты оператора
+        {c.requisites}
       </div>
       <dl className="mt-4 grid gap-3 sm:grid-cols-2">
         <div>
-          <dt className="text-muted">Наименование</dt>
-          <dd className="mt-0.5 font-medium text-ink">{COMPANY.legalName}</dd>
+          <dt className="text-muted">{c.name}</dt>
+          <dd className="mt-0.5 font-medium text-ink">
+            {locale === "ru" ? COMPANY.legalName : COMPANY.legalNameEn}
+          </dd>
         </div>
         <div>
-          <dt className="text-muted">ОГРН</dt>
+          <dt className="text-muted">{c.ogrn}</dt>
           <dd className="mt-0.5 font-medium text-ink">{COMPANY.ogrn}</dd>
         </div>
         <div>
-          <dt className="text-muted">ИНН</dt>
+          <dt className="text-muted">{c.inn}</dt>
           <dd className="mt-0.5 font-medium text-ink">{COMPANY.inn}</dd>
         </div>
         <div>
-          <dt className="text-muted">Email</dt>
+          <dt className="text-muted">{c.email}</dt>
           <dd className="mt-0.5 font-medium text-ink">
             <a href={`mailto:${COMPANY.email}`} className="hover:text-accent">
               {COMPANY.email}
@@ -30,8 +55,10 @@ export function Requisites() {
           </dd>
         </div>
         <div className="sm:col-span-2">
-          <dt className="text-muted">Адрес</dt>
-          <dd className="mt-0.5 font-medium text-ink">{COMPANY.address}</dd>
+          <dt className="text-muted">{c.address}</dt>
+          <dd className="mt-0.5 font-medium text-ink">
+            {locale === "ru" ? COMPANY.address : COMPANY.addressEn}
+          </dd>
         </div>
       </dl>
     </div>
@@ -45,10 +72,12 @@ export function LegalDoc({
   title,
   updated,
   children,
+  locale = defaultLocale,
 }: {
   title: string;
   updated: string;
   children: ReactNode;
+  locale?: Locale;
 }) {
   return (
     <Section className="pt-14 sm:pt-16">
@@ -57,7 +86,9 @@ export function LegalDoc({
           <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
             {title}
           </h1>
-          <p className="mt-3 text-sm text-muted">Редакция от {updated}</p>
+          <p className="mt-3 text-sm text-muted">
+            {LEGAL_COPY[locale].revision} {updated}
+          </p>
 
           <div
             className="mt-10 space-y-6 text-[15px] leading-relaxed text-ink-soft

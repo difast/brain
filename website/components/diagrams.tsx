@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { type Locale } from "@/i18n/config";
+
 /* ---------- Small building blocks ---------- */
 
 function Node({
@@ -69,23 +71,45 @@ function Connector() {
 
 /* ---------- Home: request/response flow ---------- */
 
-export function FlowDiagram() {
-  const steps: { label: string; sub: string; tone?: "default" | "accent" }[] = [
-    { label: "Устройство", sub: "робот · тележка · дрон" },
-    { label: "SDK / API", sub: "телеметрия + состояние" },
-    { label: "AI-движок", sub: "российские LLM", tone: "accent" },
-    { label: "Команды", sub: "структурированный JSON" },
-  ];
+const FLOW_STEPS: {
+  label: Record<Locale, string>;
+  sub: Record<Locale, string>;
+  tone?: "default" | "accent";
+}[] = [
+  {
+    label: { ru: "Устройство", en: "Device" },
+    sub: { ru: "робот · тележка · дрон", en: "robot · cart · drone" },
+  },
+  {
+    label: { ru: "SDK / API", en: "SDK / API" },
+    sub: { ru: "телеметрия + состояние", en: "telemetry + state" },
+  },
+  {
+    label: { ru: "AI-движок", en: "AI engine" },
+    sub: { ru: "российские LLM", en: "your own model" },
+    tone: "accent",
+  },
+  {
+    label: { ru: "Команды", en: "Commands" },
+    sub: { ru: "структурированный JSON", en: "structured JSON" },
+  },
+];
+
+export function FlowDiagram({ locale }: { locale: Locale }) {
   return (
     <div className="rounded-2xl border border-line bg-white p-5 sm:p-7">
       <div className="flex flex-col gap-3 md:flex-row md:items-stretch">
-        {steps.map((s, i) => (
+        {FLOW_STEPS.map((s, i) => (
           <div
-            key={s.label}
+            key={s.label.ru}
             className="flex flex-col md:flex-1 md:flex-row md:items-center"
           >
-            <Node label={s.label} sub={s.sub} tone={s.tone ?? "default"} />
-            {i < steps.length - 1 ? <Connector /> : null}
+            <Node
+              label={s.label[locale]}
+              sub={s.sub[locale]}
+              tone={s.tone ?? "default"}
+            />
+            {i < FLOW_STEPS.length - 1 ? <Connector /> : null}
           </div>
         ))}
       </div>
@@ -147,29 +171,63 @@ function DownLink() {
   );
 }
 
-export function ArchitectureDiagram() {
+const ARCH: Record<
+  Locale,
+  {
+    devices: string;
+    deviceList: [string, string, string];
+    protocol: string;
+    protocolList: [string, string];
+    services: string;
+    models: string;
+    modelList: [string, string, string, string];
+  }
+> = {
+  ru: {
+    devices: "Устройства",
+    deviceList: ["Промышленный робот", "Складская тележка", "Симулятор"],
+    protocol: "Единый протокол",
+    protocolList: ["SDK (Python)", "REST API · JWT-аутентификация"],
+    services: "Сервисы платформы",
+    models: "AI-модели (Model Router)",
+    modelList: ["YandexGPT", "GigaChat", "Локальные модели", "On-premise"],
+  },
+  en: {
+    devices: "Devices",
+    deviceList: ["Industrial robot", "Warehouse cart", "Simulator"],
+    protocol: "One protocol",
+    protocolList: ["SDK (Python)", "REST API · JWT authentication"],
+    services: "Platform services",
+    models: "AI models (Model Router)",
+    modelList: ["YandexGPT", "GigaChat", "Local models", "On-premise"],
+  },
+};
+
+export function ArchitectureDiagram({ locale }: { locale: Locale }) {
+  const c = ARCH[locale];
   return (
     <div className="rounded-2xl border border-line bg-surface/60 p-4 sm:p-6">
-      <Layer tag="Устройства">
+      <Layer tag={c.devices}>
         <div className="grid grid-cols-3 gap-3">
-          <Pill>Промышленный робот</Pill>
-          <Pill>Складская тележка</Pill>
-          <Pill>Симулятор</Pill>
+          {c.deviceList.map((d) => (
+            <Pill key={d}>{d}</Pill>
+          ))}
         </div>
       </Layer>
 
       <DownLink />
 
-      <Layer tag="Единый протокол">
+      <Layer tag={c.protocol}>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Pill>SDK (Python)</Pill>
-          <Pill>REST API · JWT-аутентификация</Pill>
+          {c.protocolList.map((d) => (
+            <Pill key={d}>{d}</Pill>
+          ))}
         </div>
       </Layer>
 
       <DownLink />
 
-      <Layer tag="Сервисы платформы">
+      <Layer tag={c.services}>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Pill>Robot Registry</Pill>
           <Pill>Task Engine</Pill>
@@ -182,12 +240,11 @@ export function ArchitectureDiagram() {
 
       <DownLink />
 
-      <Layer tag="AI-модели (Model Router)">
+      <Layer tag={c.models}>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Pill>YandexGPT</Pill>
-          <Pill>GigaChat</Pill>
-          <Pill>Локальные модели</Pill>
-          <Pill>On-premise</Pill>
+          {c.modelList.map((d) => (
+            <Pill key={d}>{d}</Pill>
+          ))}
         </div>
       </Layer>
     </div>

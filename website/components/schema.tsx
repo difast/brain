@@ -2,6 +2,7 @@
 
 import { COMPANY } from "./company";
 import { FOUNDER, FOUNDER_SAME_AS } from "./founder";
+import { defaultLocale, htmlLang, localePath, type Locale } from "@/i18n/config";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mevratek.ru";
 
@@ -15,8 +16,17 @@ function JsonLd({ data }: { data: Record<string, unknown> }) {
   );
 }
 
+const ORG_DESCRIPTION: Record<Locale, string> = {
+  ru: "Российская платформа управления промышленными роботами и автономными устройствами через единый протокол и AI-движок. Разворачивается в контуре заказчика (on-premise).",
+  en: "A platform for controlling industrial robots and autonomous devices through one protocol and an AI decision engine, deployed inside the customer's own perimeter (on-premise).",
+};
+
 /** Organization — the legal entity behind Mevratek. Site-wide. */
-export function OrganizationJsonLd() {
+export function OrganizationJsonLd({
+  locale = defaultLocale,
+}: {
+  locale?: Locale;
+} = {}) {
   return (
     <JsonLd
       data={{
@@ -33,8 +43,7 @@ export function OrganizationJsonLd() {
           height: 512,
         },
         image: `${SITE_URL}/og.png`,
-        description:
-          "Российская платформа управления промышленными роботами и автономными устройствами через единый протокол и AI-движок. Разворачивается в контуре заказчика (on-premise).",
+        description: ORG_DESCRIPTION[locale],
         foundingDate: "2025",
         address: {
           "@type": "PostalAddress",
@@ -105,15 +114,19 @@ export function FounderJsonLd() {
 }
 
 /** WebSite — enables sitelinks / site name in search. Site-wide. */
-export function WebSiteJsonLd() {
+export function WebSiteJsonLd({
+  locale = defaultLocale,
+}: {
+  locale?: Locale;
+} = {}) {
   return (
     <JsonLd
       data={{
         "@context": "https://schema.org",
         "@type": "WebSite",
         name: COMPANY.brand,
-        url: SITE_URL,
-        inLanguage: "ru-RU",
+        url: `${SITE_URL}${localePath(locale, "/") === "/" ? "" : localePath(locale, "/")}`,
+        inLanguage: htmlLang[locale],
         publisher: {
           "@type": "Organization",
           name: COMPANY.brand,
@@ -147,8 +160,48 @@ export function BreadcrumbJsonLd({
   );
 }
 
+const APP_COPY: Record<
+  Locale,
+  { description: string; featureList: string[]; offer: string }
+> = {
+  ru: {
+    description:
+      "Платформа-«мозг» для парка автономных устройств: единый SDK и API, телеметрия в реальном времени и структурированные команды AI Decision Engine на базе YandexGPT, GigaChat, Claude и локальных моделей. Разворачивается в закрытом контуре предприятия (on-premise).",
+    featureList: [
+      "Единый протокол управления любым устройством (Device Abstraction Layer)",
+      "AI Decision Engine с выбором модели (YandexGPT, GigaChat, Claude, локальные)",
+      "Телеметрия в реальном времени",
+      "Движок задач и журнал решений",
+      "Официальные SDK для Python, JavaScript, Go, C++ и C",
+      "MCP-коннектор для Claude и ChatGPT",
+      "Развёртывание в изолированном контуре предприятия",
+    ],
+    offer:
+      "Поставка по договору, оплата по счёту для юридических лиц. Стоимость зависит от размера парка и контура развёртывания.",
+  },
+  en: {
+    description:
+      "A brain for a fleet of autonomous devices: one SDK and API, real-time telemetry, and structured commands from an AI Decision Engine running on YandexGPT, GigaChat, Claude or a local model. Deployed inside the enterprise's closed perimeter (on-premise).",
+    featureList: [
+      "One control protocol for any device (Device Abstraction Layer)",
+      "An AI Decision Engine with a choice of model (YandexGPT, GigaChat, Claude, local)",
+      "Real-time telemetry",
+      "A task engine and a decision journal",
+      "Official SDKs for Python, JavaScript, Go, C++ and C",
+      "An MCP connector for Claude and ChatGPT",
+      "Deployment inside an isolated enterprise perimeter",
+    ],
+    offer:
+      "Delivered under contract and invoiced to a legal entity. The price depends on the size of the fleet and the deployment perimeter.",
+  },
+};
+
 /** SoftwareApplication — the Mevratek platform itself. */
-export function SoftwareApplicationJsonLd() {
+export function SoftwareApplicationJsonLd({
+  locale = defaultLocale,
+}: {
+  locale?: Locale;
+} = {}) {
   return (
     <JsonLd
       data={{
@@ -159,24 +212,15 @@ export function SoftwareApplicationJsonLd() {
         applicationSubCategory: "Robotics Control Platform",
         operatingSystem: "Linux (on-premise)",
         url: SITE_URL,
-        inLanguage: "ru-RU",
+        inLanguage: htmlLang[locale],
         image: `${SITE_URL}/og.png`,
-        description:
-          "Платформа-«мозг» для парка автономных устройств: единый SDK и API, телеметрия в реальном времени и структурированные команды AI Decision Engine на базе YandexGPT, GigaChat, Claude и локальных моделей. Разворачивается в закрытом контуре предприятия (on-premise).",
-        featureList: [
-          "Единый протокол управления любым устройством (Device Abstraction Layer)",
-          "AI Decision Engine с выбором модели (YandexGPT, GigaChat, Claude, локальные)",
-          "Телеметрия в реальном времени",
-          "Движок задач и журнал решений",
-          "Официальные SDK для Python, JavaScript, Go, C++ и C",
-          "Развёртывание в изолированном контуре предприятия",
-        ],
+        description: APP_COPY[locale].description,
+        featureList: APP_COPY[locale].featureList,
         offers: {
           "@type": "Offer",
           priceCurrency: "RUB",
           availability: "https://schema.org/InStock",
-          description:
-            "Поставка по договору, оплата по счёту для юридических лиц. Стоимость зависит от размера парка и контура развёртывания.",
+          description: APP_COPY[locale].offer,
         },
         publisher: { "@type": "Organization", name: COMPANY.brand },
       }}
@@ -191,14 +235,16 @@ export function ArticleJsonLd({
   slug,
   datePublished,
   dateModified,
+  locale = defaultLocale,
 }: {
   title: string;
   description: string;
   slug: string;
   datePublished: string;
   dateModified?: string;
+  locale?: Locale;
 }) {
-  const url = `${SITE_URL}/blog/${slug}`;
+  const url = `${SITE_URL}${localePath(locale, `/blog/${slug}`)}`;
   return (
     <JsonLd
       data={{
@@ -206,7 +252,7 @@ export function ArticleJsonLd({
         "@type": "Article",
         headline: title,
         description,
-        inLanguage: "ru-RU",
+        inLanguage: htmlLang[locale],
         datePublished,
         dateModified: dateModified ?? datePublished,
         mainEntityOfPage: { "@type": "WebPage", "@id": url },
@@ -233,10 +279,12 @@ export function TechArticleJsonLd({
   title,
   description,
   path,
+  locale = defaultLocale,
 }: {
   title: string;
   description: string;
   path: string;
+  locale?: Locale;
 }) {
   return (
     <JsonLd
@@ -245,8 +293,8 @@ export function TechArticleJsonLd({
         "@type": "TechArticle",
         headline: title,
         description,
-        inLanguage: "ru-RU",
-        url: `${SITE_URL}${path}`,
+        inLanguage: htmlLang[locale],
+        url: `${SITE_URL}${localePath(locale, path)}`,
         image: [`${SITE_URL}/og.png`],
         author: { "@type": "Organization", name: COMPANY.brand },
         publisher: { "@type": "Organization", name: COMPANY.brand },

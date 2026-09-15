@@ -1,11 +1,20 @@
 import Link from "next/link";
 
-export function Logo({ className = "" }: { className?: string }) {
+import { t } from "@/content/ui";
+import { defaultLocale, localePath, type Locale } from "@/i18n/config";
+
+export function Logo({
+  className = "",
+  locale = defaultLocale,
+}: {
+  className?: string;
+  locale?: Locale;
+}) {
   return (
     <Link
-      href="/"
+      href={localePath(locale, "/")}
       className={`inline-flex items-center gap-2.5 text-ink ${className}`}
-      aria-label="Mevratek — на главную"
+      aria-label={t(locale, "homeAria")}
     >
       <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden className="shrink-0">
         <rect width="32" height="32" rx="7" fill="#374151" />
