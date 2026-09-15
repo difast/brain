@@ -210,6 +210,20 @@ class Settings(BaseSettings):
     demo_mode: bool = True
     demo_interval_seconds: int = 5
 
+    # --- Reviewer account ---
+    # A dedicated member-role account the connector directories (Anthropic,
+    # OpenAI) sign in with to review the MCP integration. It exists so that a
+    # published set of credentials is never the administrator's: a member
+    # cannot manage the team, mint API keys, or reach the admin routes.
+    # Turn it off with REVIEWER_ACCOUNT_ENABLED=false once review is done —
+    # the row stays, so switching it back on does not reset anything.
+    reviewer_account_enabled: bool = True
+    reviewer_email: str = "reviewer@mevratek.ru"
+    # Empty means "use the password published in the MCP docs". Setting this
+    # rotates the account on the next start, which is how the password gets
+    # changed without a code change — update the docs to match.
+    reviewer_password: str = ""
+
     # --- CORS ---
     # NoDecode stops pydantic-settings from trying json.loads() on the env
     # value (so CORS_ORIGINS=* or a comma-separated list is accepted) — our

@@ -17,16 +17,28 @@ import jwt as pyjwt
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 
 from app.core.config import settings
-from app.core.security import create_mcp_token, create_user_token, hash_password
+from app.core.security import (
+    create_mcp_token,
+    create_user_token,
+    hash_password,
+    verify_password,
+)
 from app.models.decision import Decision
 from app.models.organization import Organization
 from app.models.robot import Robot, RobotStatus
 from app.models.telemetry import Telemetry
 from app.models.user import User, UserRole
 from app.models.user_session import UserSession
-from app.services.seed_service import SEED_ADMIN_ID, SEED_ORG_ID
+from app.services.seed_service import (
+    SEED_ADMIN_ID,
+    SEED_ORG_ID,
+    SEED_REVIEWER_ID,
+    SEED_REVIEWER_PASSWORD,
+    seed_identity,
+)
 from app.services.session_service import SessionService
 
 OTHER_ORG_ID = "0" * 31 + "9"
@@ -609,3 +621,148 @@ async def test_revoke_always_reports_success(anon_client, mcp_token):
     assert res.status_code == 200
     res = await anon_client.post("/oauth/revoke", data={"token": "nonsense"})
     assert res.status_code == 200
+
+
+# --- the reviewer account --------------------------------------------------
+#
+# A published set of credentials is only safe if the account behind it is
+# limited. These pin both halves of that: the reviewer really can exercise the
+# connector (otherwise a directory review fails on our side), and it really
+# cannot do anything an administrator can.
+
+
+@pytest_asyncio.fixture
+async def reviewer(app, session_factory, monkeypatch):
+    """Provision the reviewer account through the real seed.
+
+    conftest turns it off for the rest of the suite (it would otherwise add a
+    second member to every team test), so these tests switch it back on and
+    re-run the seed — which is idempotent, and is the same call production
+    makes on start.
+    """
+    monkeypatch.setattr(settings, "reviewer_account_enabled", True)
+    await seed_identity(session_factory)
+    async with session_factory() as s:
+        return await s.scalar(
+            select(User).where(User.email == settings.reviewer_email)
+        )
+
+
+@pytest_asyncio.fixture
+async def reviewer_mcp_token(reviewer, session_factory) -> str:
+    """An MCP access token for the seeded reviewer, bound to a live session."""
+    async with session_factory() as s:
+        now = datetime.now(UTC)
+        row = UserSession(
+            user_id=SEED_REVIEWER_ID,
+            last_seen_at=now,
+            expires_at=now + timedelta(hours=8),
+        )
+        s.add(row)
+        await s.commit()
+        session_id = row.id
+    return create_mcp_token(SEED_REVIEWER_ID, SEED_ORG_ID, "member", session_id)
+
+
+@pytest_asyncio.fixture
+async def reviewer_client(app, reviewer_mcp_token) -> AsyncClient:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {reviewer_mcp_token}"},
+    ) as ac:
+        yield ac
+
+
+@pytest.mark.asyncio
+async def test_reviewer_is_seeded_as_a_member_of_the_seed_org(reviewer):
+    assert reviewer is not None
+    assert reviewer.role == UserRole.member
+    assert reviewer.organization_id == SEED_ORG_ID
+    assert reviewer.password != SEED_REVIEWER_PASSWORD  # stored hashed
+    assert verify_password(SEED_REVIEWER_PASSWORD, reviewer.password)
+
+
+@pytest.mark.asyncio
+async def test_reviewer_can_sign_in(reviewer, anon_client):
+    res = await anon_client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": settings.reviewer_email,
+            "password": SEED_REVIEWER_PASSWORD,
+        },
+    )
+    assert res.status_code == 200, res.text
+
+
+@pytest.mark.asyncio
+async def test_reviewer_sees_the_organizations_devices_over_mcp(
+    reviewer_client, client
+):
+    await client.post(
+        "/api/v1/robots/register",
+        json={"name": "reviewable", "robot_type": "rover", "capabilities": []},
+    )
+    result = await call(reviewer_client, "get_devices")
+    names = {d["name"] for d in result["structuredContent"]["devices"]}
+    assert "reviewable" in names
+
+
+@pytest.mark.asyncio
+async def test_reviewer_can_queue_a_task_over_mcp(reviewer_client, client):
+    registered = (
+        await client.post(
+            "/api/v1/robots/register",
+            json={"name": "rv-target", "robot_type": "rover", "capabilities": []},
+        )
+    ).json()
+    result = await call(
+        reviewer_client,
+        "send_task",
+        {"device_id": registered["robot"]["id"], "task_description": "осмотреть"},
+    )
+    assert result["isError"] is False
+
+
+@pytest.mark.asyncio
+async def test_reviewer_cannot_see_another_org_over_mcp(reviewer_client, other_org):
+    listed = await call(reviewer_client, "get_devices")
+    names = {d["name"] for d in listed["structuredContent"]["devices"]}
+    assert "secret-rover" not in names
+
+    status = await call(
+        reviewer_client, "get_device_status", {"device_id": other_org["robot_id"]}
+    )
+    assert status["isError"] is True
+
+    telemetry = await call(
+        reviewer_client, "get_telemetry", {"device_id": other_org["robot_id"]}
+    )
+    # Not an error: the join simply matches nothing, which is the same answer
+    # the caller would get for an id that never existed.
+    assert telemetry["structuredContent"]["readings"] == []
+
+    logs = await call(reviewer_client, "get_decision_logs")
+    tasks = {entry["task"] for entry in logs["structuredContent"]["logs"]}
+    assert "секретная задача" not in tasks
+
+
+@pytest.mark.asyncio
+async def test_reviewer_cannot_manage_the_team_or_mint_keys(reviewer, app):
+    """The whole reason the published password is not the administrator's."""
+    token = create_user_token(SEED_REVIEWER_ID, SEED_ORG_ID, "member")
+    transport = ASGITransport(app=app)
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {token}"},
+    ) as ac:
+        invite = await ac.post(
+            "/api/v1/organization/team/invites",
+            json={"email": "someone@example.com", "role": "admin"},
+        )
+        assert invite.status_code in (401, 403), invite.text
+
+        admin_route = await ac.get("/api/v1/admin/organizations")
+        assert admin_route.status_code in (401, 403), admin_route.text

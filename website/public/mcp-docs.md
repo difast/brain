@@ -123,24 +123,23 @@ info@mevratek.ru.
 
 ## Reviewer access
 
-A demo organization is available for directory review:
+A dedicated account is available for directory review:
 
 ```
 URL:      https://app.mevratek.ru
-Email:    info@mevratek.ru
-Password: 11111111
+Email:    reviewer@mevratek.ru
+Password: 7_SE=?JQYiSWnE.M8bFF
 ```
+
+It holds the **member** role in the demo organization, which is the whole
+point of it: it can read the organization's devices, telemetry and decision
+journal, and queue a task or a simulation — everything the connector exposes —
+and nothing else. It cannot manage the team, issue API keys, delete anything,
+or reach an administrator route.
 
 The organization has a demo device with live telemetry, so every read-only
 tool returns data immediately. `send_task` and `run_simulator` can be
 exercised against it safely — nothing physical is connected.
-
-> **Note for the operator:** these are the credentials of the seeded
-> administrator of the live installation. Before this document is published,
-> replace them with a dedicated reviewer account that has the member role and
-> a strong password. Publishing administrator credentials at a public URL
-> gives anyone who finds this page the ability to register devices, read the
-> organization's data and issue API keys.
 
 ---
 

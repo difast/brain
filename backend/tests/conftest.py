@@ -20,6 +20,11 @@ os.environ["OPENAI_API_KEY"] = ""
 os.environ["OPENAI_BASE_URL"] = ""
 os.environ["LLM_PROVIDER"] = "auto"
 os.environ["DEMO_MODE"] = "false"
+# The reviewer account is a production artefact — a second member in the seed
+# organization. Leaving it on here would quietly change the baseline for every
+# suite that counts team members, so it is off by default and the tests that
+# are about it turn it on (see the `reviewer` fixture in test_mcp.py).
+os.environ["REVIEWER_ACCOUNT_ENABLED"] = "false"
 os.environ.setdefault("ENVIRONMENT", "development")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
@@ -32,18 +37,27 @@ from sqlalchemy.pool import StaticPool
 
 from app.api.deps import get_brain, get_storage
 from app.core.database import Base, get_session
-from app.core.security import create_user_token, hash_password
+from app.core.security import create_user_token
 from app.main import create_app
-from app.models.organization import Organization
-from app.models.user import User, UserRole
 from app.services.decision_engine import DecisionEngine
 from app.services.seed_service import (
     SEED_ADMIN_EMAIL,
     SEED_ADMIN_ID,
     SEED_ADMIN_PASSWORD,
     SEED_ORG_ID,
-    SEED_ORG_NAME,
+    seed_identity,
 )
+
+# Test modules import these through conftest rather than reaching into the
+# service themselves, so they are re-exported here on purpose — ruff would
+# otherwise read them as unused and remove them, which breaks collection.
+__all__ = [
+    "API",
+    "SEED_ADMIN_EMAIL",
+    "SEED_ADMIN_ID",
+    "SEED_ADMIN_PASSWORD",
+    "SEED_ORG_ID",
+]
 
 
 class FakeStorage:
@@ -104,21 +118,10 @@ async def app(engine, session_factory):
     storage = FakeStorage()
     brain = DecisionEngine()  # mock mode (no provider configured)
 
-    # Seed the tenant identity (org + admin) on the test engine, mirroring what
-    # the app does at startup, so login and data isolation can be exercised.
-    async with session_factory() as s:
-        s.add(Organization(id=SEED_ORG_ID, name=SEED_ORG_NAME))
-        await s.flush()
-        s.add(
-            User(
-                id=SEED_ADMIN_ID,
-                email=SEED_ADMIN_EMAIL,
-                password=hash_password(SEED_ADMIN_PASSWORD),
-                organization_id=SEED_ORG_ID,
-                role=UserRole.admin,
-            )
-        )
-        await s.commit()
+    # Seed the tenant identity on the test engine by running the real seed,
+    # so login, data isolation and the reviewer account are exercised against
+    # the same code the app runs at startup rather than a copy of it.
+    await seed_identity(session_factory)
 
     application = create_app()
     application.dependency_overrides[get_session] = _get_session
