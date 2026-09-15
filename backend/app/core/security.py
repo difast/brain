@@ -171,3 +171,76 @@ def decode_admin_token(token: str) -> dict[str, Any]:
 def generate_invite_token() -> str:
     """Random opaque token embedded in an invite link."""
     return secrets.token_urlsafe(32)
+
+
+# --- MCP access tokens (OAuth 2.0) ----------------------------------------
+
+# An MCP connector's access token is short-lived on purpose: it lives in a
+# third party's infrastructure rather than in the user's own browser, so the
+# blast radius of a leak is capped by the refresh cycle.
+MCP_TOKEN_TTL_HOURS = 8
+
+# The only scope issued today. Kept as a string rather than a set so it
+# round-trips through the JWT and the token response unchanged.
+MCP_SCOPE = "mcp"
+
+
+def create_mcp_token(
+    user_id: str,
+    organization_id: str,
+    role: str,
+    session_id: str,
+    *,
+    scope: str = MCP_SCOPE,
+    resource: str | None = None,
+) -> str:
+    """Issue an access token for an MCP connector.
+
+    Deliberately ``type="mcp"`` rather than ``type="user"``. Both carry a
+    ``sid``, so both are revocable from the account page and both show up in
+    the session list — but only a real dashboard token opens the dashboard
+    API. Were they the same type, anyone holding a connector token could call
+    every endpoint the signed-in user can, which is the opposite of what
+    handing out a scoped token is for.
+
+    ``resource`` is RFC 8707 audience binding: a token minted for this API
+    states so, and cannot be replayed against another MCP server that happens
+    to trust the same issuer.
+    """
+    now = datetime.now(UTC)
+    payload: dict[str, Any] = {
+        "sub": user_id,
+        "type": "mcp",
+        "org": organization_id,
+        "role": role,
+        "sid": session_id,
+        "scope": scope,
+        "iat": now,
+        "exp": now + timedelta(hours=MCP_TOKEN_TTL_HOURS),
+    }
+    if resource:
+        payload["aud"] = resource
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+
+
+def decode_mcp_token(token: str, *, resource: str | None = None) -> dict[str, Any]:
+    """Decode and validate an MCP access token. Raises on failure."""
+    return jwt.decode(
+        token,
+        settings.secret_key,
+        algorithms=[settings.jwt_algorithm],
+        audience=resource,
+        # A token minted without an audience stays valid; one minted *with*
+        # an audience is checked against it.
+        options={"verify_aud": resource is not None},
+    )
+
+
+def generate_oauth_code() -> str:
+    """The authorization code handed back to the client's redirect URI."""
+    return secrets.token_urlsafe(32)
+
+
+def generate_refresh_token() -> str:
+    """Opaque refresh token. Stored hashed, like the code."""
+    return secrets.token_urlsafe(48)

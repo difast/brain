@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import jwt
 from fastapi import Depends, Request
@@ -21,6 +21,9 @@ from app.services.api_key_service import ApiKeyService
 from app.services.decision_engine import DecisionEngine
 from app.services.session_service import SessionService
 from app.services.storage import FrameStorage
+
+if TYPE_CHECKING:  # circular at runtime: app.mcp imports the services
+    from app.mcp.tools import McpContext
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -211,3 +214,59 @@ async def require_admin(
 
 
 AdminGuard = Annotated[None, Depends(require_admin)]
+
+
+async def resolve_mcp_context(
+    token: str | None, session: AsyncSession
+) -> McpContext:
+    """Authenticate an MCP connector from its OAuth access token.
+
+    Separate from ``get_current_user`` on purpose: this accepts only
+    ``type="mcp"`` tokens, so a connector's token cannot be turned around and
+    used against the dashboard API. It still carries a ``sid``, so the same
+    session checks apply and revoking the session from the account page cuts
+    the connector off immediately.
+
+    Raises ``AuthError``; the /mcp route turns that into a 401 carrying the
+    ``WWW-Authenticate`` header that tells the client where to authorize.
+    """
+    from app.core.security import MCP_SCOPE, decode_mcp_token
+    from app.mcp.tools import McpContext
+
+    if not token:
+        raise AuthError("Missing bearer token.")
+    try:
+        payload = decode_mcp_token(token)
+    except jwt.ExpiredSignatureError as exc:
+        raise AuthError("Access token expired.") from exc
+    except jwt.PyJWTError as exc:
+        raise AuthError("Invalid access token.") from exc
+
+    if payload.get("type") != "mcp":
+        raise AuthError("Not an MCP access token.")
+    if MCP_SCOPE not in str(payload.get("scope", "")).split():
+        raise AuthError("Token is not scoped for MCP.")
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise AuthError("Token missing subject.")
+    user = await session.get(User, str(user_id))
+    if user is None:
+        raise AuthError("Account no longer exists.")
+
+    session_id = str(payload.get("sid") or "")
+    if not session_id:
+        raise AuthError("Token is not bound to a session.")
+    row = await SessionService(session).get_live(session_id)
+    if row is None or row.user_id != user.id:
+        raise AuthError("Access was revoked.")
+
+    # The organization comes from the freshly loaded user, never from the
+    # token: a user moved to another tenant must not keep reading the old one
+    # until their token happens to expire.
+    return McpContext(
+        user_id=user.id,
+        organization_id=user.organization_id,
+        role=str(user.role),
+        session_id=session_id,
+    )

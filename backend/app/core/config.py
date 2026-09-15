@@ -128,6 +128,21 @@ class Settings(BaseSettings):
         # The platform's env var is written as SSL / STARTTLS.
         return v.lower() if isinstance(v, str) else v
 
+    # --- MCP connector (Claude / ChatGPT) ---
+    # A Model Context Protocol server at /mcp, with its own OAuth 2.0 front
+    # door. Off by default in the sense that it is harmless when unused: no
+    # token, no access. Set MCP_ENABLED=false to remove the routes entirely.
+    mcp_enabled: bool = True
+    # The canonical external URL of this API, without a trailing slash. It is
+    # what the OAuth metadata advertises as the issuer, so it has to match
+    # what the client actually connected to — a mismatch makes the client
+    # reject the metadata. Left empty, it is derived from the request, which
+    # is right behind a single proxy and wrong behind two.
+    public_api_url: str = ""
+    # Where a not-yet-signed-in user is sent to log in before approving a
+    # connector. The dashboard origin, no trailing slash.
+    dashboard_url: str = "https://app.mevratek.ru"
+
     # --- Database ---
     database_url: str = (
         "postgresql+asyncpg://brain:brain@postgres:5432/brain"

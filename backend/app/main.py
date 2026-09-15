@@ -26,7 +26,9 @@ from app.api.routes import (
     invites,
     leads,
     logs,
+    mcp,
     metrics,
+    oauth,
     observability,
     robots,
     tasks,
@@ -187,6 +189,12 @@ def create_app() -> FastAPI:
 
     # Outside the API prefix on purpose: GET /metrics is where Prometheus looks.
     app.include_router(observability.router)
+
+    # Also outside the prefix: MCP clients and OAuth discovery both expect
+    # well-known paths at the root of the origin, not under /api/v1.
+    if settings.mcp_enabled:
+        app.include_router(oauth.router)
+        app.include_router(mcp.router)
 
     @app.get("/", include_in_schema=False)
     async def root() -> dict:

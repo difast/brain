@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { useSmartCaptcha } from "@/lib/captcha";
@@ -11,8 +11,22 @@ import { api, UnauthorizedError, errorMessage } from "@/lib/api";
 
 const CONTACTS_URL = "https://mevratek.ru/contacts";
 
-export default function LoginPage() {
+/**
+ * Where to go after signing in.
+ *
+ * Only a path on this origin is honoured. Taking the value as given would be
+ * an open redirect: a link to /login?next=https://evil.example would send
+ * someone who just typed their password straight off the site. A leading
+ * "//" is rejected for the same reason — the browser reads it as a host.
+ */
+function safeNext(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+}
+
+function LoginInner() {
   const { t, lang, setLang } = useT();
+  const nextPath = safeNext(useSearchParams().get("next"));
   const { status, login, completeLogin } = useAuth();
   const { enabled: captchaEnabled, token: captchaToken, containerRef, reset } =
     useSmartCaptcha();
@@ -36,7 +50,7 @@ export default function LoginPage() {
 
   // Already signed in → go to the dashboard.
   useEffect(() => {
-    if (status === "authed") router.replace("/");
+    if (status === "authed") router.replace(nextPath);
   }, [status, router]);
 
   async function submitPassword(e: React.FormEvent) {
@@ -56,7 +70,7 @@ export default function LoginPage() {
         setMaskedEmail(res.masked_email);
         setCode("");
       } else {
-        router.replace("/");
+        router.replace(nextPath);
       }
     } catch (e) {
       // A bad credential is a generic 401; rate limits and mail failures carry
@@ -79,7 +93,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await completeLogin(challenge, code.trim());
-      router.replace("/");
+      router.replace(nextPath);
     } catch (e) {
       setError(errorMessage(e, t("auth.codeInvalid")));
     } finally {
@@ -403,5 +417,14 @@ export default function LoginPage() {
         )}
       </form>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  // useSearchParams needs a Suspense boundary to prerender.
+  return (
+    <Suspense fallback={null}>
+      <LoginInner />
+    </Suspense>
   );
 }

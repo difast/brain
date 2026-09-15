@@ -9,6 +9,7 @@ from app.models.invite import Invite
 from app.models.lead import ContactLead
 from app.models.login_throttle import LoginThrottle
 from app.models.newsletter import Newsletter, NewsletterStatus
+from app.models.oauth import OAuthClient, OAuthCode
 from app.models.organization import Organization
 from app.models.robot import Robot, RobotStatus
 from app.models.task import Task, TaskSource, TaskStatus
@@ -30,6 +31,8 @@ __all__ = [
     "LoginThrottle",
     "Newsletter",
     "NewsletterStatus",
+    "OAuthClient",
+    "OAuthCode",
     "Organization",
     "Robot",
     "RobotStatus",
