@@ -17,7 +17,6 @@ export const FOUNDER = {
    * придуманное описание там хуже, чем никакого.
    */
   projects: [
-    { name: "Panteon Chess", note: "шахматный проект" },
     { name: "Mevratek", note: "платформа управления роботами" },
     { name: "OneOnOne" },
     { name: "ТехФабрика", note: "онлайн-школа программирования" },
