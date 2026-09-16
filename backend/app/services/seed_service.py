@@ -42,17 +42,22 @@ SEED_ADMIN_PASSWORD = "11111111"
 
 # The account the connector directories review the MCP integration with.
 #
-# Its password is published, in website/public/mcp-docs.md — that is the point
-# of it. What makes that acceptable is the role: a member can read the
-# organization's devices, telemetry and decision journal, and queue a task or
-# a simulation, and nothing else. It cannot manage the team, issue API keys,
-# delete anything, or reach an admin route. Publishing the administrator's
-# credentials instead, which is what the docs used to do, would have handed
-# anyone who found the page the whole organization.
+# Its password is NOT published. It goes into the private credentials field of
+# the Anthropic / OpenAI submission; website/public/mcp-docs.md names the
+# account and says to ask for the password, because that file is served at a
+# public URL and a password on it is a password everyone has.
 #
-# Change it by setting REVIEWER_PASSWORD rather than by editing this line, and
-# update mcp-docs.md to match.
-SEED_REVIEWER_PASSWORD = "7_SE=?JQYiSWnE.M8bFF"  # noqa: S105 — published on purpose
+# The role is the second line of defence, and the reason this is not the
+# administrator: a member can read the organization's fleet, telemetry and
+# decision journal and queue a task or a simulation, and nothing else — no
+# team management, no API keys, no admin routes. The docs used to publish the
+# administrator's credentials, which handed anyone who found the page the
+# whole organization.
+#
+# This constant is the bootstrap value, so the account exists on a fresh
+# deployment with nothing configured. Set REVIEWER_PASSWORD in the environment
+# to replace it; that is the value to put in the submission.
+SEED_REVIEWER_PASSWORD = "7_SE=?JQYiSWnE.M8bFF"  # noqa: S105 — bootstrap default
 
 
 async def seed_identity(session_factory: Any | None = None) -> None:
