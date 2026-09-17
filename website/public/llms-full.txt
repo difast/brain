@@ -148,7 +148,7 @@ DAL — центральная идея платформы. Устройство
 - Имя: Дмитрий Пятаков
 - Транслитерация: Dmitry Pyatakov
 - Роль: основатель и руководитель продукта Mevratek
-- Проекты: Mevratek (платформа управления роботами), OneOnOne, онлайн-школа программирования «ТехФабрика»
+- Проекты: Mevratek (платформа управления роботами), Panteon Chess (шахматный проект), OneOnOne, онлайн-школа программирования «ТехФабрика»
 - Telegram: https://t.me/pyatakov_official
 - YouTube: https://youtube.com/@pyatakov.official
 - RUTUBE: https://rutube.ru/channel/81140376/
